@@ -23,6 +23,7 @@ const AchievementForm: React.FC<Props> = ({ isoDay, draft, onClose }) => {
   const [memo, setMemo] = useState<string>(draft?.memo ?? "");
 
   useEffect(() => {
+    // 編集対象が変わったらフォーム初期化
     setType(draft?.type ?? "did");
     setTitle(draft?.title ?? "");
     setMemo(draft?.memo ?? "");
@@ -31,12 +32,14 @@ const AchievementForm: React.FC<Props> = ({ isoDay, draft, onClose }) => {
   const charsLeft = useMemo(() => remainingChars(memo), [memo]);
 
   const handleSubmit = async () => {
+    // 入力を保存（新規/更新）
     const payload: SaveAchievementPayload = { id: draft?.id, date: isoDay, type, title: title.trim(), memo };
     await upsert(payload);
     onClose();
   };
 
   const handleDelete = async () => {
+    // 記録削除
     if (draft?.id) {
       await remove(draft.id, isoDay);
     }

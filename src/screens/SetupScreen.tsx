@@ -16,12 +16,14 @@ const SetupScreen: React.FC<Props> = ({ navigation }) => {
   const [localSettings, setLocalSettings] = useState<UserSettings>({ ...DEFAULT_SETTINGS, ...settings });
 
   const handleChange = useCallback(<K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
+    // 入力値をローカル状態に反映（保存は送信時）
     setLocalSettings((prev) => ({ ...prev, [key]: value }));
   }, []);
 
   const canSubmit = useMemo(() => !!localSettings.birthDate, [localSettings.birthDate]);
 
   const handleSubmit = useCallback(async () => {
+    // 必須の出生日チェック後、設定を保存してカレンダーへ遷移
     if (!localSettings.birthDate) {
       Alert.alert("出生日は必須です", "出生日を入力してください", [{ text: "OK" }]);
       return;

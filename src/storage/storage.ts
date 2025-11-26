@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   achievementStore: "little_baby_calendar_achievements",
 };
 
+// 設定の読み込み（壊れたJSONや未保存の場合は null を返す）
 export const loadUserSettings = async (): Promise<UserSettings | null> => {
   const raw = await AsyncStorage.getItem(STORAGE_KEYS.userSettings);
   if (!raw) return null;
@@ -16,6 +17,7 @@ export const loadUserSettings = async (): Promise<UserSettings | null> => {
   }
 };
 
+// 設定の保存（全量をJSONで上書き）
 export const saveUserSettings = async (
   settings: UserSettings
 ): Promise<void> => {
@@ -23,6 +25,7 @@ export const saveUserSettings = async (
   await AsyncStorage.setItem(STORAGE_KEYS.userSettings, serialized);
 };
 
+// 記録の読み込み（パース失敗や未保存時は空配列）
 export const loadAchievements = async (): Promise<AchievementStore> => {
   const raw = await AsyncStorage.getItem(STORAGE_KEYS.achievementStore);
   if (!raw) {

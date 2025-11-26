@@ -19,6 +19,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
   const { settings, updateSettings } = useSettings();
   const { monthCounts, loadMonth } = useAchievements();
   const [anchorDate, setAnchorDate] = useState<Date>(() => {
+    // 一覧から遷移した場合は選択日を優先し、その月を表示
     const initialDay = route.params?.initialSelectedDay;
     if (initialDay) {
       const [y, m] = initialDay.split("-").map(Number);
@@ -34,6 +35,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
   const monthKeyValue = monthKey(anchorDate);
 
   useEffect(() => {
+    // 表示月を変更したら該当月の●集計を読み込み、最後に見た月として保存
     void loadMonth(monthKeyValue);
     const isoMonth = `${anchorDate.getUTCFullYear()}-${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}-01`;
     if (settings.lastViewedMonth !== isoMonth) {
@@ -69,6 +71,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
   const monthLabel = `${anchorDate.getUTCFullYear()}/${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}`;
 
   const handlePressDay = (iso: string) => {
+    // 日付タップで詳細シートを開く
     setSelectedDay(iso);
   };
 

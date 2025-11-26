@@ -31,6 +31,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [store, setStore] = useState<AchievementStore>({ achievements: [] });
 
   const refresh = useCallback(async () => {
+    // 永続ストレージから最新の記録を丸ごと読み込む
     setLoading(true);
     const loaded = await loadAchievements();
     setStore(loaded);
@@ -42,6 +43,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [refresh]);
 
   const byDay = useMemo(() => {
+    // 日付ごとに記録をグルーピング（表示用）
     const map: Record<string, Achievement[]> = {};
     for (const item of store.achievements) {
       const key = item.date;
@@ -57,6 +59,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [store]);
 
   const monthCounts = useMemo(() => {
+    // 月ごとの日別件数を集計し、カレンダーの●表示に使う
     const counts: Record<string, Record<string, number>> = {};
     for (const item of store.achievements) {
       const month = item.date.slice(0, 7);
@@ -85,6 +88,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const upsert = useCallback(
     async (payload: SaveAchievementPayload) => {
+      // 新規/更新を判定し、作成日時は維持しつつ更新日時を付与
       setLoading(true);
       const normalizedDate = toIsoDateString(normalizeToUtcDate(payload.date));
       let nextStore: AchievementStore = store;
@@ -117,6 +121,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   );
 
   const remove = useCallback(async (id: string, _isoDay: string) => {
+    // 指定IDの記録を削除し永続化
     setLoading(true);
     let nextStore: AchievementStore = store;
     setStore((prev) => {

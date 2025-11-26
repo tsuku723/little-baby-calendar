@@ -19,6 +19,7 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
+    // シートを開くたびに対象日付の記録を読み込む
     if (isoDay && visible) {
       void loadDay(isoDay);
       setEditingId(null);
@@ -30,6 +31,7 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose }) => {
   const editing = useMemo(() => achievements.find((item) => item.id === editingId) ?? null, [achievements, editingId]);
 
   const ageInfo = useMemo(() => {
+    // 対象日と設定から年齢情報を再計算
     if (!normalizedIso || !settings.birthDate) return null;
     return calculateAgeInfo({
       targetDate: normalizedIso,

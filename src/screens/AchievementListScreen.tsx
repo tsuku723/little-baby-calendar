@@ -20,6 +20,7 @@ const AchievementListScreen: React.FC<Props> = ({ navigation }) => {
   const [filter, setFilter] = useState<Filter>("all");
 
   const items = useMemo(() => {
+    // フィルタに応じて抽出し、日付降順→作成日時降順で並べ替え
     const all: Achievement[] = store?.achievements ?? [];
     const filtered = filter === "all" ? all : all.filter((a) => a.type === filter);
     return filtered
@@ -36,6 +37,7 @@ const AchievementListScreen: React.FC<Props> = ({ navigation }) => {
       onPress={() => navigation.navigate("Calendar", { initialSelectedDay: item.date })}
       accessibilityRole="button"
     >
+      {/* 行タップでカレンダー画面の該当日を開く */}
       <View style={styles.rowHeader}>
         <Text style={styles.date}>{dateLabel(item.date)}</Text>
         <Text style={styles.type}>{typeLabel(item.type)}</Text>

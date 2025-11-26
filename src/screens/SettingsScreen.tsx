@@ -17,6 +17,7 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleChange = useCallback(
     async <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
+      // 各入力変更時に即保存（設定画面は即時反映）
       const next = { ...localSettings, [key]: value } as UserSettings;
       setLocalSettings(next);
       await updateSettings({ [key]: value } as Partial<UserSettings>);
@@ -27,6 +28,7 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const canSave = useMemo(() => !!localSettings.birthDate, [localSettings.birthDate]);
 
   const handleClose = useCallback(() => {
+    // 出生日が空なら警告、問題なければ前画面へ戻る
     if (!localSettings.birthDate) {
       Alert.alert("出生日は必須です", "出生日を入力してください", [{ text: "OK" }]);
       return;

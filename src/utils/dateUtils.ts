@@ -6,6 +6,7 @@ import {
   UserSettings,
 } from "../models/dataModels";
 
+// 年齢計算の中間表現（負の値は利用側で0に丸める）
 type AgeParts = { years: number; months: number; days: number };
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -25,9 +26,11 @@ export const normalizeToUtcDate = (isoDate: string): Date => {
   return new Date(Date.UTC(y, m - 1, d));
 };
 
+// 端末TZに依存しない日付オブジェクトを生成（時刻00:00 UTC固定）
 export const toUtcDateOnly = (date: Date): Date =>
   new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
+// ISO日付文字列（YYYY-MM-DD）を返す
 export const toIsoDateString = (date: Date): string => {
   const d = toUtcDateOnly(date);
   const year = d.getUTCFullYear();
@@ -36,6 +39,7 @@ export const toIsoDateString = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+// 今日のISO日付（UTC丸め）
 export const todayIsoDate = (): string => toIsoDateString(toUtcDateOnly(new Date()));
 
 const diffYmdBorrow = (start: Date, end: Date): AgeParts => {
@@ -82,6 +86,7 @@ const isWithinCorrectedLimit = (
   parts: AgeParts,
   limitMonths: number | null
 ): boolean => {
+  // 表示上限を超えたら修正月齢を隠す
   if (limitMonths === null) return true;
   const totalMonths = parts.years * 12 + parts.months;
   // Hide when strictly over limit or exactly at limit with extra days
@@ -102,6 +107,7 @@ export const calculateAgeInfo = (params: {
   showCorrectedUntilMonths: number | null;
   ageFormat: AgeFormat;
 }): AgeInfo => {
+  // すべてUTC丸めした日付で計算する
   const target = normalizeToUtcDate(params.targetDate);
   const birth = normalizeToUtcDate(params.birthDate);
   const due = params.dueDate ? normalizeToUtcDate(params.dueDate) : null;
@@ -142,6 +148,7 @@ export const monthKey = (date: Date): string => {
 };
 
 const startOfCalendarGrid = (anchor: Date): Date => {
+  // 当月1日の曜日から逆算して6行×7列の開始日を決める
   const firstDay = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1));
   const startDay = firstDay.getUTCDay();
   const startDate = new Date(firstDay);
@@ -158,6 +165,7 @@ export const buildCalendarMonthView = ({
   settings: UserSettings;
   achievementCountsByDay?: Record<string, number>;
 }): CalendarMonthView => {
+  // カレンダー表示用に42セルぶんのViewModelを構築
   const startDate = startOfCalendarGrid(anchorDate);
   const todayIso = todayIsoDate();
   const days: CalendarDay[] = [];
