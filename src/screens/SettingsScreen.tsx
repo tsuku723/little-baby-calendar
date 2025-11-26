@@ -7,34 +7,40 @@ import { RootStackParamList } from "@/navigation";
 import { DEFAULT_SETTINGS, UserSettings } from "@/types/models";
 import { useSettings } from "@/state/SettingsContext";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Setup">;
+type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 
 const MONTH_LIMIT_OPTIONS: Array<UserSettings["showCorrectedUntilMonths"]> = [24, 36, null];
 
-const SetupScreen: React.FC<Props> = ({ navigation }) => {
+const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { settings, updateSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState<UserSettings>({ ...DEFAULT_SETTINGS, ...settings });
 
-  const handleChange = useCallback(<K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
-    setLocalSettings((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const handleChange = useCallback(
+    async <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
+      const next = { ...localSettings, [key]: value } as UserSettings;
+      setLocalSettings(next);
+      await updateSettings({ [key]: value } as Partial<UserSettings>);
+    },
+    [localSettings, updateSettings]
+  );
 
-  const canSubmit = useMemo(() => !!localSettings.birthDate, [localSettings.birthDate]);
+  const canSave = useMemo(() => !!localSettings.birthDate, [localSettings.birthDate]);
 
-  const handleSubmit = useCallback(async () => {
+  const handleClose = useCallback(() => {
     if (!localSettings.birthDate) {
       Alert.alert("出生日は必須です", "出生日を入力してください", [{ text: "OK" }]);
       return;
     }
-    await updateSettings({ ...localSettings });
-    navigation.replace("Calendar");
-  }, [localSettings, navigation, updateSettings]);
+    navigation.goBack();
+  }, [localSettings.birthDate, navigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>ようこそ。「リトルベビーカレンダー」へ</Text>
-        <Text style={styles.subtitle}>はじめに、お子さんの情報をそっと教えてください。</Text>
+        <View style={styles.header}>
+          <Button title="＜ 戻る" onPress={handleClose} color="#3A86FF" />
+          <Text style={styles.title}>設定</Text>
+        </View>
 
         <View style={styles.field}>
           <Text style={styles.label}>出生日*</Text>
@@ -104,8 +110,8 @@ const SetupScreen: React.FC<Props> = ({ navigation }) => {
 
         <Text style={styles.notice}>※このアプリの記録は、この端末の中だけに保存されます。</Text>
 
-        <View style={styles.submit}>
-          <Button title="カレンダーへ" onPress={handleSubmit} disabled={!canSubmit} color="#3A86FF" />
+        <View style={styles.footer}>
+          <Button title="保存して戻る" onPress={handleClose} disabled={!canSave} color="#3A86FF" />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -121,13 +127,14 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#2E2A27",
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  subtitle: {
-    fontSize: 16,
+  title: {
+    fontSize: 20,
+    fontWeight: "600",
     color: "#2E2A27",
   },
   field: {
@@ -165,9 +172,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
   },
-  submit: {
+  footer: {
     marginTop: 12,
   },
 });
 
-export default SetupScreen;
+export default SettingsScreen;

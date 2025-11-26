@@ -4,11 +4,15 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import CalendarScreen from "@/screens/CalendarScreen";
 import SetupScreen from "@/screens/SetupScreen";
+import SettingsScreen from "@/screens/SettingsScreen";
+import AchievementListScreen from "@/screens/AchievementListScreen";
 import { useSettings } from "@/state/SettingsContext";
 
 export type RootStackParamList = {
   Setup: undefined;
-  Calendar: undefined;
+  Calendar: { initialSelectedDay?: string } | undefined;
+  Settings: undefined;
+  AchievementList: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -37,6 +41,8 @@ const Navigator: React.FC = () => {
       <Stack.Navigator initialRouteName={initialRoute} screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Setup" component={SetupScreen} />
         <Stack.Screen name="Calendar" component={CalendarScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="AchievementList" component={AchievementListScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

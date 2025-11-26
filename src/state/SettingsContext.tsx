@@ -1,7 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { loadSettings, saveSettings } from "@/services/StorageService";
-import { DEFAULT_SETTINGS, UserSettings } from "@/types/models";
+import { UserSettings } from "@/models/dataModels";
+import { loadUserSettings, saveUserSettings } from "@/storage/storage";
+import { DEFAULT_SETTINGS } from "@/types/models";
 
 interface SettingsContextValue {
   settings: UserSettings;
@@ -18,8 +19,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     (async () => {
-      const stored = await loadSettings();
-      setSettings(stored);
+      const stored = await loadUserSettings();
+      if (stored) {
+        setSettings({ ...DEFAULT_SETTINGS, ...stored });
+      }
       setLoading(false);
     })();
   }, []);
@@ -30,12 +33,12 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       merged = { ...prev, ...next } as UserSettings;
       return merged;
     });
-    await saveSettings(merged);
+    await saveUserSettings(merged);
   }, []);
 
   const resetSettings = useCallback(async () => {
     setSettings(DEFAULT_SETTINGS);
-    await saveSettings(DEFAULT_SETTINGS);
+    await saveUserSettings(DEFAULT_SETTINGS);
   }, []);
 
   const value = useMemo<SettingsContextValue>(
