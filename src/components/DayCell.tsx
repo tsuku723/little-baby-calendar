@@ -13,6 +13,7 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const dateNumber = parseInt(day.date.slice(-2), 10);
   const chronological = day.ageInfo?.chronological.formatted ?? "";
   const correctedVisible = day.ageInfo?.corrected.visible && day.ageInfo?.corrected.formatted;
+  const hasAchievements = day.achievementCount > 0;
 
   return (
     <TouchableOpacity
@@ -27,7 +28,7 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
       <Text style={[styles.corrected, !correctedVisible && styles.hidden, isDimmed && styles.ageDimmed]} numberOfLines={1}>
         {correctedVisible ? `修: ${day.ageInfo?.corrected.formatted}` : " "}
       </Text>
-      {day.hasAchievements ? <View style={styles.dot} /> : null}
+      {hasAchievements ? <View style={styles.dot} /> : null}
     </TouchableOpacity>
   );
 };

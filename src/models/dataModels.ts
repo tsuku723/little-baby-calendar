@@ -1,29 +1,59 @@
+// ---------------------------------------
+// 基本設定
+// ---------------------------------------
+
 export type AgeFormat = "md" | "ymd";
 
 export type UserSettings = {
-  birthDate: string; // ISODateString e.g. "2025-10-01"
-  dueDate: string | null; // ISODateString or null
-  showCorrectedUntilMonths: number | null; // 24 | 36 | null (no limit)
+  birthDate: string;                // ISODateString "2025-10-01"
+  dueDate: string | null;           // ISODateString or null
+  showCorrectedUntilMonths: number | null; 
   ageFormat: AgeFormat;
   showDaysSinceBirth: boolean;
-  lastViewedMonth: string | null; // ISODateString for first day of month, e.g. "2026-04-01"
+  lastViewedMonth: string | null;   // "YYYY-MM-DD"
 };
+
+// ---------------------------------------
+// Achievement（実績）
+// ---------------------------------------
 
 export type AchievementType = "did" | "tried";
 
 export type Achievement = {
   id: string;
-  date: string; // ISODateString normalized to UTC midnight
+  date: string;        // normalized ISO "YYYY-MM-DD"
   type: AchievementType;
   title: string;
   memo?: string;
-  createdAt: string; // ISODateTime
-  updatedAt?: string;
+
+  // storage.ts に合わせて「必須」に統一
+  createdAt: string;   // ISO datetime
+  updatedAt: string;   // ISO datetime（optional ではない）
 };
 
-export type AchievementStore = {
-  achievements: Achievement[];
+// ---------------------------------------
+// 永続化全体（辞書形式）
+// ---------------------------------------
+// storage.ts は Record<string, Achievement[]> を使うため、
+// この形式に合わせる必要がある。
+
+export type AchievementStore = Record<string, Achievement[]>;
+
+// ---------------------------------------
+// (任意) DailyRecord
+// ---------------------------------------
+// カレンダー1日の情報として使いたい場合用。
+// ただし辞書形式の key/value がそのまま DailyRecord になるため、
+// 「仕様上は不要」。使う場合のみ定義を正しくする。
+
+export type DailyRecord = {
+  date: string;
+  items: Achievement[];
 };
+
+// ---------------------------------------
+// 年齢情報
+// ---------------------------------------
 
 export type AgeInfo = {
   chronological: {
@@ -42,23 +72,35 @@ export type AgeInfo = {
   daysSinceBirth: number;
 };
 
+// ---------------------------------------
+// カレンダー
+// ---------------------------------------
+
 export type CalendarDay = {
-  date: string;
+  date: string;              // "YYYY-MM-DD"
   isCurrentMonth: boolean;
   isToday: boolean;
   ageInfo: AgeInfo | null;
+
+  achievementCount: number;
+
+  // 永続化は配列のため hasAchievements は boolean のままでOK
   hasAchievements: boolean;
 };
 
 export type CalendarMonthView = {
   year: number;
-  month: number; // 1-12
+  month: number;
   days: CalendarDay[];
 };
 
+// ---------------------------------------
+// 一覧表示用
+// ---------------------------------------
+
 export type AchievementListItem = {
   id: string;
-  date: string;
+  date: string;      // YYYY-MM-DD
   dateLabel: string;
   type: AchievementType;
   typeLabel: string;

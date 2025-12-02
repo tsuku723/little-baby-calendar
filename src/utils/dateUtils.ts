@@ -6,10 +6,13 @@ import {
   UserSettings,
 } from "../models/dataModels";
 
-// 年齢計算の中間表現（負の値は利用側で0に丸める）
 type AgeParts = { years: number; months: number; days: number };
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export const isIsoDateString = (value: unknown): value is string =>
+  typeof value === "string" && ISO_DATE_RE.test(value);
 
 const getDateParts = (date: Date) => ({
   year: date.getUTCFullYear(),
@@ -18,20 +21,53 @@ const getDateParts = (date: Date) => ({
 });
 
 const daysInMonth = (year: number, month: number): number =>
-  // month: 1-12, using 0 to reach the previous month end
   new Date(Date.UTC(year, month, 0)).getUTCDate();
 
-export const normalizeToUtcDate = (isoDate: string): Date => {
+const parseIsoDateStrict = (isoDate: string): Date | null => {
+  if (!isIsoDateString(isoDate)) return null;
+
   const [y, m, d] = isoDate.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d));
+  const parsed = new Date(Date.UTC(y, m - 1, d));
+
+  if (
+    parsed.getUTCFullYear() !== y ||
+    parsed.getUTCMonth() + 1 !== m ||
+    parsed.getUTCDate() !== d
+  ) {
+    return null;
+  }
+
+  return parsed;
 };
 
-// 端末TZに依存しない日付オブジェクトを生成（時刻00:00 UTC固定）
-export const toUtcDateOnly = (date: Date): Date =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+export const normalizeToUtcDate = (isoDate: string | null | undefined): Date => {
+  if (isoDate == null || isoDate === "") {
+    console.warn("normalizeToUtcDate: isoDate が未定義です", isoDate);
+    return new Date(NaN);
+  }
 
-// ISO日付文字列（YYYY-MM-DD）を返す
+  const parsed = parseIsoDateStrict(isoDate);
+  if (!parsed) {
+    console.warn("normalizeToUtcDate: isoDate が不正な形式です", isoDate);
+    return new Date(NaN);
+  }
+
+  return parsed;
+};
+
+export const toUtcDateOnly = (date: Date): Date => {
+  if (Number.isNaN(date.getTime())) {
+    return new Date(NaN);
+  }
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
+};
+
 export const toIsoDateString = (date: Date): string => {
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("toIsoDateString: Invalid Date provided");
+  }
   const d = toUtcDateOnly(date);
   const year = d.getUTCFullYear();
   const month = String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -39,11 +75,13 @@ export const toIsoDateString = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-// 今日のISO日付（UTC丸め）
 export const todayIsoDate = (): string => toIsoDateString(toUtcDateOnly(new Date()));
 
 const diffYmdBorrow = (start: Date, end: Date): AgeParts => {
-  // Spec: negative values are rounded to 0d
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return { years: 0, months: 0, days: 0 };
+  }
+
   if (end.getTime() < start.getTime()) {
     return { years: 0, months: 0, days: 0 };
   }
@@ -56,7 +94,6 @@ const diffYmdBorrow = (start: Date, end: Date): AgeParts => {
   let days = e.day - s.day;
 
   if (days < 0) {
-    // Borrow from previous month of end date
     months -= 1;
     const prevMonth = e.month === 1 ? 12 : e.month - 1;
     const prevMonthYear = e.month === 1 ? e.year - 1 : e.year;
@@ -86,16 +123,15 @@ const isWithinCorrectedLimit = (
   parts: AgeParts,
   limitMonths: number | null
 ): boolean => {
-  // 表示上限を超えたら修正月齢を隠す
   if (limitMonths === null) return true;
   const totalMonths = parts.years * 12 + parts.months;
-  // Hide when strictly over limit or exactly at limit with extra days
   if (totalMonths > limitMonths) return false;
   if (totalMonths === limitMonths && parts.days > 0) return false;
   return true;
 };
 
 export const daysBetweenUtc = (start: Date, end: Date): number => {
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
   const diff = Math.floor((end.getTime() - start.getTime()) / MS_PER_DAY);
   return diff < 0 ? 0 : diff;
 };
@@ -107,15 +143,18 @@ export const calculateAgeInfo = (params: {
   showCorrectedUntilMonths: number | null;
   ageFormat: AgeFormat;
 }): AgeInfo => {
-  // すべてUTC丸めした日付で計算する
   const target = normalizeToUtcDate(params.targetDate);
   const birth = normalizeToUtcDate(params.birthDate);
-  const due = params.dueDate ? normalizeToUtcDate(params.dueDate) : null;
+  const dueRaw = params.dueDate ? normalizeToUtcDate(params.dueDate) : null;
+  const due = dueRaw && !Number.isNaN(dueRaw.getTime()) ? dueRaw : null;
+
+  if (Number.isNaN(target.getTime()) || Number.isNaN(birth.getTime())) {
+    throw new Error("calculateAgeInfo: Invalid date input");
+  }
 
   const chronologicalParts = diffYmdBorrow(birth, target);
 
-  const correctedBase =
-    due && due.getTime() > birth.getTime() ? due : birth;
+  const correctedBase = due && due.getTime() > birth.getTime() ? due : birth;
   const correctedParts = due
     ? diffYmdBorrow(correctedBase, target)
     : { years: 0, months: 0, days: 0 };
@@ -148,8 +187,9 @@ export const monthKey = (date: Date): string => {
 };
 
 const startOfCalendarGrid = (anchor: Date): Date => {
-  // 当月1日の曜日から逆算して6行×7列の開始日を決める
-  const firstDay = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1));
+  const firstDay = new Date(
+    Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1)
+  );
   const startDay = firstDay.getUTCDay();
   const startDate = new Date(firstDay);
   startDate.setUTCDate(firstDay.getUTCDate() - startDay);
@@ -165,10 +205,11 @@ export const buildCalendarMonthView = ({
   settings: UserSettings;
   achievementCountsByDay?: Record<string, number>;
 }): CalendarMonthView => {
-  // カレンダー表示用に42セルぶんのViewModelを構築
   const startDate = startOfCalendarGrid(anchorDate);
   const todayIso = todayIsoDate();
   const days: CalendarDay[] = [];
+  const hasValidBirthDate = Boolean(settings.birthDate) && isIsoDateString(settings.birthDate);
+  const dueDate = settings.dueDate && isIsoDateString(settings.dueDate) ? settings.dueDate : null;
 
   for (let offset = 0; offset < 42; offset += 1) {
     const date = new Date(startDate);
@@ -178,13 +219,12 @@ export const buildCalendarMonthView = ({
       date.getUTCFullYear() === anchorDate.getUTCFullYear() &&
       date.getUTCMonth() === anchorDate.getUTCMonth();
 
-    const hasBirth = Boolean(settings.birthDate);
     const ageInfo =
-      hasBirth && iso
+      hasValidBirthDate && iso
         ? calculateAgeInfo({
             targetDate: iso,
             birthDate: settings.birthDate,
-            dueDate: settings.dueDate,
+            dueDate,
             showCorrectedUntilMonths: settings.showCorrectedUntilMonths,
             ageFormat: settings.ageFormat,
           })
@@ -195,7 +235,7 @@ export const buildCalendarMonthView = ({
       isCurrentMonth,
       isToday: iso === todayIso,
       ageInfo,
-      hasAchievements: Boolean(achievementCountsByDay?.[iso]),
+      achievementCount: achievementCountsByDay?.[iso] ?? 0,
     });
   }
 

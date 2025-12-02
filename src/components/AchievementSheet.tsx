@@ -5,7 +5,7 @@ import AchievementForm from "@/components/AchievementForm";
 import AchievementItem from "@/components/AchievementItem";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useSettings } from "@/state/SettingsContext";
-import { calculateAgeInfo, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+import { calculateAgeInfo, isIsoDateString, toIsoDateString } from "@/utils/dateUtils";
 
 interface Props {
   isoDay: string | null;
@@ -18,25 +18,36 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose }) => {
   const { byDay, loadDay, remove } = useAchievements();
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const normalizedIso = useMemo(() => {
+    if (!isoDay || !isIsoDateString(isoDay)) return null;
+    const parsed = new Date(isoDay);
+    if (Number.isNaN(parsed.getTime())) {
+      console.warn("AchievementSheet: invalid isoDay provided", isoDay);
+      return null;
+    }
+    return toIsoDateString(parsed);
+  }, [isoDay]);
+
   useEffect(() => {
     // シートを開くたびに対象日付の記録を読み込む
-    if (isoDay && visible) {
-      void loadDay(isoDay);
+    if (visible) {
+      if (normalizedIso) {
+        void loadDay(normalizedIso);
+      }
       setEditingId(null);
     }
-  }, [isoDay, visible, loadDay]);
+  }, [normalizedIso, visible, loadDay]);
 
-  const normalizedIso = isoDay ? toIsoDateString(normalizeToUtcDate(isoDay)) : null;
   const achievements = normalizedIso ? byDay[normalizedIso] ?? [] : [];
   const editing = useMemo(() => achievements.find((item) => item.id === editingId) ?? null, [achievements, editingId]);
 
   const ageInfo = useMemo(() => {
-    // 対象日と設定から年齢情報を再計算
-    if (!normalizedIso || !settings.birthDate) return null;
+    if (!normalizedIso || !settings.birthDate || !isIsoDateString(settings.birthDate)) return null;
+    const dueDate = settings.dueDate && isIsoDateString(settings.dueDate) ? settings.dueDate : null;
     return calculateAgeInfo({
       targetDate: normalizedIso,
       birthDate: settings.birthDate,
-      dueDate: settings.dueDate,
+      dueDate,
       showCorrectedUntilMonths: settings.showCorrectedUntilMonths,
       ageFormat: settings.ageFormat,
     });
@@ -73,9 +84,9 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose }) => {
           </View>
         </ScrollView>
         <View style={styles.formSection}>
-          <AchievementForm isoDay={normalizedIso ?? toIsoDateString(normalizeToUtcDate(new Date()))} draft={editing} onClose={onClose} />
+          <AchievementForm isoDay={normalizedIso ?? toIsoDateString(new Date())} draft={editing} onClose={onClose} />
         </View>
-        <Text style={styles.notice}>※ データはこの端末内にのみ保存されます。</Text>
+        <Text style={styles.notice}>※ データはこの端末内のみ保存されます。</Text>
       </View>
     </Modal>
   );
