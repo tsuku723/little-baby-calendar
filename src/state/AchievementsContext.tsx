@@ -1,3 +1,4 @@
+import "react-native-get-random-values";
 import React, {
   createContext,
   useCallback,
@@ -136,12 +137,14 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading(true);
       try {
         if (!isIsoDateString(payload.date)) {
-          throw new Error(`Invalid date format in upsert: ${payload.date}`);
+          console.error(`Invalid date format in upsert: ${payload.date}`);
+          return;
         }
 
         const normalizedDateObj = normalizeToUtcDate(payload.date);
         if (Number.isNaN(normalizedDateObj.getTime())) {
-          throw new Error(`Invalid date value in upsert: ${payload.date}`);
+          console.error(`Invalid date value in upsert: ${payload.date}`);
+          return;
         }
         const normalizedDate = toIsoDateString(normalizedDateObj);
 
@@ -157,6 +160,8 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({
 
         await storageUpsert(record);
         await refresh();
+      } catch (err) {
+        console.error("upsert failed:", err);
       } finally {
         setLoading(false);
       }
@@ -173,16 +178,20 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading(true);
       try {
         if (!isIsoDateString(isoDate)) {
-          throw new Error(`Invalid date format in remove: ${isoDate}`);
+          console.error(`Invalid date format in remove: ${isoDate}`);
+          return;
         }
         const normalizedDateObj = normalizeToUtcDate(isoDate);
         if (Number.isNaN(normalizedDateObj.getTime())) {
-          throw new Error(`Invalid date value in remove: ${isoDate}`);
+          console.error(`Invalid date value in remove: ${isoDate}`);
+          return;
         }
         const normalizedDate = toIsoDateString(normalizedDateObj);
 
         await storageDelete(id, normalizedDate);
         await refresh();
+      } catch (err) {
+        console.error("remove failed:", err);
       } finally {
         setLoading(false);
       }

@@ -68,48 +68,45 @@ const isMapFormat = (input: unknown): input is AchievementStore => {
   });
 };
 
-const migrateToMap = (input: unknown): AchievementStore => {
+const migrateToMap = async (input: unknown): Promise<AchievementStore> => {
   const now = new Date().toISOString();
+  const nextStore: AchievementStore = {};
+
+  const addList = (dateKey: string, list: Achievement[]) => {
+    const normalizedKey = normalizeDateKeySafe(dateKey);
+    if (!normalizedKey) return;
+    const safeList = list
+      .filter((item) => Boolean(item?.date))
+      .map((rec) => ensureTimestamps(rec, now));
+    if (safeList.length > 0) {
+      nextStore[normalizedKey] = safeList;
+    }
+  };
 
   if (isMapFormat(input)) {
-    const normalized: AchievementStore = {};
     Object.entries(input).forEach(([dateKey, list]) => {
-      const normalizedKey = normalizeDateKeySafe(dateKey);
-      if (!normalizedKey) return;
-      normalized[normalizedKey] = (list as Achievement[]).map((rec) => ensureTimestamps(rec, now));
+      addList(dateKey, list as Achievement[]);
     });
-    return normalized;
-  }
-
-  if (
+  } else if (
     input &&
     typeof input === "object" &&
     !Array.isArray(input) &&
     Array.isArray((input as any).achievements)
   ) {
     const list = (input as any).achievements as Achievement[];
-    return list.reduce<AchievementStore>((acc, item) => {
-      if (!item?.date) return acc;
-      const key = normalizeDateKeySafe(item.date);
-      if (!key) return acc;
-      const rec = ensureTimestamps(item, now);
-      acc[key] = acc[key] ? [...acc[key], rec] : [rec];
-      return acc;
-    }, {});
+    list.forEach((item) => {
+      if (!item?.date) return;
+      addList(item.date, [item]);
+    });
+  } else if (Array.isArray(input)) {
+    (input as Achievement[]).forEach((item) => {
+      if (!item?.date) return;
+      addList(item.date, [item]);
+    });
   }
 
-  if (Array.isArray(input)) {
-    return (input as Achievement[]).reduce<AchievementStore>((acc, item) => {
-      if (!item?.date) return acc;
-      const key = normalizeDateKeySafe(item.date);
-      if (!key) return acc;
-      const rec = ensureTimestamps(item, now);
-      acc[key] = acc[key] ? [...acc[key], rec] : [rec];
-      return acc;
-    }, {});
-  }
-
-  return DEFAULT_ACHIEVEMENTS;
+  await saveAchievements(nextStore);
+  return nextStore;
 };
 
 export const loadUserSettings = async (): Promise<UserSettings> => {
@@ -135,25 +132,34 @@ export const saveAchievements = async (store: AchievementStore): Promise<void> =
 export const upsertAchievement = async (record: Achievement): Promise<Achievement> => {
   const now = new Date().toISOString();
   const normalized = ensureTimestamps(record, now);
-  const key = normalizeDateKey(normalized.date);
-  const current = await loadAchievements();
-  const list = current[key] ? [...current[key]] : [];
-  const index = list.findIndex((a) => a.id === normalized.id);
+  try {
+    const key = normalizeDateKey(normalized.date);
+    const current = await loadAchievements();
+    const list = current[key] ? [...current[key]] : [];
+    const index = list.findIndex((a) => a.id === normalized.id);
 
-  if (index >= 0) {
-    const existing = list[index];
-    list.splice(index, 1, { ...existing, ...normalized, createdAt: existing.createdAt, updatedAt: now });
-  } else {
-    list.push({ ...normalized, createdAt: now, updatedAt: now });
+    if (index >= 0) {
+      const existing = list[index];
+      list.splice(index, 1, { ...existing, ...normalized, createdAt: existing.createdAt, updatedAt: now });
+    } else {
+      list.push({ ...normalized, createdAt: now, updatedAt: now });
+    }
+
+    const nextStore: AchievementStore = { ...current, [key]: list };
+    await saveAchievements(nextStore);
+    return { ...normalized, date: key };
+  } catch (error) {
+    console.error("upsertAchievement failed; record not persisted", error);
+    return normalized;
   }
-
-  const nextStore: AchievementStore = { ...current, [key]: list };
-  await saveAchievements(nextStore);
-  return { ...normalized, date: key };
 };
 
 export const deleteAchievement = async (id: string, isoDate: string): Promise<void> => {
-  const key = normalizeDateKey(isoDate);
+  const key = normalizeDateKeySafe(isoDate);
+  if (!key) {
+    console.error("deleteAchievement skipped due to invalid date", isoDate);
+    return;
+  }
   const current = await loadAchievements();
   const list = current[key];
   if (!list) return;
@@ -169,7 +175,8 @@ export const deleteAchievement = async (id: string, isoDate: string): Promise<vo
 };
 
 export const listAchievementsByDate = async (isoDate: string): Promise<Achievement[]> => {
-  const key = normalizeDateKey(isoDate);
+  const key = normalizeDateKeySafe(isoDate);
+  if (!key) return [];
   const current = await loadAchievements();
   return current[key] ?? [];
 };

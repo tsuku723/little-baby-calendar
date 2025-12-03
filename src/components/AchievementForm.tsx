@@ -32,10 +32,20 @@ const AchievementForm: React.FC<Props> = ({ isoDay, draft, onClose }) => {
   const charsLeft = useMemo(() => remainingChars(memo), [memo]);
 
   const handleSubmit = async () => {
-    // 入力を保存（新規/更新）
-    const payload: SaveAchievementPayload = { id: draft?.id, date: isoDay, type, title: title.trim(), memo };
-    await upsert(payload);
-    onClose();
+    const payload: SaveAchievementPayload = {
+      id: draft?.id,
+      date: isoDay,
+      type,
+      title: title.trim(),
+      memo,
+    };
+    try {
+      await upsert(payload);
+      onClose();
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert("保存中にエラーが発生しました。もう一度お試しください。");
+    }
   };
 
   const handleDelete = async () => {
