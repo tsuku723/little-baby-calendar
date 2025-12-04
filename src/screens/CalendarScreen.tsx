@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import CalendarGrid from "@/components/CalendarGrid";
 import MonthHeader from "@/components/MonthHeader";
@@ -77,26 +77,28 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <MonthHeader
-          monthLabel={monthLabel}
-          onPrev={handlePrev}
-          onNext={handleNext}
-          onToday={handleToday}
-          onOpenSettings={() => navigation.navigate("Settings")}
-          onOpenList={() => navigation.navigate("AchievementList")}
-        />
-        <View style={styles.weekRow}>
-          {WEEK_LABELS.map((label) => (
-            <Text key={label} style={styles.weekLabel}>
-              {label}
-            </Text>
-          ))}
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+        <View style={styles.container}>
+          <MonthHeader
+            monthLabel={monthLabel}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            onToday={handleToday}
+            onOpenSettings={() => navigation.navigate("Settings")}
+            onOpenList={() => navigation.navigate("AchievementList")}
+          />
+          <View style={styles.weekRow}>
+            {WEEK_LABELS.map((label) => (
+              <Text key={label} style={styles.weekLabel}>
+                {label}
+              </Text>
+            ))}
+          </View>
+          <CalendarGrid days={monthView.days} onPressDay={handlePressDay} />
+          <Text style={styles.footer}>修正月齢の表記は目安です。医療的判断は主治医にご相談ください。</Text>
+          <Text style={styles.footer}>データは端末内のみで保存します。</Text>
         </View>
-        <CalendarGrid days={monthView.days} onPressDay={handlePressDay} />
-        <Text style={styles.footer}>修正月齢の表記は目安です。医療的判断は主治医にご相談ください。</Text>
-        <Text style={styles.footer}>データは端末内のみで保存します。</Text>
-      </View>
+      </ScrollView>
       <AchievementSheet isoDay={selectedDay} visible={!!selectedDay} onClose={() => setSelectedDay(null)} />
     </SafeAreaView>
   );
@@ -106,6 +108,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#FFFDF9",
+  },
+  scrollContainer: {
+    flexGrow: 1, // Webでスクロール可能にするため追加
   },
   container: {
     flex: 1,
