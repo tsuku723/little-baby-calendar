@@ -111,9 +111,9 @@ const diffYmdBorrow = (start: Date, end: Date): AgeParts => {
 const formatAge = (parts: AgeParts, ageFormat: AgeFormat): string => {
   if (ageFormat === "md") {
     const totalMonths = parts.years * 12 + parts.months;
-    return `m${totalMonths}d${parts.days}`;
+    return `${totalMonths}m${parts.days}d`;
   }
-  return `y${parts.years}m${parts.months}d${parts.days}`;
+  return `${parts.years}y${parts.months}m${parts.days}d`;
 };
 
 const agesEqual = (a: AgeParts, b: AgeParts): boolean =>
