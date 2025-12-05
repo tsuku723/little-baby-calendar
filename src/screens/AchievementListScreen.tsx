@@ -20,9 +20,11 @@ const AchievementListScreen: React.FC<Props> = ({ navigation }) => {
   const [filter, setFilter] = useState<Filter>("all");
 
   const items = useMemo(() => {
-    // フィルタに応じて抽出し、日付降順→作成日時降順で並べ替え
-    const all: Achievement[] = store?.achievements ?? [];
-    const filtered = filter === "all" ? all : all.filter((a) => a.type === filter);
+    // AchievementStore = { "2025-02-05": [A], "2025-02-06": [B, C], ... }
+    const allList: Achievement[] = Object.values(store).flat();
+
+    const filtered = filter === "all" ? allList : allList.filter((a) => a.type === filter);
+
     return filtered
       .slice()
       .sort((a, b) => {
