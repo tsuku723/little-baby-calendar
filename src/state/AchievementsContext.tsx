@@ -1,22 +1,53 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import "react-native-get-random-values";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import { v4 as uuid } from "uuid";
 
-import { Achievement, AchievementType, AchievementStore } from "@/models/dataModels";
-import { loadAchievements, saveAchievements } from "@/storage/storage";
-import { normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+import {
+  Achievement,
+  AchievementType,
+  AchievementStore,
+} from "@/models/dataModels";
+
+import {
+  loadAchievements,
+  upsertAchievement as storageUpsert,
+  deleteAchievement as storageDelete,
+} from "@/storage/storage";
+
+import { isIsoDateString, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+
+// -----------------------------------------------------
+// Context interface
+// -----------------------------------------------------
 
 interface AchievementsState {
   loading: boolean;
   store: AchievementStore;
-  byDay: Record<string, Achievement[]>;
+  byDay: Record<string, Achievement[]>; // = store
   monthCounts: Record<string, Record<string, number>>;
+
   loadDay: (isoDay: string) => Promise<void>;
   loadMonth: (yyyymm: string) => Promise<void>;
+
   upsert: (payload: SaveAchievementPayload) => Promise<void>;
   remove: (id: string, isoDay: string) => Promise<void>;
 }
 
-const AchievementsContext = createContext<AchievementsState | undefined>(undefined);
+const AchievementsContext = createContext<AchievementsState | undefined>(
+  undefined
+);
+
+// -----------------------------------------------------
+// Payload type
+// -----------------------------------------------------
 
 export type SaveAchievementPayload = {
   id?: string;
@@ -26,9 +57,19 @@ export type SaveAchievementPayload = {
   memo?: string;
 };
 
-export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// -----------------------------------------------------
+// Provider
+// -----------------------------------------------------
+
+export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [loading, setLoading] = useState<boolean>(true);
-  const [store, setStore] = useState<AchievementStore>({ achievements: [] });
+  const [store, setStore] = useState<AchievementStore>({}); // 辞書形式
+
+  // -------------------------------------------
+  // Refresh from storage
+  // -------------------------------------------
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -41,36 +82,40 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     void refresh();
   }, [refresh]);
 
+  // -------------------------------------------
+  // byDay = store（辞書形式なのでそのまま）
+  // -------------------------------------------
+
   const byDay = useMemo(() => {
-    const map: Record<string, Achievement[]> = {};
-    for (const item of store.achievements) {
-      const key = item.date;
-      if (!map[key]) {
-        map[key] = [];
-      }
-      map[key].push(item);
-    }
-    for (const key of Object.keys(map)) {
-      map[key] = map[key].slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-    }
-    return map;
+    return { ...store }; // shallow copy
   }, [store]);
 
+  // -------------------------------------------
+  // monthCounts：月→日→件数を集計
+  // -------------------------------------------
+
   const monthCounts = useMemo(() => {
-    const counts: Record<string, Record<string, number>> = {};
-    for (const item of store.achievements) {
-      const month = item.date.slice(0, 7);
-      if (!counts[month]) {
-        counts[month] = {};
+    const result: Record<string, Record<string, number>> = {};
+
+    for (const [date, list] of Object.entries(store)) {
+      const month = date.slice(0, 7); // YYYY-MM
+
+      if (!result[month]) {
+        result[month] = {};
       }
-      counts[month][item.date] = (counts[month][item.date] || 0) + 1;
+
+      result[month][date] = list.length;
     }
-    return counts;
+
+    return result;
   }, [store]);
+
+  // -------------------------------------------
+  // Day / Month loading
+  // -------------------------------------------
 
   const loadDay = useCallback(
     async (_isoDay: string) => {
-      // Full refresh to keep in sync with storage
       await refresh();
     },
     [refresh]
@@ -83,58 +128,105 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     [refresh]
   );
 
+  // -------------------------------------------
+  // Upsert（storage.ts に委譲）
+  // -------------------------------------------
+
   const upsert = useCallback(
     async (payload: SaveAchievementPayload) => {
       setLoading(true);
-      const normalizedDate = toIsoDateString(normalizeToUtcDate(payload.date));
-      let nextStore: AchievementStore = store;
-      setStore((prev) => {
-        const achievements = [...prev.achievements];
-        const now = new Date().toISOString();
-        const existingIndex = payload.id ? achievements.findIndex((item) => item.id === payload.id) : -1;
-        const existing = existingIndex >= 0 ? achievements[existingIndex] : undefined;
+      try {
+        if (!isIsoDateString(payload.date)) {
+          console.error(`Invalid date format in upsert: ${payload.date}`);
+          return;
+        }
+
+        const normalizedDateObj = normalizeToUtcDate(payload.date);
+        if (Number.isNaN(normalizedDateObj.getTime())) {
+          console.error(`Invalid date value in upsert: ${payload.date}`);
+          return;
+        }
+        const normalizedDate = toIsoDateString(normalizedDateObj);
+
         const record: Achievement = {
           id: payload.id ?? uuid(),
           date: normalizedDate,
           type: payload.type,
           title: payload.title,
           memo: payload.memo,
-          createdAt: existing?.createdAt ?? now,
-          updatedAt: now,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         };
-        if (existingIndex >= 0) {
-          achievements.splice(existingIndex, 1, record);
-        } else {
-          achievements.push(record);
-        }
-        nextStore = { achievements };
-        return nextStore;
-      });
-      await saveAchievements(nextStore);
-      setLoading(false);
+
+        await storageUpsert(record);
+        await refresh();
+      } catch (err) {
+        console.error("upsert failed:", err);
+      } finally {
+        setLoading(false);
+      }
     },
-    [store]
+    [refresh]
   );
 
-  const remove = useCallback(async (id: string, _isoDay: string) => {
-    setLoading(true);
-    let nextStore: AchievementStore = store;
-    setStore((prev) => {
-      const achievements = prev.achievements.filter((item) => item.id !== id);
-      nextStore = { achievements };
-      return nextStore;
-    });
-    await saveAchievements(nextStore);
-    setLoading(false);
-  }, [store]);
+  // -------------------------------------------
+  // Remove
+  // -------------------------------------------
+
+  const remove = useCallback(
+    async (id: string, isoDate: string) => {
+      setLoading(true);
+      try {
+        if (!isIsoDateString(isoDate)) {
+          console.error(`Invalid date format in remove: ${isoDate}`);
+          return;
+        }
+        const normalizedDateObj = normalizeToUtcDate(isoDate);
+        if (Number.isNaN(normalizedDateObj.getTime())) {
+          console.error(`Invalid date value in remove: ${isoDate}`);
+          return;
+        }
+        const normalizedDate = toIsoDateString(normalizedDateObj);
+
+        await storageDelete(id, normalizedDate);
+        await refresh();
+      } catch (err) {
+        console.error("remove failed:", err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [refresh]
+  );
+
+  // -------------------------------------------
+  // Context value
+  // -------------------------------------------
 
   const value = useMemo(
-    () => ({ loading, store, byDay, monthCounts, loadDay, loadMonth, upsert, remove }),
+    () => ({
+      loading,
+      store,
+      byDay,
+      monthCounts,
+      loadDay,
+      loadMonth,
+      upsert,
+      remove,
+    }),
     [loading, store, byDay, monthCounts, loadDay, loadMonth, upsert, remove]
   );
 
-  return <AchievementsContext.Provider value={value}>{children}</AchievementsContext.Provider>;
+  return (
+    <AchievementsContext.Provider value={value}>
+      {children}
+    </AchievementsContext.Provider>
+  );
 };
+
+// -----------------------------------------------------
+// Hook
+// -----------------------------------------------------
 
 export const useAchievements = (): AchievementsState => {
   const ctx = useContext(AchievementsContext);

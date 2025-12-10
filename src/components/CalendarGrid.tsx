@@ -33,12 +33,15 @@ const CalendarGrid: React.FC<Props> = ({ days, onPressDay }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 12,
-    gap: 8,
+    paddingHorizontal: 0,
   },
   row: {
     flexDirection: "row",
-    gap: 8,
+    paddingHorizontal: 0,
+  },
+    cellWrapper: {
+    flex: 1,              
+    maxWidth: `${100 / 7}%`,
   },
 });
 

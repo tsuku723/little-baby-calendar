@@ -18,6 +18,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 起動時に永続化された設定を読み込む
     (async () => {
       const stored = await loadUserSettings();
       if (stored) {
@@ -28,6 +29,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const updateSettings = useCallback(async (next: Partial<UserSettings>) => {
+    // 差分更新し、そのまま永続化
     let merged: UserSettings = DEFAULT_SETTINGS;
     setSettings((prev) => {
       merged = { ...prev, ...next } as UserSettings;
@@ -37,6 +39,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const resetSettings = useCallback(async () => {
+    // 初期値に戻して保存
     setSettings(DEFAULT_SETTINGS);
     await saveUserSettings(DEFAULT_SETTINGS);
   }, []);

@@ -20,8 +20,11 @@ const AchievementListScreen: React.FC<Props> = ({ navigation }) => {
   const [filter, setFilter] = useState<Filter>("all");
 
   const items = useMemo(() => {
-    const all: Achievement[] = store?.achievements ?? [];
-    const filtered = filter === "all" ? all : all.filter((a) => a.type === filter);
+    // AchievementStore = { "2025-02-05": [A], "2025-02-06": [B, C], ... }
+    const allList: Achievement[] = Object.values(store).flat();
+
+    const filtered = filter === "all" ? allList : allList.filter((a) => a.type === filter);
+
     return filtered
       .slice()
       .sort((a, b) => {
@@ -36,6 +39,7 @@ const AchievementListScreen: React.FC<Props> = ({ navigation }) => {
       onPress={() => navigation.navigate("Calendar", { initialSelectedDay: item.date })}
       accessibilityRole="button"
     >
+      {/* 行タップでカレンダー画面の該当日を開く */}
       <View style={styles.rowHeader}>
         <Text style={styles.date}>{dateLabel(item.date)}</Text>
         <Text style={styles.type}>{typeLabel(item.type)}</Text>
