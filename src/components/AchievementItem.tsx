@@ -1,7 +1,7 @@
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import { Achievement } from "@/types/models";
+import { Achievement } from "@/models/dataModels";
 
 interface Props {
   item: Achievement;
@@ -9,18 +9,24 @@ interface Props {
   onDelete: (item: Achievement) => void;
 }
 
+const typeLabel = (type: Achievement["type"]): string => (type === "did" ? "できた" : "頑張った");
+
 const AchievementItem: React.FC<Props> = ({ item, onEdit, onDelete }) => (
   <TouchableOpacity style={styles.container} onPress={() => onEdit(item)}>
     <View style={styles.header}>
-      <Text style={styles.type}>{item.type}</Text>
+      <Text style={styles.type}>{typeLabel(item.type)}</Text>
       <TouchableOpacity onPress={() => onDelete(item)} accessibilityRole="button">
         <Text style={styles.delete}>削除</Text>
       </TouchableOpacity>
     </View>
-    <Text style={styles.comment} numberOfLines={3}>
-      {item.comment}
+    <Text style={styles.title} numberOfLines={2}>
+      {item.title}
     </Text>
-    {item.photoUri ? <Image source={{ uri: item.photoUri }} style={styles.photo} /> : null}
+    {item.memo ? (
+      <Text style={styles.memo} numberOfLines={3}>
+        {item.memo}
+      </Text>
+    ) : null}
   </TouchableOpacity>
 );
 
@@ -46,14 +52,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#D9534F",
   },
-  comment: {
+  title: {
     fontSize: 16,
     color: "#2E2A27",
-    lineHeight: 22,
+    fontWeight: "500",
   },
-  photo: {
-    height: 160,
-    borderRadius: 12,
+  memo: {
+    fontSize: 14,
+    color: "#4A453D",
+    lineHeight: 20,
   },
 });
 

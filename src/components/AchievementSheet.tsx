@@ -3,9 +3,9 @@ import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "rea
 
 import AchievementForm from "@/components/AchievementForm";
 import AchievementItem from "@/components/AchievementItem";
-import { computeAgeLabels, ensureDayKey } from "@/services/AgeService";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useSettings } from "@/state/SettingsContext";
+import { calculateAgeInfo, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 
 interface Props {
   isoDay: string | null;
@@ -25,41 +25,55 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose }) => {
     }
   }, [isoDay, visible, loadDay]);
 
-  const achievements = isoDay ? byDay[isoDay] ?? [] : [];
+  const normalizedIso = isoDay ? toIsoDateString(normalizeToUtcDate(isoDay)) : null;
+  const achievements = normalizedIso ? byDay[normalizedIso] ?? [] : [];
   const editing = useMemo(() => achievements.find((item) => item.id === editingId) ?? null, [achievements, editingId]);
 
-  const ageLabels = useMemo(() => {
-    if (!isoDay) return null;
-    return computeAgeLabels({ settings, isoDay });
-  }, [isoDay, settings]);
+  const ageInfo = useMemo(() => {
+    if (!normalizedIso || !settings.birthDate) return null;
+    return calculateAgeInfo({
+      targetDate: normalizedIso,
+      birthDate: settings.birthDate,
+      dueDate: settings.dueDate,
+      showCorrectedUntilMonths: settings.showCorrectedUntilMonths,
+      ageFormat: settings.ageFormat,
+    });
+  }, [normalizedIso, settings]);
 
   return (
     <Modal animationType="slide" visible={visible} onRequestClose={onClose} presentationStyle="pageSheet">
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.date}>{isoDay}</Text>
+          <Text style={styles.date}>{normalizedIso ?? ""}</Text>
           <TouchableOpacity onPress={onClose} accessibilityRole="button">
             <Text style={styles.close}>閉じる</Text>
           </TouchableOpacity>
         </View>
-        {ageLabels ? (
-          <Text style={styles.age}>
-            実: {ageLabels.chronological}
-            {ageLabels.corrected && !ageLabels.suppressed ? ` / 修: ${ageLabels.corrected}` : ""}
-          </Text>
+        {ageInfo ? (
+          <View style={styles.ageBlock}>
+            <Text style={styles.age}>実: {ageInfo.chronological.formatted}</Text>
+            {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
+              <Text style={styles.age}>修: {ageInfo.corrected.formatted}</Text>
+            ) : null}
+            {settings.showDaysSinceBirth ? (
+              <Text style={styles.age}>生後日数: {ageInfo.daysSinceBirth}日目</Text>
+            ) : null}
+          </View>
         ) : null}
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.list}>
-            {achievements.length === 0 ? <Text style={styles.empty}>まだ記録はありません。はじめの一歩を残しませんか？</Text> : null}
+            {achievements.length === 0 ? (
+              <Text style={styles.empty}>まだ記録はありません。はじめの一歩を残しませんか？</Text>
+            ) : null}
             {achievements.map((item) => (
-              <AchievementItem key={item.id} item={item} onEdit={setEditingId} onDelete={(ach) => remove(ach.id, ach.yyyy_mm_dd)} />
+              <AchievementItem key={item.id} item={item} onEdit={setEditingId} onDelete={(ach) => remove(ach.id, ach.date)} />
             ))}
           </View>
         </ScrollView>
         <View style={styles.formSection}>
-          <AchievementForm isoDay={isoDay ?? ensureDayKey(new Date())} draft={editing} onClose={onClose} />
+          <AchievementForm isoDay={normalizedIso ?? toIsoDateString(normalizeToUtcDate(new Date()))} draft={editing} onClose={onClose} />
         </View>
-        <Text style={styles.notice}>※ データはこの端末内に保存されます。バックアップはエクスポートをご利用ください。</Text>
+        <Text style={styles.notice}>※ データはこの端末内にのみ保存されます。</Text>
       </View>
     </Modal>
   );
@@ -89,7 +103,6 @@ const styles = StyleSheet.create({
   age: {
     fontSize: 16,
     color: "#2E2A27",
-    marginBottom: 12,
   },
   scroll: {
     gap: 12,
@@ -111,6 +124,10 @@ const styles = StyleSheet.create({
     color: "#6B665E",
     marginTop: 16,
     textAlign: "center",
+  },
+  ageBlock: {
+    gap: 4,
+    marginBottom: 12,
   },
 });
 

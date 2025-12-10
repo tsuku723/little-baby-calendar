@@ -7,31 +7,49 @@ import AchievementSheet from "@/components/AchievementSheet";
 import { RootStackParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useSettings } from "@/state/SettingsContext";
-import { buildCalendarMatrix, getAnchorMonthDate, monthKey, toUTCDateOnly } from "@/utils/date";
+import { buildCalendarMonthView, monthKey, toUtcDateOnly } from "@/utils/dateUtils";
 
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Calendar">;
 
-const CalendarScreen: React.FC<Props> = ({ navigation }) => {
+const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
+
+const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
   const { settings, updateSettings } = useSettings();
   const { monthCounts, loadMonth } = useAchievements();
-  const [anchorDate, setAnchorDate] = useState<Date>(() =>
-    getAnchorMonthDate(settings.lastViewedMonth, toUTCDateOnly(new Date()))
-  );
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [anchorDate, setAnchorDate] = useState<Date>(() => {
+    const initialDay = route.params?.initialSelectedDay;
+    if (initialDay) {
+      const [y, m] = initialDay.split("-").map(Number);
+      return new Date(Date.UTC(y, m - 1, 1));
+    }
+    if (settings.lastViewedMonth) {
+      const [y, m] = settings.lastViewedMonth.split("-").map(Number);
+      return new Date(Date.UTC(y, m - 1, 1));
+    }
+    return toUtcDateOnly(new Date());
+  });
+  const [selectedDay, setSelectedDay] = useState<string | null>(route.params?.initialSelectedDay ?? null);
   const monthKeyValue = monthKey(anchorDate);
 
   useEffect(() => {
-    const isoMonth = `${anchorDate.getUTCFullYear()}-${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}`;
     void loadMonth(monthKeyValue);
-    if (settings.lastViewedMonth !== `${isoMonth}-01`) {
-      void updateSettings({ lastViewedMonth: `${isoMonth}-01` });
+    const isoMonth = `${anchorDate.getUTCFullYear()}-${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}-01`;
+    if (settings.lastViewedMonth !== isoMonth) {
+      void updateSettings({ lastViewedMonth: isoMonth });
     }
   }, [anchorDate, loadMonth, monthKeyValue, settings.lastViewedMonth, updateSettings]);
 
-  const matrix = useMemo(() => buildCalendarMatrix(anchorDate), [anchorDate]);
-  const counts = monthCounts[monthKeyValue] ?? {};
+  const monthView = useMemo(
+    () =>
+      buildCalendarMonthView({
+        anchorDate,
+        settings,
+        achievementCountsByDay: monthCounts[monthKeyValue],
+      }),
+    [anchorDate, monthCounts, monthKeyValue, settings]
+  );
 
   const handlePrev = () => {
     const prev = new Date(Date.UTC(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth() - 1, 1));
@@ -44,7 +62,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleToday = () => {
-    const today = toUTCDateOnly(new Date());
+    const today = toUtcDateOnly(new Date());
     setAnchorDate(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)));
   };
 
@@ -62,18 +80,19 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
           onPrev={handlePrev}
           onNext={handleNext}
           onToday={handleToday}
-          onOpenSettings={() => navigation.navigate("Setup")}
+          onOpenSettings={() => navigation.navigate("Settings")}
+          onOpenList={() => navigation.navigate("AchievementList")}
         />
         <View style={styles.weekRow}>
-          {["日", "月", "火", "水", "木", "金", "土"].map((label) => (
+          {WEEK_LABELS.map((label) => (
             <Text key={label} style={styles.weekLabel}>
               {label}
             </Text>
           ))}
         </View>
-        <CalendarGrid matrix={matrix} countsByDay={counts} onPressDay={handlePressDay} />
+        <CalendarGrid days={monthView.days} onPressDay={handlePressDay} />
         <Text style={styles.footer}>修正月齢の表記は目安です。医療的判断は主治医にご相談ください。</Text>
-        <Text style={styles.footer}>このアプリの記録は端末内だけでそっと守られています。</Text>
+        <Text style={styles.footer}>データは端末内のみで保存します。</Text>
       </View>
       <AchievementSheet isoDay={selectedDay} visible={!!selectedDay} onClose={() => setSelectedDay(null)} />
     </SafeAreaView>
