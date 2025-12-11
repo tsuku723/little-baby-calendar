@@ -93,7 +93,10 @@ const ensureStateIntegrity = (state: AppState): AppState => {
     achievements: state.achievements ?? {},
   };
 
-  if (!nextState.activeUserId || !nextState.users.some((u) => u.id === nextState.activeUserId)) {
+  if (
+    nextState.activeUserId &&
+    !nextState.users.some((u) => u.id === nextState.activeUserId)
+  ) {
     nextState.activeUserId = nextState.users[0]?.id ?? null;
   }
 
@@ -121,7 +124,7 @@ const migrateLegacyState = async (): Promise<AppState | null> => {
   const profile: UserProfile = {
     id: userId,
     name: "Baby",
-    birthDate: legacySettings?.birthDate ?? "",
+    birthDate: legacySettings?.birthDate || new Date().toISOString().slice(0, 10),
     dueDate: legacySettings?.dueDate ?? null,
     settings: {
       showCorrectedUntilMonths: legacySettings?.showCorrectedUntilMonths ?? 24,
@@ -134,11 +137,14 @@ const migrateLegacyState = async (): Promise<AppState | null> => {
 
   const migratedAchievements: Achievement[] = [];
   Object.values(legacyAchievements).forEach((list) => {
+    if (!Array.isArray(list)) return;
     list.forEach((item) => {
+      const legacyTag = (item as any).tag;
+      const tag = legacyTag === "did" ? "growth" : legacyTag === "tried" ? "effort" : "growth";
       migratedAchievements.push({
         id: (item as any).id ?? uuid(),
         date: (item as any).date ?? "",
-        tag: "growth",
+        tag,
         title: (item as any).title ?? "",
         memo: (item as any).memo,
         createdAt: (item as any).createdAt ?? now,
@@ -193,12 +199,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const updateState = useCallback(async (updater: (prev: AppState) => AppState) => {
-    let nextState: AppState = EMPTY_STATE;
     setState((prev) => {
-      nextState = ensureStateIntegrity(updater(prev));
-      return nextState;
+      const next = ensureStateIntegrity(updater(prev));
+      void persistState(next);
+      return next;
     });
-    await persistState(nextState);
   }, []);
 
   const addUser = useCallback(
@@ -233,7 +238,17 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({
     async (userId: string, partial: Partial<Omit<UserProfile, "id">>) => {
       await updateState((prev) => {
         const nextUsers = prev.users.map((user) =>
-          user.id === userId ? { ...user, ...partial, id: user.id } : user
+          user.id === userId
+            ? {
+                ...user,
+                ...partial,
+                id: user.id,
+                settings: {
+                  ...user.settings,
+                  ...(partial.settings ?? {}),
+                },
+              }
+            : user
         );
         return { ...prev, users: nextUsers };
       });
