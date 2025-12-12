@@ -1,4 +1,5 @@
 import React from "react";
+import { View, Text } from "react-native";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -53,25 +54,30 @@ const navTheme = {
 const Navigator: React.FC = () => {
   const { loading } = useSettings();
 
-  if (loading) {
-    return null;
-  }
-
   return (
     <NavigationContainer theme={navTheme}>
-      <Stack.Navigator initialRouteName="Today" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Today" component={TodayScreen} />
-        <Stack.Screen name="Calendar" component={CalendarScreen} />
-        <Stack.Screen name="AchievementList" component={AchievementListScreen} />
-        <Stack.Screen name="ProfileManager" component={ProfileManagerScreen} />
-        <Stack.Screen name="Settings" component={SettingsScreen} />
-        <Stack.Screen name="Setup" component={SetupScreen} />
-        <Stack.Screen
-          name="AchievementSheet"
-          component={AchievementSheetScreen}
-          options={{ presentation: "modal" }}
-        />
-      </Stack.Navigator>
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text>Loading...</Text>
+        </View>
+      ) : (
+        <Stack.Navigator
+          initialRouteName="Today"
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="Today" component={TodayScreen} />
+          <Stack.Screen name="Calendar" component={CalendarScreen} />
+          <Stack.Screen name="AchievementList" component={AchievementListScreen} />
+          <Stack.Screen name="ProfileManager" component={ProfileManagerScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+          <Stack.Screen name="Setup" component={SetupScreen} />
+          <Stack.Screen
+            name="AchievementSheet"
+            component={AchievementSheetScreen}
+            options={{ presentation: "modal" }}
+          />
+        </Stack.Navigator>
+      )}
     </NavigationContainer>
   );
 };

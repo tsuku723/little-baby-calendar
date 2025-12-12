@@ -23,6 +23,38 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
     }, [])
   );
 
+  const ageInfo = useMemo(() => {
+    if (!user?.birthDate) return null;
+    try {
+      return calculateAgeInfo({
+        targetDate: todayIso,
+        birthDate: user.birthDate,
+        dueDate: user.dueDate,
+        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+        ageFormat: user.settings.ageFormat,
+      });
+    } catch (error) {
+      console.warn("TodayScreen: failed to calculate age", error);
+      return null;
+    }
+  }, [
+    todayIso,
+    user?.birthDate,
+    user?.dueDate,
+    user?.settings?.showCorrectedUntilMonths,
+    user?.settings?.ageFormat,
+  ]);
+
+  const todaysAchievements = useMemo(
+    () => (user ? achievements.filter((item) => item.date === todayIso) : []),
+    [achievements, todayIso, user]
+  );
+
+  const latest =
+    todaysAchievements.length > 0
+      ? todaysAchievements[todaysAchievements.length - 1]
+      : null;
+
   if (!user) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -54,31 +86,6 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
       </SafeAreaView>
     );
   }
-
-  const ageInfo = useMemo(() => {
-    try {
-      return calculateAgeInfo({
-        targetDate: todayIso,
-        birthDate: user.birthDate,
-        dueDate: user.dueDate,
-        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
-        ageFormat: user.settings.ageFormat,
-      });
-    } catch (error) {
-      console.warn("TodayScreen: failed to calculate age", error);
-      return null;
-    }
-  }, [todayIso, user.birthDate, user.dueDate, user.settings.showCorrectedUntilMonths, user.settings.ageFormat]);
-
-  const todaysAchievements = useMemo(
-    () => achievements.filter((item) => item.date === todayIso),
-    [achievements, todayIso]
-  );
-
-  const latest =
-    todaysAchievements.length > 0
-      ? todaysAchievements[todaysAchievements.length - 1]
-      : null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
