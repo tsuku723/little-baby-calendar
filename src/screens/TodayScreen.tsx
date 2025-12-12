@@ -1,7 +1,7 @@
 // TODO: This screen functions as a day-based view.
 // Renaming to DayScreen is deferred for future refactor.
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -10,22 +10,51 @@ import AchievementForm from "@/components/AchievementForm";
 import { RootStackParamList } from "@/navigation";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
-import { calculateAgeInfo } from "@/utils/dateUtils";
+import { calculateAgeInfo, toIsoDateString } from "@/utils/dateUtils";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Today">;
 
 const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
+  // Hooks should remain at top level (no conditional hooks)
   const user = useActiveUser();
-  const { selectedDate, setSelectedDate, byDay, loading: achievementsLoading } = useAchievements();
+  const { byDay, loading: achievementsLoading, selectedDate, setSelectedDate } = useAchievements();
   const [formVisible, setFormVisible] = useState(false);
 
-  // Apply incoming selected day (from Calendar / List) once focused.
-  useEffect(() => {
-    const incoming = route.params?.selectedDay;
+  // 表示対象日付（param優先）。Navigator側互換のため selectedDay / isoDay 両方を見る。
+  const isoDay = useMemo(() => {
+    const incoming = route.params?.isoDay ?? route.params?.selectedDay;
     if (incoming) {
       setSelectedDate(incoming);
+      return incoming;
     }
-  }, [route.params?.selectedDay, setSelectedDate]);
+    return selectedDate || toIsoDateString(new Date());
+  }, [route.params?.isoDay, route.params?.selectedDay, selectedDate, setSelectedDate]);
+
+  const ageInfo = useMemo(() => {
+    if (!user || !user.birthDate) return null;
+    try {
+      return calculateAgeInfo({
+        targetDate: isoDay,
+        birthDate: user.birthDate,
+        dueDate: user.dueDate,
+        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+        ageFormat: user.settings.ageFormat,
+      });
+    } catch {
+      return null;
+    }
+  }, [
+    user,
+    isoDay,
+    user?.birthDate,
+    user?.dueDate,
+    user?.settings.showCorrectedUntilMonths,
+    user?.settings.ageFormat,
+  ]);
+
+  const todaysAchievements = useMemo(() => byDay[isoDay] ?? [], [byDay, isoDay]);
+
+  const displayDate = isoDay.replace(/-/g, "/");
 
   if (!user) {
     return (
@@ -53,24 +82,6 @@ const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   }
 
-  const ageInfo = useMemo(() => {
-    try {
-      return calculateAgeInfo({
-        targetDate: selectedDate,
-        birthDate: user.birthDate,
-        dueDate: user.dueDate,
-        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
-        ageFormat: user.settings.ageFormat,
-      });
-    } catch (error) {
-      console.warn("TodayScreen: failed to calculate age", error);
-      return null;
-    }
-  }, [selectedDate, user.birthDate, user.dueDate, user.settings.showCorrectedUntilMonths, user.settings.ageFormat]);
-
-  const achievements = useMemo(() => byDay[selectedDate] ?? [], [byDay, selectedDate]);
-  const displayDate = selectedDate.replace(/-/g, "/");
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
@@ -93,10 +104,10 @@ const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.sectionTitle}>今日の記録</Text>
           {achievementsLoading ? (
             <Text style={styles.empty}>読み込み中...</Text>
-          ) : achievements.length === 0 ? (
+          ) : todaysAchievements.length === 0 ? (
             <Text style={styles.empty}>まだ記録はありません。</Text>
           ) : (
-            achievements.map((item) => (
+            todaysAchievements.map((item) => (
               <View key={item.id} style={styles.card}>
                 <Text style={styles.cardTitle}>{item.title || "(タイトルなし)"}</Text>
                 <Text style={styles.cardMeta}>{item.date}</Text>
@@ -118,7 +129,7 @@ const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
 
         {formVisible ? (
           <View style={styles.formWrapper}>
-            <AchievementForm isoDay={selectedDate} draft={null} onClose={() => setFormVisible(false)} />
+            <AchievementForm isoDay={isoDay} draft={null} onClose={() => setFormVisible(false)} />
           </View>
         ) : null}
       </ScrollView>
