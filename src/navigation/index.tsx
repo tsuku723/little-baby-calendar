@@ -1,4 +1,5 @@
 import React from "react";
+import { View, Text } from "react-native";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import CalendarScreen from "@/screens/CalendarScreen";
@@ -32,10 +33,6 @@ const navTheme = {
 
 const Navigator: React.FC = () => {
   const { loading } = useSettings();
-
-  if (loading) {
-    return null;
-  }
 
   return (
     <NavigationContainer theme={navTheme}>
