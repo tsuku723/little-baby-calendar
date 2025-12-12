@@ -30,7 +30,10 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.title}>プロフィールを作成してください</Text>
           <Text style={styles.subtitle}>最初のセットアップからはじめましょう。</Text>
           <View style={styles.buttonRow}>
-            <Button title="セットアップへ" onPress={() => navigation.navigate("Setup")} />
+            <Button
+              title="セットアップへ"
+              onPress={() => navigation.navigate("ProfileManager")}
+            />
           </View>
         </View>
       </SafeAreaView>
