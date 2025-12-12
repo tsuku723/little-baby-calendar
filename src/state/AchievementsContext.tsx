@@ -22,7 +22,12 @@ import {
   deleteAchievement as storageDelete,
 } from "@/storage/storage";
 
-import { isIsoDateString, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+import {
+  isIsoDateString,
+  normalizeToUtcDate,
+  toIsoDateString,
+  todayIsoDate,
+} from "@/utils/dateUtils";
 
 // -----------------------------------------------------
 // Context interface
@@ -31,8 +36,10 @@ import { isIsoDateString, normalizeToUtcDate, toIsoDateString } from "@/utils/da
 interface AchievementsState {
   loading: boolean;
   store: AchievementStore;
-  byDay: Record<string, Achievement[]>; // = store
+  byDay: Record<string, Achievement[]>;
   monthCounts: Record<string, Record<string, number>>;
+  selectedDate: string;
+  setSelectedDate: (isoDate: string) => void;
 
   loadDay: (isoDay: string) => Promise<void>;
   loadMonth: (yyyymm: string) => Promise<void>;
@@ -65,7 +72,10 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [loading, setLoading] = useState<boolean>(true);
-  const [store, setStore] = useState<AchievementStore>({}); // 辞書形式
+  const [store, setStore] = useState<AchievementStore>({});
+  const [selectedDate, setSelectedDateState] = useState<string>(() =>
+    todayIsoDate()
+  );
 
   // -------------------------------------------
   // Refresh from storage
@@ -83,32 +93,43 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [refresh]);
 
   // -------------------------------------------
-  // byDay = store（辞書形式なのでそのまま）
+  // byDay & monthCounts
   // -------------------------------------------
 
   const byDay = useMemo(() => {
     return { ...store }; // shallow copy
   }, [store]);
 
-  // -------------------------------------------
-  // monthCounts：月→日→件数を集計
-  // -------------------------------------------
-
   const monthCounts = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
 
     for (const [date, list] of Object.entries(store)) {
       const month = date.slice(0, 7); // YYYY-MM
-
       if (!result[month]) {
         result[month] = {};
       }
-
       result[month][date] = list.length;
     }
 
     return result;
   }, [store]);
+
+  // -------------------------------------------
+  // Selected date shared across screens
+  // -------------------------------------------
+
+  const setSelectedDate = useCallback((isoDate: string) => {
+    if (!isIsoDateString(isoDate)) {
+      console.warn("setSelectedDate: invalid isoDate", isoDate);
+      return;
+    }
+    const normalizedDate = normalizeToUtcDate(isoDate);
+    if (Number.isNaN(normalizedDate.getTime())) {
+      console.warn("setSelectedDate: invalid date value", isoDate);
+      return;
+    }
+    setSelectedDateState(toIsoDateString(normalizedDate));
+  }, []);
 
   // -------------------------------------------
   // Day / Month loading
@@ -129,7 +150,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   // -------------------------------------------
-  // Upsert（storage.ts に委譲）
+  // Upsert
   // -------------------------------------------
 
   const upsert = useCallback(
@@ -209,12 +230,25 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({
       store,
       byDay,
       monthCounts,
+      selectedDate,
+      setSelectedDate,
       loadDay,
       loadMonth,
       upsert,
       remove,
     }),
-    [loading, store, byDay, monthCounts, loadDay, loadMonth, upsert, remove]
+    [
+      loading,
+      store,
+      byDay,
+      monthCounts,
+      selectedDate,
+      setSelectedDate,
+      loadDay,
+      loadMonth,
+      upsert,
+      remove,
+    ]
   );
 
   return (

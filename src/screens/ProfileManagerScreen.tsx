@@ -105,14 +105,14 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
           lastViewedMonth: null,
         },
       });
-      navigation.navigate("Today");
+      navigation.replace("Today"); // replaceでスタックをリセットし確実にTodayへ戻る
     } else if (editMode.mode === "edit") {
       await updateUser(editMode.userId, {
         name,
         birthDate,
         dueDate,
       });
-      navigation.navigate("Today");
+      navigation.replace("Today"); // replaceでスタックをリセットし確実にTodayへ戻る
     }
 
     setEditMode({ mode: "none" });
@@ -168,7 +168,11 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <Button title="Todayに戻る" onPress={() => navigation.navigate("Today")} color="#3A86FF" />
+          <Button
+            title="Todayに戻る"
+            onPress={() => navigation.replace("Today")} // replaceでスタックを汚さずTodayを最前面に
+            color="#3A86FF"
+          />
           <Text style={styles.title}>プロフィール管理</Text>
         </View>
 

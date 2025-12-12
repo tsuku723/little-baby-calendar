@@ -1,39 +1,40 @@
-import React, { useCallback, useMemo } from "react";
-import { Button, SafeAreaView, StyleSheet, Text, View } from "react-native";
+// TODO: This screen functions as a day-based view.
+// Renaming to DayScreen is deferred for future refactor.
 
-import { useFocusEffect } from "@react-navigation/native";
+import React, { useEffect, useMemo, useState } from "react";
+import { Button, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
+import AchievementForm from "@/components/AchievementForm";
 import { RootStackParamList } from "@/navigation";
-import { useActiveUser, useAchievements } from "@/state/AppStateContext";
-import { calculateAgeInfo, toIsoDateString } from "@/utils/dateUtils";
+import { useActiveUser } from "@/state/AppStateContext";
+import { useAchievements } from "@/state/AchievementsContext";
+import { calculateAgeInfo } from "@/utils/dateUtils";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Today">;
 
-const TodayScreen: React.FC<Props> = ({ navigation }) => {
+const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
   const user = useActiveUser();
-  const achievements = useAchievements();
+  const { selectedDate, setSelectedDate, byDay, loading: achievementsLoading } = useAchievements();
+  const [formVisible, setFormVisible] = useState(false);
 
-  const todayIso = toIsoDateString(new Date());
-  const todayDisplay = todayIso.replace(/-/g, "/");
-
-  useFocusEffect(
-    useCallback(() => {
-      return;
-    }, [])
-  );
+  // Apply incoming selected day (from Calendar / List) once focused.
+  useEffect(() => {
+    const incoming = route.params?.selectedDay;
+    if (incoming) {
+      setSelectedDate(incoming);
+    }
+  }, [route.params?.selectedDay, setSelectedDate]);
 
   if (!user) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <Text style={styles.title}>プロフィールを作成してください</Text>
-          <Text style={styles.subtitle}>最初のセットアップからはじめましょう。</Text>
+          <Text style={styles.subtitle}>最初にプロフィール設定からはじめましょう</Text>
           <View style={styles.buttonRow}>
-            <Button
-              title="セットアップへ"
-              onPress={() => navigation.navigate("ProfileManager")}
-            />
+            <Button title="セットアップへ" onPress={() => navigation.navigate("ProfileManager")} />
           </View>
         </View>
       </SafeAreaView>
@@ -46,10 +47,7 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.container}>
           <Text style={styles.title}>{user.name}</Text>
           <Text style={styles.subtitle}>生年月日が未設定です</Text>
-          <Button
-            title="プロフィールを編集"
-            onPress={() => navigation.navigate("ProfileManager")}
-          />
+          <Button title="プロフィールを編集" onPress={() => navigation.navigate("ProfileManager")} />
         </View>
       </SafeAreaView>
     );
@@ -58,7 +56,7 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
   const ageInfo = useMemo(() => {
     try {
       return calculateAgeInfo({
-        targetDate: todayIso,
+        targetDate: selectedDate,
         birthDate: user.birthDate,
         dueDate: user.dueDate,
         showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
@@ -68,27 +66,20 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
       console.warn("TodayScreen: failed to calculate age", error);
       return null;
     }
-  }, [todayIso, user.birthDate, user.dueDate, user.settings.showCorrectedUntilMonths, user.settings.ageFormat]);
+  }, [selectedDate, user.birthDate, user.dueDate, user.settings.showCorrectedUntilMonths, user.settings.ageFormat]);
 
-  const todaysAchievements = useMemo(
-    () => achievements.filter((item) => item.date === todayIso),
-    [achievements, todayIso]
-  );
-
-  const latest =
-    todaysAchievements.length > 0
-      ? todaysAchievements[todaysAchievements.length - 1]
-      : null;
+  const achievements = useMemo(() => byDay[selectedDate] ?? [], [byDay, selectedDate]);
+  const displayDate = selectedDate.replace(/-/g, "/");
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>{user.name}</Text>
-        <Text style={styles.date}>{todayDisplay}</Text>
+        <Text style={styles.date}>{displayDate}</Text>
 
         {ageInfo ? (
           <View style={styles.ageBlock}>
-            <Text style={styles.ageText}>実: {ageInfo.chronological.formatted}</Text>
+            <Text style={styles.ageText}>暦: {ageInfo.chronological.formatted}</Text>
             {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
               <Text style={styles.ageText}>修: {ageInfo.corrected.formatted}</Text>
             ) : null}
@@ -100,48 +91,37 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>今日の記録</Text>
-          {latest ? (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{latest.title || "(タイトルなし)"}</Text>
-              <Text style={styles.cardMeta}>
-                {latest.tag === "growth" ? "成長" : "頑張った"} / {latest.date}
-              </Text>
-              {latest.memo ? <Text style={styles.cardBody}>{latest.memo}</Text> : null}
-            </View>
-          ) : (
+          {achievementsLoading ? (
+            <Text style={styles.empty}>読み込み中...</Text>
+          ) : achievements.length === 0 ? (
             <Text style={styles.empty}>まだ記録はありません。</Text>
+          ) : (
+            achievements.map((item) => (
+              <View key={item.id} style={styles.card}>
+                <Text style={styles.cardTitle}>{item.title || "(タイトルなし)"}</Text>
+                <Text style={styles.cardMeta}>{item.date}</Text>
+              </View>
+            ))
           )}
         </View>
 
         <View style={styles.buttonColumn}>
           <Button
-            title="記録する"
-            onPress={() => navigation.navigate("AchievementSheet", { isoDay: todayIso })}
+            title={formVisible ? "記録フォームを閉じる" : "記録する"}
+            onPress={() => setFormVisible((prev) => !prev)}
             color="#3A86FF"
           />
-          <Button
-            title="カレンダーを見る"
-            onPress={() => navigation.navigate("Calendar")}
-            color="#6B665E"
-          />
-          <Button
-            title="記録一覧"
-            onPress={() => navigation.navigate("AchievementList")}
-            color="#6B665E"
-          />
-          <Button
-            title="プロフィール切り替え"
-            onPress={() => {
-              try {
-                navigation.navigate("ProfileManager");
-              } catch (e) {
-                console.warn("ProfileManager is not implemented yet");
-              }
-            }}
-            color="#6B665E"
-          />
+          <Button title="カレンダーを見る" onPress={() => navigation.navigate("Calendar")} color="#6B665E" />
+          <Button title="記録一覧" onPress={() => navigation.navigate("AchievementList")} color="#6B665E" />
+          <Button title="プロフィール切り替え" onPress={() => navigation.navigate("ProfileManager")} color="#6B665E" />
         </View>
-      </View>
+
+        {formVisible ? (
+          <View style={styles.formWrapper}>
+            <AchievementForm isoDay={selectedDate} draft={null} onClose={() => setFormVisible(false)} />
+          </View>
+        ) : null}
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -152,7 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFDF9",
   },
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 24,
     gap: 16,
   },
@@ -199,6 +179,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E1DA",
     gap: 6,
+    marginBottom: 8,
   },
   cardTitle: {
     fontSize: 16,
@@ -209,15 +190,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6B665E",
   },
-  cardBody: {
-    fontSize: 15,
-    color: "#2E2A27",
-  },
   buttonColumn: {
     gap: 12,
   },
   buttonRow: {
     marginTop: 12,
+  },
+  formWrapper: {
+    marginTop: 16,
   },
 });
 
