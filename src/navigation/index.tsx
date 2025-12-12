@@ -2,13 +2,13 @@ import React from "react";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 import CalendarScreen from "@/screens/CalendarScreen";
 import TodayScreen from "@/screens/TodayScreen";
 import SetupScreen from "@/screens/SetupScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
 import AchievementListScreen from "@/screens/AchievementListScreen";
+import ProfileManagerScreen from "@/screens/ProfileManagerScreen";
 import { useSettings } from "@/state/SettingsContext";
 import AchievementSheet from "@/components/AchievementSheet";
 
@@ -38,15 +38,6 @@ const AchievementSheetScreen: React.FC<AchievementSheetScreenProps> = ({
     visible
     onClose={() => navigation.goBack()}
   />
-);
-
-const ProfileManagerPlaceholder: React.FC = () => (
-  <SafeAreaView style={styles.placeholderContainer}>
-    <View>
-      <Text style={styles.placeholderTitle}>プロフィール切り替え</Text>
-      <Text style={styles.placeholderText}>後続フェーズで提供予定です。</Text>
-    </View>
-  </SafeAreaView>
 );
 
 const navTheme = {
@@ -79,7 +70,7 @@ const Navigator: React.FC = () => {
           component={AchievementSheetScreen}
           options={{ presentation: "modal" }}
         />
-        <Stack.Screen name="ProfileManager" component={ProfileManagerPlaceholder} />
+        <Stack.Screen name="ProfileManager" component={ProfileManagerScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -87,21 +78,3 @@ const Navigator: React.FC = () => {
 
 export default Navigator;
 
-const styles = StyleSheet.create({
-  placeholderContainer: {
-    flex: 1,
-    backgroundColor: "#FFFDF9",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  placeholderTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#2E2A27",
-    marginBottom: 8,
-  },
-  placeholderText: {
-    fontSize: 16,
-    color: "#2E2A27",
-  },
-});
