@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import AchievementForm from "@/components/AchievementForm";
@@ -11,9 +11,10 @@ interface Props {
   isoDay: string | null;
   visible: boolean;
   onClose: () => void;
+  useModal?: boolean;
 }
 
-const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose }) => {
+const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose, useModal = true }) => {
   const { settings } = useSettings();
   const { byDay, loadDay, remove } = useAchievements();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -28,14 +29,15 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose }) => {
     return toIsoDateString(dateObj);
   }, [isoDay]);
 
+  const isVisible = useModal ? visible : true;
+
   useEffect(() => {
-    if (visible) {
-      if (normalizedIso) {
-        void loadDay(normalizedIso);
-      }
-      setEditingId(null);
+    if (!isVisible) return;
+    if (normalizedIso) {
+      void loadDay(normalizedIso);
     }
-  }, [normalizedIso, visible, loadDay]);
+    setEditingId(null);
+  }, [normalizedIso, isVisible, loadDay]);
 
   const achievements = normalizedIso ? byDay[normalizedIso] ?? [] : [];
   const editing = useMemo(() => achievements.find((item) => item.id === editingId) ?? null, [achievements, editingId]);
@@ -52,63 +54,76 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose }) => {
     });
   }, [normalizedIso, settings]);
 
-  return (
-    <Modal animationType="slide" visible={visible} onRequestClose={onClose} presentationStyle="pageSheet">
-      <KeyboardAvoidingView style={styles.flex} behavior="padding" enabled>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.container}>
-            {!normalizedIso ? (
-              <>
-                <View style={styles.header}>
-                  <Text style={styles.date}>日付情報を読み込めませんでした。</Text>
-                  <TouchableOpacity onPress={onClose} accessibilityRole="button">
-                    <Text style={styles.close}>閉じる</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.notice}>日付が不正なため入力フォームを表示できません。</Text>
-              </>
-            ) : (
-              <>
-                <View style={styles.header}>
-                  <Text style={styles.date}>{normalizedIso}</Text>
-                  <TouchableOpacity onPress={onClose} accessibilityRole="button">
-                    <Text style={styles.close}>閉じる</Text>
-                  </TouchableOpacity>
-                </View>
-                {ageInfo ? (
-                  <View style={styles.ageBlock}>
-                    <Text style={styles.age}>実: {ageInfo.chronological.formatted}</Text>
-                    {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
-                      <Text style={styles.age}>修: {ageInfo.corrected.formatted}</Text>
-                    ) : null}
-                    {settings.showDaysSinceBirth ? (
-                      <Text style={styles.age}>生後日数: {ageInfo.daysSinceBirth}日目</Text>
-                    ) : null}
-                  </View>
-                ) : null}
-                <View style={styles.list}>
-                  {achievements.length === 0 ? (
-                    <Text style={styles.empty}>まだ記録はありません。はじめの一歩を残しませんか？</Text>
+  if (!useModal && !visible) {
+    return null;
+  }
+
+  const content = (
+    <KeyboardAvoidingView style={styles.flex} behavior="padding" enabled>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <View style={styles.container}>
+          {!normalizedIso ? (
+            <>
+              <View style={styles.header}>
+                <Text style={styles.date}>日付情報を読み込めませんでした</Text>
+                <TouchableOpacity onPress={onClose} accessibilityRole="button">
+                  <Text style={styles.close}>閉じる</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.notice}>日付が不正なため入力フォームを表示できません。</Text>
+            </>
+          ) : (
+            <>
+              <View style={styles.header}>
+                <Text style={styles.date}>{normalizedIso}</Text>
+                <TouchableOpacity onPress={onClose} accessibilityRole="button">
+                  <Text style={styles.close}>閉じる</Text>
+                </TouchableOpacity>
+              </View>
+              {ageInfo ? (
+                <View style={styles.ageBlock}>
+                  <Text style={styles.age}>暦: {ageInfo.chronological.formatted}</Text>
+                  {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
+                    <Text style={styles.age}>修: {ageInfo.corrected.formatted}</Text>
                   ) : null}
-                  {achievements.map((item) => (
-                    <AchievementItem key={item.id} item={item} onEdit={setEditingId} onDelete={(ach) => remove(ach.id, ach.date)} />
-                  ))}
+                  {settings.showDaysSinceBirth ? (
+                    <Text style={styles.age}>生後日数: {ageInfo.daysSinceBirth}日目</Text>
+                  ) : null}
                 </View>
-                {/* キーボードで隠れないようにフォームも ScrollView 内に配置 */}
-                <View style={styles.formSection}>
-                  <AchievementForm isoDay={normalizedIso} draft={editing} onClose={onClose} />
-                </View>
-                <Text style={styles.notice}>※ データはこの端末内のみ保存されます。</Text>
-              </>
-            )}
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </Modal>
+              ) : null}
+              <View style={styles.list}>
+                {achievements.length === 0 ? (
+                  <Text style={styles.empty}>まだ記録はありません。はじめの一歩を残しませんか？</Text>
+                ) : null}
+                {achievements.map((item) => (
+                  <AchievementItem
+                    key={item.id}
+                    item={item}
+                    onEdit={setEditingId}
+                    onDelete={(ach) => remove(ach.id, ach.date)}
+                  />
+                ))}
+              </View>
+              <View style={styles.formSection}>
+                <AchievementForm isoDay={normalizedIso} draft={editing} onClose={onClose} />
+              </View>
+              <Text style={styles.notice}>※ データはこの端末内に保存されます。</Text>
+            </>
+          )}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
+
+  if (useModal) {
+    return (
+      <Modal animationType="slide" visible={visible} onRequestClose={onClose} presentationStyle="pageSheet">
+        {content}
+      </Modal>
+    );
+  }
+
+  return content;
 };
 
 const styles = StyleSheet.create({
@@ -141,7 +156,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: 16,
-    paddingBottom: 220, // キーボードでフォームが隠れないように下部余白を拡張
+    paddingBottom: 220,
   },
   list: {
     gap: 12,

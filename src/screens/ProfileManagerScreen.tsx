@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -167,7 +167,10 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>プロフィール管理</Text>
+        <View style={styles.header}>
+          <Button title="Todayに戻る" onPress={() => navigation.navigate("Today")} color="#3A86FF" />
+          <Text style={styles.title}>プロフィール管理</Text>
+        </View>
 
         {users.map((user) => {
           const isActive = activeLabel.has(user.id);
@@ -212,6 +215,9 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     gap: 12,
+  },
+  header: {
+    gap: 8,
   },
   title: {
     fontSize: 22,

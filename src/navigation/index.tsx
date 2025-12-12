@@ -37,6 +37,7 @@ const AchievementSheetScreen: React.FC<AchievementSheetScreenProps> = ({
     isoDay={route.params?.isoDay ?? null}
     visible
     onClose={() => navigation.goBack()}
+    useModal={false}
   />
 );
 
@@ -66,15 +67,10 @@ const Navigator: React.FC = () => {
         <Stack.Screen name="ProfileManager" component={ProfileManagerScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="Setup" component={SetupScreen} />
-        <Stack.Screen
-          name="AchievementSheet"
-          component={AchievementSheetScreen}
-          options={{ presentation: "modal" }}
-        />
+        <Stack.Screen name="AchievementSheet" component={AchievementSheetScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
 
 export default Navigator;
-
