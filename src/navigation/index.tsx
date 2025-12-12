@@ -61,16 +61,16 @@ const Navigator: React.FC = () => {
     <NavigationContainer theme={navTheme}>
       <Stack.Navigator initialRouteName="Today" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Today" component={TodayScreen} />
-        <Stack.Screen name="Setup" component={SetupScreen} />
         <Stack.Screen name="Calendar" component={CalendarScreen} />
-        <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="AchievementList" component={AchievementListScreen} />
+        <Stack.Screen name="ProfileManager" component={ProfileManagerScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="Setup" component={SetupScreen} />
         <Stack.Screen
           name="AchievementSheet"
           component={AchievementSheetScreen}
           options={{ presentation: "modal" }}
         />
-        <Stack.Screen name="ProfileManager" component={ProfileManagerScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

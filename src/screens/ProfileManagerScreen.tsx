@@ -32,7 +32,7 @@ const createEmptyForm = (): FormState => ({
   dueDate: "",
 });
 
-const ProfileManagerScreen: React.FC<Props> = () => {
+const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
   const { state, addUser, updateUser, deleteUser, setActiveUser } = useAppState();
   const { users, activeUserId } = state;
 
@@ -105,12 +105,14 @@ const ProfileManagerScreen: React.FC<Props> = () => {
           lastViewedMonth: null,
         },
       });
+      navigation.navigate("Today");
     } else if (editMode.mode === "edit") {
       await updateUser(editMode.userId, {
         name,
         birthDate,
         dueDate,
       });
+      navigation.navigate("Today");
     }
 
     setEditMode({ mode: "none" });
