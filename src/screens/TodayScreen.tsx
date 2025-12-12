@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo } from "react";
 import { Button, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
-import { useFocusEffect } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { RootStackParamList } from "@/navigation";
@@ -17,11 +16,6 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
   const todayIso = toIsoDateString(new Date());
   const todayDisplay = todayIso.replace(/-/g, "/");
 
-  useFocusEffect(
-    useCallback(() => {
-      return;
-    }, [])
-  );
 
   if (!user) {
     return (
