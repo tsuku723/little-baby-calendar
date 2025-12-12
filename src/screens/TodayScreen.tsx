@@ -1,6 +1,7 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Button, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
+import { useFocusEffect } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { RootStackParamList } from "@/navigation";
@@ -13,8 +14,14 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
   const user = useActiveUser();
   const achievements = useAchievements();
 
-  const todayIso = useMemo(() => toIsoDateString(new Date()), []);
-  const todayDisplay = useMemo(() => todayIso.replace(/-/g, "/"), [todayIso]);
+  const todayIso = toIsoDateString(new Date());
+  const todayDisplay = todayIso.replace(/-/g, "/");
+
+  useFocusEffect(
+    useCallback(() => {
+      return;
+    }, [])
+  );
 
   if (!user) {
     return (
@@ -25,6 +32,21 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
           <View style={styles.buttonRow}>
             <Button title="セットアップへ" onPress={() => navigation.navigate("Setup")} />
           </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!user.birthDate) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <Text style={styles.title}>{user.name}</Text>
+          <Text style={styles.subtitle}>生年月日が未設定です</Text>
+          <Button
+            title="プロフィールを編集"
+            onPress={() => navigation.navigate("ProfileManager")}
+          />
         </View>
       </SafeAreaView>
     );
@@ -43,7 +65,7 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
       console.warn("TodayScreen: failed to calculate age", error);
       return null;
     }
-  }, [todayIso, user]);
+  }, [todayIso, user.birthDate, user.dueDate, user.settings.showCorrectedUntilMonths, user.settings.ageFormat]);
 
   const todaysAchievements = useMemo(
     () => achievements.filter((item) => item.date === todayIso),
@@ -79,7 +101,7 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.card}>
               <Text style={styles.cardTitle}>{latest.title || "(タイトルなし)"}</Text>
               <Text style={styles.cardMeta}>
-                {latest.tag === "growth" ? "成長" : "チャレンジ"} / {latest.date}
+                {latest.tag === "growth" ? "成長" : "頑張った"} / {latest.date}
               </Text>
               {latest.memo ? <Text style={styles.cardBody}>{latest.memo}</Text> : null}
             </View>
@@ -106,7 +128,13 @@ const TodayScreen: React.FC<Props> = ({ navigation }) => {
           />
           <Button
             title="プロフィール切り替え"
-            onPress={() => navigation.navigate("ProfileManager")}
+            onPress={() => {
+              try {
+                navigation.navigate("ProfileManager");
+              } catch (e) {
+                console.warn("ProfileManager is not implemented yet");
+              }
+            }}
             color="#6B665E"
           />
         </View>
