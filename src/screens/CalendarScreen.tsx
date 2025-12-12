@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import CalendarGrid from "@/components/CalendarGrid";
 import MonthHeader from "@/components/MonthHeader";
 import { RootStackParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
-import { useSettings } from "@/state/SettingsContext";
+import { useActiveUser, useAppState } from "@/state/AppStateContext";
 import { buildCalendarMonthView, monthKey, toUtcDateOnly } from "@/utils/dateUtils";
 
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -15,17 +15,17 @@ type Props = NativeStackScreenProps<RootStackParamList, "Calendar">;
 const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
 const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { settings, updateSettings } = useSettings();
+  const user = useActiveUser();
+  const { updateUser } = useAppState();
   const { monthCounts, loadMonth, setSelectedDate } = useAchievements();
   const [anchorDate, setAnchorDate] = useState<Date>(() => {
-    // 一覧から遷移した場合は選択日を優先し、その月を表示
     const initialDay = route.params?.initialSelectedDay;
     if (initialDay) {
       const [y, m] = initialDay.split("-").map(Number);
       return new Date(Date.UTC(y, m - 1, 1));
     }
-    if (settings.lastViewedMonth) {
-      const [y, m] = settings.lastViewedMonth.split("-").map(Number);
+    if (user?.settings.lastViewedMonth) {
+      const [y, m] = user.settings.lastViewedMonth.split("-").map(Number);
       return new Date(Date.UTC(y, m - 1, 1));
     }
     return toUtcDateOnly(new Date());
@@ -39,22 +39,28 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [route.params?.initialSelectedDay, setSelectedDate]);
 
   useEffect(() => {
-    // 表示月を変更したら該当月の●集計を読み込み、最後に見た月として保存
     void loadMonth(monthKeyValue);
     const isoMonth = `${anchorDate.getUTCFullYear()}-${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}-01`;
-    if (settings.lastViewedMonth !== isoMonth) {
-      void updateSettings({ lastViewedMonth: isoMonth });
+    if (user?.settings.lastViewedMonth !== isoMonth && user?.id) {
+      void updateUser(user.id, { settings: { ...user.settings, lastViewedMonth: isoMonth } });
     }
-  }, [anchorDate, loadMonth, monthKeyValue, settings.lastViewedMonth, updateSettings]);
+  }, [anchorDate, loadMonth, monthKeyValue, updateUser, user]);
 
   const monthView = useMemo(
     () =>
       buildCalendarMonthView({
         anchorDate,
-        settings,
+        settings: {
+          birthDate: user?.birthDate ?? "",
+          dueDate: user?.dueDate ?? null,
+          showCorrectedUntilMonths: user?.settings.showCorrectedUntilMonths ?? null,
+          ageFormat: user?.settings.ageFormat ?? "md",
+          showDaysSinceBirth: user?.settings.showDaysSinceBirth ?? true,
+          lastViewedMonth: user?.settings.lastViewedMonth ?? null,
+        },
         achievementCountsByDay: monthCounts[monthKeyValue],
       }),
-    [anchorDate, monthCounts, monthKeyValue, settings]
+    [anchorDate, monthCounts, monthKeyValue, user]
   );
 
   const handlePrev = () => {
@@ -113,7 +119,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFDF9",
   },
   scrollContainer: {
-    flexGrow: 1, // Webでスクロール可能にするため追加
+    flexGrow: 1,
   },
   container: {
     flex: 1,

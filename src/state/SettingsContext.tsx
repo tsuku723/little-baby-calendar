@@ -1,8 +1,11 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+﻿import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { UserSettings } from "@/models/dataModels";
-import { loadUserSettings, saveUserSettings } from "@/storage/storage";
 import { DEFAULT_SETTINGS } from "@/types/models";
+import { useActiveUser, useAppState } from "@/state/AppStateContext";
+
+// SettingsContext も profileId ごとに設定を分離する。
+// birthDate / dueDate は UserProfile に属するため、SettingsContext は AppStateContext 経由でのみ読書きする。
 
 interface SettingsContextValue {
   settings: UserSettings;
@@ -14,35 +17,71 @@ interface SettingsContextValue {
 const SettingsContext = createContext<SettingsContextValue | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const user = useActiveUser();
+  const { updateUser } = useAppState();
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 起動時に永続化された設定を読み込む
-    (async () => {
-      const stored = await loadUserSettings();
-      if (stored) {
-        setSettings({ ...DEFAULT_SETTINGS, ...stored });
-      }
-      setLoading(false);
-    })();
-  }, []);
+    // プロフィール切替時に設定を切り替える。別プロフィールの設定を混在させないため必ず activeUser を参照。
+    if (user) {
+      setSettings({
+        ...DEFAULT_SETTINGS,
+        birthDate: user.birthDate,
+        dueDate: user.dueDate,
+        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+        ageFormat: user.settings.ageFormat,
+        showDaysSinceBirth: user.settings.showDaysSinceBirth,
+        lastViewedMonth: user.settings.lastViewedMonth,
+      });
+    } else {
+      setSettings(DEFAULT_SETTINGS);
+    }
+    setLoading(false);
+  }, [user]);
 
-  const updateSettings = useCallback(async (next: Partial<UserSettings>) => {
-    // 差分更新し、そのまま永続化
-    let merged: UserSettings = DEFAULT_SETTINGS;
-    setSettings((prev) => {
-      merged = { ...prev, ...next } as UserSettings;
-      return merged;
-    });
-    await saveUserSettings(merged);
-  }, []);
+  const updateSettings = useCallback(
+    async (next: Partial<UserSettings>) => {
+      if (!user) {
+        console.warn("updateSettings skipped: active user not set");
+        return;
+      }
+      // birthDate / dueDate はプロフィール情報として updateUser に渡す。その他は settings 配下に保持。
+      const merged: UserSettings = { ...settings, ...next };
+      setSettings(merged);
+      await updateUser(user.id, {
+        birthDate: merged.birthDate,
+        dueDate: merged.dueDate ?? null,
+        settings: {
+          ...user.settings,
+          showCorrectedUntilMonths: merged.showCorrectedUntilMonths,
+          ageFormat: merged.ageFormat,
+          showDaysSinceBirth: merged.showDaysSinceBirth,
+          lastViewedMonth: merged.lastViewedMonth,
+        },
+      });
+    },
+    [settings, updateUser, user]
+  );
 
   const resetSettings = useCallback(async () => {
-    // 初期値に戻して保存
+    if (!user) {
+      console.warn("resetSettings skipped: active user not set");
+      return;
+    }
     setSettings(DEFAULT_SETTINGS);
-    await saveUserSettings(DEFAULT_SETTINGS);
-  }, []);
+    await updateUser(user.id, {
+      birthDate: DEFAULT_SETTINGS.birthDate,
+      dueDate: DEFAULT_SETTINGS.dueDate,
+      settings: {
+        ...user.settings,
+        showCorrectedUntilMonths: DEFAULT_SETTINGS.showCorrectedUntilMonths,
+        ageFormat: DEFAULT_SETTINGS.ageFormat,
+        showDaysSinceBirth: DEFAULT_SETTINGS.showDaysSinceBirth,
+        lastViewedMonth: DEFAULT_SETTINGS.lastViewedMonth,
+      },
+    });
+  }, [updateUser, user]);
 
   const value = useMemo<SettingsContextValue>(
     () => ({ settings, loading, updateSettings, resetSettings }),
