@@ -124,6 +124,7 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
 
     const isNew = editMode.mode === "new";
 
+    // プロフィール情報（出生日・予定日含む）はこの画面の編集モードでのみ入力できるようにする。
     return (
       <View style={styles.formContainer}>
         <Text style={styles.formTitle}>{isNew ? "新規プロフィール" : "プロフィール編集"}</Text>
@@ -302,3 +303,4 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileManagerScreen;
+

@@ -196,20 +196,25 @@ const startOfCalendarGrid = (anchor: Date): Date => {
   return startDate;
 };
 
+// birthDate / dueDate は UserProfile 由来の値を受け取り、UserSettings には含めない。
 export const buildCalendarMonthView = ({
   anchorDate,
   settings,
+  birthDate,
+  dueDate,
   achievementCountsByDay,
 }: {
   anchorDate: Date;
   settings: UserSettings;
+  birthDate: string | null;
+  dueDate: string | null;
   achievementCountsByDay?: Record<string, number>;
 }): CalendarMonthView => {
   const startDate = startOfCalendarGrid(anchorDate);
   const todayIso = todayIsoDate();
   const days: CalendarDay[] = [];
-  const hasValidBirthDate = Boolean(settings.birthDate) && isIsoDateString(settings.birthDate);
-  const dueDate = settings.dueDate && isIsoDateString(settings.dueDate) ? settings.dueDate : null;
+  const hasValidBirthDate = Boolean(birthDate) && isIsoDateString(birthDate);
+  const normalizedDueDate = dueDate && isIsoDateString(dueDate) ? dueDate : null;
 
   for (let offset = 0; offset < 42; offset += 1) {
     const date = new Date(startDate);
@@ -223,8 +228,8 @@ export const buildCalendarMonthView = ({
       hasValidBirthDate && iso
         ? calculateAgeInfo({
             targetDate: iso,
-            birthDate: settings.birthDate,
-            dueDate,
+            birthDate: birthDate as string,
+            dueDate: normalizedDueDate,
             showCorrectedUntilMonths: settings.showCorrectedUntilMonths,
             ageFormat: settings.ageFormat,
           })

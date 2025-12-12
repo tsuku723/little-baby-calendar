@@ -8,9 +8,8 @@ export const STORAGE_KEYS = {
   achievementStore: "little_baby_calendar_achievements",
 };
 
+// 設定は画面表示に関するもののみを保持する。出生情報はプロフィールで管理する。
 const DEFAULT_SETTINGS: UserSettings = {
-  birthDate: "",
-  dueDate: null,
   showCorrectedUntilMonths: 24,
   ageFormat: "md",
   showDaysSinceBirth: true,
@@ -109,9 +108,11 @@ const migrateToMap = async (input: unknown): Promise<AchievementStore> => {
   return nextStore;
 };
 
-export const loadUserSettings = async (): Promise<UserSettings> => {
+// レガシー互換: 過去バージョンでは birthDate / dueDate を設定に保存していた。
+// ここでは UserSettings に含めず、あくまで表示設定のみ返却する。
+export const loadUserSettings = async (): Promise<UserSettings & { birthDate?: string; dueDate?: string | null }> => {
   const raw = await AsyncStorage.getItem(STORAGE_KEYS.userSettings);
-  const parsed = safeParse<UserSettings>(raw, DEFAULT_SETTINGS);
+  const parsed = safeParse<UserSettings & { birthDate?: string; dueDate?: string | null }>(raw, DEFAULT_SETTINGS);
   return { ...DEFAULT_SETTINGS, ...parsed };
 };
 

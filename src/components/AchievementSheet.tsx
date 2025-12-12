@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Modal, ScrollView, StyleSheet, Text, TouchableOpa
 import AchievementForm from "@/components/AchievementForm";
 import AchievementItem from "@/components/AchievementItem";
 import { useAchievements } from "@/state/AchievementsContext";
-import { useSettings } from "@/state/SettingsContext";
+import { useActiveUser } from "@/state/AppStateContext";
 import { calculateAgeInfo, isIsoDateString, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
 }
 
 const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose, useModal = true }) => {
-  const { settings } = useSettings();
+  const user = useActiveUser();
   const { byDay, loadDay, remove } = useAchievements();
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -43,16 +43,17 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose, useModal 
   const editing = useMemo(() => achievements.find((item) => item.id === editingId) ?? null, [achievements, editingId]);
 
   const ageInfo = useMemo(() => {
-    if (!normalizedIso || !settings.birthDate || !isIsoDateString(settings.birthDate)) return null;
-    const dueDate = settings.dueDate && isIsoDateString(settings.dueDate) ? settings.dueDate : null;
+    // birthDate / dueDate はプロフィール情報から取得し、SettingsContext では扱わない
+    if (!normalizedIso || !user || !user.birthDate || !isIsoDateString(user.birthDate)) return null;
+    const dueDate = user.dueDate && isIsoDateString(user.dueDate) ? user.dueDate : null;
     return calculateAgeInfo({
       targetDate: normalizedIso,
-      birthDate: settings.birthDate,
+      birthDate: user.birthDate,
       dueDate,
-      showCorrectedUntilMonths: settings.showCorrectedUntilMonths,
-      ageFormat: settings.ageFormat,
+      showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+      ageFormat: user.settings.ageFormat,
     });
-  }, [normalizedIso, settings]);
+  }, [normalizedIso, user]);
 
   if (!useModal && !visible) {
     return null;
@@ -86,7 +87,7 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose, useModal 
                   {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
                     <Text style={styles.age}>修: {ageInfo.corrected.formatted}</Text>
                   ) : null}
-                  {settings.showDaysSinceBirth ? (
+                  {user?.settings.showDaysSinceBirth ? (
                     <Text style={styles.age}>生後日数: {ageInfo.daysSinceBirth}日目</Text>
                   ) : null}
                 </View>

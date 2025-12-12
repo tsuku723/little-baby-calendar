@@ -51,13 +51,13 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
       buildCalendarMonthView({
         anchorDate,
         settings: {
-          birthDate: user?.birthDate ?? "",
-          dueDate: user?.dueDate ?? null,
           showCorrectedUntilMonths: user?.settings.showCorrectedUntilMonths ?? null,
           ageFormat: user?.settings.ageFormat ?? "md",
           showDaysSinceBirth: user?.settings.showDaysSinceBirth ?? true,
           lastViewedMonth: user?.settings.lastViewedMonth ?? null,
         },
+        birthDate: user?.birthDate ?? null,
+        dueDate: user?.dueDate ?? null,
         achievementCountsByDay: monthCounts[monthKeyValue],
       }),
     [anchorDate, monthCounts, monthKeyValue, user]

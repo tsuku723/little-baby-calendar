@@ -4,8 +4,8 @@ import { UserSettings } from "@/models/dataModels";
 import { DEFAULT_SETTINGS } from "@/types/models";
 import { useActiveUser, useAppState } from "@/state/AppStateContext";
 
-// SettingsContext も profileId ごとに設定を分離する。
-// birthDate / dueDate は UserProfile に属するため、SettingsContext は AppStateContext 経由でのみ読書きする。
+// SettingsContext は「表示設定のみ」を扱い、出生情報（birthDate / dueDate）は絶対に扱わない。
+// プロフィールごとに設定を分離するため、activeUser 経由でのみ値を読み書きする。
 
 interface SettingsContextValue {
   settings: UserSettings;
@@ -23,12 +23,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // プロフィール切替時に設定を切り替える。別プロフィールの設定を混在させないため必ず activeUser を参照。
+    // プロフィール切替時に表示設定を切り替える。出生情報は UserProfile に存在するためここでは扱わない。
     if (user) {
       setSettings({
         ...DEFAULT_SETTINGS,
-        birthDate: user.birthDate,
-        dueDate: user.dueDate,
         showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
         ageFormat: user.settings.ageFormat,
         showDaysSinceBirth: user.settings.showDaysSinceBirth,
@@ -46,12 +44,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         console.warn("updateSettings skipped: active user not set");
         return;
       }
-      // birthDate / dueDate はプロフィール情報として updateUser に渡す。その他は settings 配下に保持。
+      // birthDate / dueDate は UserProfile 側でのみ編集するためここでは扱わない。
       const merged: UserSettings = { ...settings, ...next };
       setSettings(merged);
       await updateUser(user.id, {
-        birthDate: merged.birthDate,
-        dueDate: merged.dueDate ?? null,
         settings: {
           ...user.settings,
           showCorrectedUntilMonths: merged.showCorrectedUntilMonths,
@@ -71,8 +67,6 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
     setSettings(DEFAULT_SETTINGS);
     await updateUser(user.id, {
-      birthDate: DEFAULT_SETTINGS.birthDate,
-      dueDate: DEFAULT_SETTINGS.dueDate,
       settings: {
         ...user.settings,
         showCorrectedUntilMonths: DEFAULT_SETTINGS.showCorrectedUntilMonths,
