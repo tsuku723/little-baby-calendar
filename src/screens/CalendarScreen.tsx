@@ -94,6 +94,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
             onPrev={handlePrev}
             onNext={handleNext}
             onToday={handleToday}
+            // Settings は「戻る」前提のスタック画面なので navigate で積む（replace は使用しない）
             onOpenSettings={() => navigation.navigate("Settings")}
             onOpenList={() => navigation.navigate("AchievementList")}
           />
