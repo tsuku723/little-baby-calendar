@@ -1,38 +1,28 @@
-import "react-native-get-random-values";
+﻿import "react-native-get-random-values";
 import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
 
 import { v4 as uuid } from "uuid";
 
-import {
-  Achievement,
-  AchievementType,
-  AchievementStore,
-} from "@/models/dataModels";
+import { Achievement, AchievementType, AchievementStore } from "@/models/dataModels";
+import { useActiveUser, useAppState } from "@/state/AppStateContext";
+import { isIsoDateString, normalizeToUtcDate, toIsoDateString, todayIsoDate } from "@/utils/dateUtils";
 
-import {
-  loadAchievements,
-  upsertAchievement as storageUpsert,
-  deleteAchievement as storageDelete,
-} from "@/storage/storage";
-
-import { isIsoDateString, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
-
-// -----------------------------------------------------
-// Context interface
-// -----------------------------------------------------
+// AchievementsContext は AppStateContext の activeUserId を唯一の正とする。
+// プロフィールごとに実績を分離するため、storage.ts を直接参照せず AppStateContext 経由で読書きする。
 
 interface AchievementsState {
   loading: boolean;
   store: AchievementStore;
-  byDay: Record<string, Achievement[]>; // = store
+  byDay: Record<string, Achievement[]>;
   monthCounts: Record<string, Record<string, number>>;
+  selectedDate: string;
+  setSelectedDate: (isoDate: string) => void;
 
   loadDay: (isoDay: string) => Promise<void>;
   loadMonth: (yyyymm: string) => Promise<void>;
@@ -41,13 +31,7 @@ interface AchievementsState {
   remove: (id: string, isoDay: string) => Promise<void>;
 }
 
-const AchievementsContext = createContext<AchievementsState | undefined>(
-  undefined
-);
-
-// -----------------------------------------------------
-// Payload type
-// -----------------------------------------------------
+const AchievementsContext = createContext<AchievementsState | undefined>(undefined);
 
 export type SaveAchievementPayload = {
   id?: string;
@@ -57,151 +41,139 @@ export type SaveAchievementPayload = {
   memo?: string;
 };
 
-// -----------------------------------------------------
-// Provider
-// -----------------------------------------------------
+// tag 変換: AppStateContext は growth/effort、Achievement UI は did/tried を使用するため相互変換する。
+const toAppStateTag = (type: AchievementType): "growth" | "effort" => (type === "did" ? "growth" : "effort");
+const fromAppStateTag = (tag: "growth" | "effort"): AchievementType => (tag === "growth" ? "did" : "tried");
 
-export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [loading, setLoading] = useState<boolean>(true);
-  const [store, setStore] = useState<AchievementStore>({}); // 辞書形式
+export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { state, addAchievement, updateAchievement, deleteAchievement } = useAppState();
+  const user = useActiveUser();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [selectedDate, setSelectedDateState] = useState<string>(() => todayIsoDate());
 
-  // -------------------------------------------
-  // Refresh from storage
-  // -------------------------------------------
+  // activeUserId ごとの実績だけを参照する。ほかのプロフィールのデータにはアクセスしない。
+  const activeAchievements = useMemo(() => {
+    if (!state.activeUserId) return [];
+    return state.achievements[state.activeUserId] ?? [];
+  }, [state.activeUserId, state.achievements]);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    const loaded = await loadAchievements();
-    setStore(loaded);
-    setLoading(false);
-  }, []);
+  // AppStateContext の配列を日付キーのマップへ変換（UI 互換の did/tried に揃える）。
+  const store = useMemo<AchievementStore>(() => {
+    const map: AchievementStore = {};
+    activeAchievements.forEach((item) => {
+      const dateKey = item.date;
+      const converted: Achievement = {
+        id: item.id,
+        date: dateKey,
+        type: fromAppStateTag(item.tag as "growth" | "effort"),
+        title: item.title,
+        memo: item.memo,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      };
+      if (!map[dateKey]) {
+        map[dateKey] = [];
+      }
+      map[dateKey].push(converted);
+    });
+    return map;
+  }, [activeAchievements]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  // -------------------------------------------
-  // byDay = store（辞書形式なのでそのまま）
-  // -------------------------------------------
-
-  const byDay = useMemo(() => {
-    return { ...store }; // shallow copy
-  }, [store]);
-
-  // -------------------------------------------
-  // monthCounts：月→日→件数を集計
-  // -------------------------------------------
+  const byDay = useMemo(() => ({ ...store }), [store]);
 
   const monthCounts = useMemo(() => {
     const result: Record<string, Record<string, number>> = {};
-
-    for (const [date, list] of Object.entries(store)) {
-      const month = date.slice(0, 7); // YYYY-MM
-
-      if (!result[month]) {
-        result[month] = {};
-      }
-
+    Object.entries(store).forEach(([date, list]) => {
+      const month = date.slice(0, 7);
+      if (!result[month]) result[month] = {};
       result[month][date] = list.length;
-    }
-
+    });
     return result;
   }, [store]);
 
-  // -------------------------------------------
-  // Day / Month loading
-  // -------------------------------------------
+  const setSelectedDate = useCallback((isoDate: string) => {
+    if (!isIsoDateString(isoDate)) {
+      console.warn("setSelectedDate: invalid isoDate", isoDate);
+      return;
+    }
+    const normalizedDate = normalizeToUtcDate(isoDate);
+    if (Number.isNaN(normalizedDate.getTime())) {
+      console.warn("setSelectedDate: invalid date value", isoDate);
+      return;
+    }
+    setSelectedDateState(toIsoDateString(normalizedDate));
+  }, []);
 
-  const loadDay = useCallback(
-    async (_isoDay: string) => {
-      await refresh();
-    },
-    [refresh]
-  );
+  const loadDay = useCallback(async (_isoDay: string) => {
+    // AppStateContext が単一の真実のソースなので再読込は不要（profileId ごとに分離済み）。
+    return Promise.resolve();
+  }, []);
 
-  const loadMonth = useCallback(
-    async (_yyyymm: string) => {
-      await refresh();
-    },
-    [refresh]
-  );
-
-  // -------------------------------------------
-  // Upsert（storage.ts に委譲）
-  // -------------------------------------------
+  const loadMonth = useCallback(async (_yyyymm: string) => {
+    // AppStateContext が単一の真実のソースなので再読込は不要（profileId ごとに分離済み）。
+    return Promise.resolve();
+  }, []);
 
   const upsert = useCallback(
     async (payload: SaveAchievementPayload) => {
+      if (!user || !state.activeUserId) {
+        console.warn("upsert skipped: active user not set");
+        return;
+      }
+      if (!isIsoDateString(payload.date)) {
+        console.error(`Invalid date format in upsert: ${payload.date}`);
+        return;
+      }
+      const normalizedDate = toIsoDateString(normalizeToUtcDate(payload.date));
+      const now = new Date().toISOString();
+      const recordId = payload.id ?? uuid();
+      const appStateRecord = {
+        id: recordId,
+        date: normalizedDate,
+        tag: toAppStateTag(payload.type),
+        title: payload.title,
+        memo: payload.memo,
+        createdAt: now,
+        updatedAt: now,
+      };
+
       setLoading(true);
       try {
-        if (!isIsoDateString(payload.date)) {
-          console.error(`Invalid date format in upsert: ${payload.date}`);
-          return;
+        const exists = activeAchievements.some((item) => item.id === recordId);
+        if (exists) {
+          // 既存実績の更新。profileId ごとのストアを保つため updateAchievement を使用する。
+          await updateAchievement(state.activeUserId, recordId, appStateRecord);
+        } else {
+          // 新規追加。必ず activeUserId に紐づける。
+          await addAchievement(state.activeUserId, appStateRecord as any);
         }
-
-        const normalizedDateObj = normalizeToUtcDate(payload.date);
-        if (Number.isNaN(normalizedDateObj.getTime())) {
-          console.error(`Invalid date value in upsert: ${payload.date}`);
-          return;
-        }
-        const normalizedDate = toIsoDateString(normalizedDateObj);
-
-        const record: Achievement = {
-          id: payload.id ?? uuid(),
-          date: normalizedDate,
-          type: payload.type,
-          title: payload.title,
-          memo: payload.memo,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        await storageUpsert(record);
-        await refresh();
       } catch (err) {
         console.error("upsert failed:", err);
       } finally {
         setLoading(false);
       }
     },
-    [refresh]
+    [activeAchievements, addAchievement, state.activeUserId, updateAchievement, user]
   );
 
-  // -------------------------------------------
-  // Remove
-  // -------------------------------------------
-
   const remove = useCallback(
-    async (id: string, isoDate: string) => {
+    async (id: string, _isoDate: string) => {
+      if (!state.activeUserId) {
+        console.warn("remove skipped: active user not set");
+        return;
+      }
       setLoading(true);
       try {
-        if (!isIsoDateString(isoDate)) {
-          console.error(`Invalid date format in remove: ${isoDate}`);
-          return;
-        }
-        const normalizedDateObj = normalizeToUtcDate(isoDate);
-        if (Number.isNaN(normalizedDateObj.getTime())) {
-          console.error(`Invalid date value in remove: ${isoDate}`);
-          return;
-        }
-        const normalizedDate = toIsoDateString(normalizedDateObj);
-
-        await storageDelete(id, normalizedDate);
-        await refresh();
+        // profileId ごとに deleteAchievement を呼ぶことで他プロフィールのデータを触らない。
+        await deleteAchievement(state.activeUserId, id);
       } catch (err) {
         console.error("remove failed:", err);
       } finally {
         setLoading(false);
       }
     },
-    [refresh]
+    [deleteAchievement, state.activeUserId]
   );
-
-  // -------------------------------------------
-  // Context value
-  // -------------------------------------------
 
   const value = useMemo(
     () => ({
@@ -209,24 +181,18 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({
       store,
       byDay,
       monthCounts,
+      selectedDate,
+      setSelectedDate,
       loadDay,
       loadMonth,
       upsert,
       remove,
     }),
-    [loading, store, byDay, monthCounts, loadDay, loadMonth, upsert, remove]
+    [loading, store, byDay, monthCounts, selectedDate, setSelectedDate, loadDay, loadMonth, upsert, remove]
   );
 
-  return (
-    <AchievementsContext.Provider value={value}>
-      {children}
-    </AchievementsContext.Provider>
-  );
+  return <AchievementsContext.Provider value={value}>{children}</AchievementsContext.Provider>;
 };
-
-// -----------------------------------------------------
-// Hook
-// -----------------------------------------------------
 
 export const useAchievements = (): AchievementsState => {
   const ctx = useContext(AchievementsContext);

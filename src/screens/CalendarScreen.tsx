@@ -1,12 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import CalendarGrid from "@/components/CalendarGrid";
 import MonthHeader from "@/components/MonthHeader";
-import AchievementSheet from "@/components/AchievementSheet";
 import { RootStackParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
-import { useSettings } from "@/state/SettingsContext";
+import { useActiveUser, useAppState } from "@/state/AppStateContext";
 import { buildCalendarMonthView, monthKey, toUtcDateOnly } from "@/utils/dateUtils";
 
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -16,41 +15,52 @@ type Props = NativeStackScreenProps<RootStackParamList, "Calendar">;
 const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
 const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { settings, updateSettings } = useSettings();
-  const { monthCounts, loadMonth } = useAchievements();
+  const user = useActiveUser();
+  const { updateUser } = useAppState();
+  const { monthCounts, loadMonth, setSelectedDate } = useAchievements();
   const [anchorDate, setAnchorDate] = useState<Date>(() => {
-    // 一覧から遷移した場合は選択日を優先し、その月を表示
     const initialDay = route.params?.initialSelectedDay;
     if (initialDay) {
       const [y, m] = initialDay.split("-").map(Number);
       return new Date(Date.UTC(y, m - 1, 1));
     }
-    if (settings.lastViewedMonth) {
-      const [y, m] = settings.lastViewedMonth.split("-").map(Number);
+    if (user?.settings.lastViewedMonth) {
+      const [y, m] = user.settings.lastViewedMonth.split("-").map(Number);
       return new Date(Date.UTC(y, m - 1, 1));
     }
     return toUtcDateOnly(new Date());
   });
-  const [selectedDay, setSelectedDay] = useState<string | null>(route.params?.initialSelectedDay ?? null);
   const monthKeyValue = monthKey(anchorDate);
 
   useEffect(() => {
-    // 表示月を変更したら該当月の●集計を読み込み、最後に見た月として保存
+    if (route.params?.initialSelectedDay) {
+      setSelectedDate(route.params.initialSelectedDay);
+    }
+  }, [route.params?.initialSelectedDay, setSelectedDate]);
+
+  useEffect(() => {
     void loadMonth(monthKeyValue);
     const isoMonth = `${anchorDate.getUTCFullYear()}-${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}-01`;
-    if (settings.lastViewedMonth !== isoMonth) {
-      void updateSettings({ lastViewedMonth: isoMonth });
+    if (user?.settings.lastViewedMonth !== isoMonth && user?.id) {
+      void updateUser(user.id, { settings: { ...user.settings, lastViewedMonth: isoMonth } });
     }
-  }, [anchorDate, loadMonth, monthKeyValue, settings.lastViewedMonth, updateSettings]);
+  }, [anchorDate, loadMonth, monthKeyValue, updateUser, user]);
 
   const monthView = useMemo(
     () =>
       buildCalendarMonthView({
         anchorDate,
-        settings,
+        settings: {
+          showCorrectedUntilMonths: user?.settings.showCorrectedUntilMonths ?? null,
+          ageFormat: user?.settings.ageFormat ?? "md",
+          showDaysSinceBirth: user?.settings.showDaysSinceBirth ?? true,
+          lastViewedMonth: user?.settings.lastViewedMonth ?? null,
+        },
+        birthDate: user?.birthDate ?? null,
+        dueDate: user?.dueDate ?? null,
         achievementCountsByDay: monthCounts[monthKeyValue],
       }),
-    [anchorDate, monthCounts, monthKeyValue, settings]
+    [anchorDate, monthCounts, monthKeyValue, user]
   );
 
   const handlePrev = () => {
@@ -71,8 +81,8 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
   const monthLabel = `${anchorDate.getUTCFullYear()}/${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}`;
 
   const handlePressDay = (iso: string) => {
-    // 日付タップで詳細シートを開く
-    setSelectedDay(iso);
+    setSelectedDate(iso);
+    navigation.navigate("Today", { selectedDay: iso });
   };
 
   return (
@@ -84,6 +94,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
             onPrev={handlePrev}
             onNext={handleNext}
             onToday={handleToday}
+            // Settings は「戻る」前提のスタック画面なので navigate で積む（replace は使用しない）
             onOpenSettings={() => navigation.navigate("Settings")}
             onOpenList={() => navigation.navigate("AchievementList")}
           />
@@ -99,7 +110,6 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.footer}>データは端末内のみで保存します。</Text>
         </View>
       </ScrollView>
-      <AchievementSheet isoDay={selectedDay} visible={!!selectedDay} onClose={() => setSelectedDay(null)} />
     </SafeAreaView>
   );
 };
@@ -110,7 +120,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFDF9",
   },
   scrollContainer: {
-    flexGrow: 1, // Webでスクロール可能にするため追加
+    flexGrow: 1,
   },
   container: {
     flex: 1,

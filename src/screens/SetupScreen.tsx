@@ -1,11 +1,13 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { Alert, Button, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+﻿import React, { useCallback, useState } from "react";
+import { Button, SafeAreaView, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { RootStackParamList } from "@/navigation";
 import { DEFAULT_SETTINGS, UserSettings } from "@/types/models";
 import { useSettings } from "@/state/SettingsContext";
+
+// 出生日・予定日はプロフィール編集画面でのみ入力できるため、ここでは表示設定だけを初期設定する。
 
 type Props = NativeStackScreenProps<RootStackParamList, "Setup">;
 
@@ -16,18 +18,11 @@ const SetupScreen: React.FC<Props> = ({ navigation }) => {
   const [localSettings, setLocalSettings] = useState<UserSettings>({ ...DEFAULT_SETTINGS, ...settings });
 
   const handleChange = useCallback(<K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
-    // 入力値をローカル状態に反映（保存は送信時）
     setLocalSettings((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  const canSubmit = useMemo(() => !!localSettings.birthDate, [localSettings.birthDate]);
-
   const handleSubmit = useCallback(async () => {
-    // 必須の出生日チェック後、設定を保存してカレンダーへ遷移
-    if (!localSettings.birthDate) {
-      Alert.alert("出生日は必須です", "出生日を入力してください", [{ text: "OK" }]);
-      return;
-    }
+    // 表示設定のみ保存し、プロフィール情報は別画面で入力してもらう
     await updateSettings({ ...localSettings });
     navigation.replace("Calendar");
   }, [localSettings, navigation, updateSettings]);
@@ -36,31 +31,7 @@ const SetupScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>ようこそ。「リトルベビーカレンダー」へ</Text>
-        <Text style={styles.subtitle}>はじめに、お子さんの情報をそっと教えてください。</Text>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>出生日*</Text>
-          <TextInput
-            accessibilityLabel="出生日"
-            style={styles.input}
-            placeholder="YYYY-MM-DD"
-            keyboardType="numbers-and-punctuation"
-            value={localSettings.birthDate}
-            onChangeText={(text) => handleChange("birthDate", text)}
-          />
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>出産予定日（任意）</Text>
-          <TextInput
-            accessibilityLabel="出産予定日"
-            style={styles.input}
-            placeholder="YYYY-MM-DD"
-            keyboardType="numbers-and-punctuation"
-            value={localSettings.dueDate ?? ""}
-            onChangeText={(text) => handleChange("dueDate", text || null)}
-          />
-        </View>
+        <Text style={styles.subtitle}>先に表示設定だけ決めて、プロフィールは後で編集できます。</Text>
 
         <View style={styles.field}>
           <Text style={styles.label}>修正月齢の表示上限</Text>
@@ -80,12 +51,12 @@ const SetupScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.field}>
           <Text style={styles.label}>表示形式</Text>
           <View style={styles.optionsRow}>
-            {(["md", "ymd"] as UserSettings["ageFormat"][]).map((option) => (
+            {["md", "ymd"].map((option) => (
               <View key={option} style={styles.optionButton}>
                 <Button
                   title={option === "md" ? "2m4d" : "1y2m4d"}
                   color={localSettings.ageFormat === option ? "#3A86FF" : "#BABABA"}
-                  onPress={() => handleChange("ageFormat", option)}
+                  onPress={() => handleChange("ageFormat", option as UserSettings["ageFormat"])}
                 />
               </View>
             ))}
@@ -104,10 +75,11 @@ const SetupScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
 
+        <Text style={styles.notice}>※出生情報はプロフィール編集画面で入力してください。</Text>
         <Text style={styles.notice}>※このアプリの記録は、この端末の中だけに保存されます。</Text>
 
         <View style={styles.submit}>
-          <Button title="カレンダーへ" onPress={handleSubmit} disabled={!canSubmit} color="#3A86FF" />
+          <Button title="カレンダーへ" onPress={handleSubmit} color="#3A86FF" />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -138,15 +110,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     color: "#2E2A27",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#D7D3CC",
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: "#FFFFFF",
-    color: "#2E2A27",
-    fontSize: 16,
   },
   optionsRow: {
     flexDirection: "row",

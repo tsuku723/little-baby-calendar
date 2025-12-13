@@ -16,7 +16,7 @@ const typeLabel = (t: AchievementType): string => (t === "did" ? "できた" : "
 const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
 
 const AchievementListScreen: React.FC<Props> = ({ navigation }) => {
-  const { loading, store } = useAchievements();
+  const { loading, store, setSelectedDate } = useAchievements();
   const [filter, setFilter] = useState<Filter>("all");
 
   const items = useMemo(() => {
@@ -36,7 +36,10 @@ const AchievementListScreen: React.FC<Props> = ({ navigation }) => {
   const renderItem = ({ item }: { item: Achievement }) => (
     <TouchableOpacity
       style={styles.row}
-      onPress={() => navigation.navigate("Calendar", { initialSelectedDay: item.date })}
+      onPress={() => {
+        setSelectedDate(item.date);
+        navigation.navigate("Today", { selectedDay: item.date });
+      }}
       accessibilityRole="button"
     >
       {/* 行タップでカレンダー画面の該当日を開く */}

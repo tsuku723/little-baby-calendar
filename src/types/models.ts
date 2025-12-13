@@ -11,8 +11,6 @@ export {
 } from "../models/dataModels";
 
 export const DEFAULT_SETTINGS: import("../models/dataModels").UserSettings = {
-  birthDate: "",
-  dueDate: null,
   showCorrectedUntilMonths: 24,
   ageFormat: "md",
   showDaysSinceBirth: true,

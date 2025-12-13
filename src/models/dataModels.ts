@@ -4,13 +4,13 @@
 
 export type AgeFormat = "md" | "ymd";
 
+// UserSettings はプロフィールに紐付かない表示設定のみを扱う。
+// birthDate / dueDate は UserProfile 側で保持し、ここでは扱わない。
 export type UserSettings = {
-  birthDate: string;                // ISODateString "2025-10-01"
-  dueDate: string | null;           // ISODateString or null
-  showCorrectedUntilMonths: number | null; 
+  showCorrectedUntilMonths: number | null;
   ageFormat: AgeFormat;
   showDaysSinceBirth: boolean;
-  lastViewedMonth: string | null;   // "YYYY-MM-DD"
+  lastViewedMonth: string | null; // "YYYY-MM-DD"
 };
 
 // ---------------------------------------
