@@ -1,20 +1,23 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+import { NavigationProp, useNavigation } from "@react-navigation/native";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import CalendarGrid from "@/components/CalendarGrid";
 import MonthHeader from "@/components/MonthHeader";
-import { RootStackParamList } from "@/navigation";
+import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useActiveUser, useAppState } from "@/state/AppStateContext";
 import { buildCalendarMonthView, monthKey, toUtcDateOnly } from "@/utils/dateUtils";
 
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-
-type Props = NativeStackScreenProps<RootStackParamList, "Calendar">;
+type Props = NativeStackScreenProps<CalendarStackParamList, "Calendar">;
+type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
 const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
-const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
+const CalendarScreen: React.FC<Props> = ({ route }) => {
+  const rootNavigation = useNavigation<RootNavigation>();
   const user = useActiveUser();
   const { updateUser } = useAppState();
   const { monthCounts, loadMonth, setSelectedDate } = useAchievements();
@@ -82,7 +85,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handlePressDay = (iso: string) => {
     setSelectedDate(iso);
-    navigation.navigate("Today", { selectedDay: iso });
+    rootNavigation.navigate("TodayStack", { screen: "Today", params: { selectedDay: iso } });
   };
 
   return (
@@ -95,8 +98,8 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
             onNext={handleNext}
             onToday={handleToday}
             // Settings は「戻る」前提のスタック画面なので navigate で積む（replace は使用しない）
-            onOpenSettings={() => navigation.navigate("Settings")}
-            onOpenList={() => navigation.navigate("AchievementList")}
+            onOpenSettings={() => rootNavigation.navigate("SettingsStack")}
+            onOpenList={() => rootNavigation.navigate("RecordListStack")}
           />
           <View style={styles.weekRow}>
             {WEEK_LABELS.map((label) => (
@@ -110,6 +113,14 @@ const CalendarScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.footer}>データは端末内のみで保存します。</Text>
         </View>
       </ScrollView>
+      <TouchableOpacity
+        style={styles.fab}
+        accessibilityRole="button"
+        // Phase 1: FAB は記録入力画面への入口だけを担う
+        onPress={() => rootNavigation.navigate("RecordInput")}
+      >
+        <Text style={styles.fabText}>＋ 記録</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -141,6 +152,24 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#6B665E",
     fontSize: 12,
+  },
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: 24,
+    backgroundColor: "#3A86FF",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 32,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  fabText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
 

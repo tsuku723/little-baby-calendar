@@ -12,11 +12,11 @@ import {
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-import { RootStackParamList } from "@/navigation";
+import { TodayStackParamList } from "@/navigation";
 import { useAppState } from "@/state/AppStateContext";
 import { toIsoDateString } from "@/utils/dateUtils";
 
-type Props = NativeStackScreenProps<RootStackParamList, "ProfileManager">;
+type Props = NativeStackScreenProps<TodayStackParamList, "ProfileManager">;
 
 type FormState = {
   name: string;
@@ -303,4 +303,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileManagerScreen;
-

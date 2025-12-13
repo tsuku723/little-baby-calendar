@@ -1,13 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { Button, FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { Achievement, AchievementType } from "@/models/dataModels";
-import { RootStackParamList } from "@/navigation";
+import { RecordListStackParamList, RootStackParamList, TabParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
 
-type Props = NativeStackScreenProps<RootStackParamList, "AchievementList">;
+type Props = NativeStackScreenProps<RecordListStackParamList, "AchievementList">;
+type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
 type Filter = "all" | AchievementType;
 
@@ -15,7 +17,8 @@ const typeLabel = (t: AchievementType): string => (t === "did" ? "できた" : "
 
 const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
 
-const AchievementListScreen: React.FC<Props> = ({ navigation }) => {
+const AchievementListScreen: React.FC<Props> = () => {
+  const rootNavigation = useNavigation<RootNavigation>();
   const { loading, store, setSelectedDate } = useAchievements();
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -38,7 +41,7 @@ const AchievementListScreen: React.FC<Props> = ({ navigation }) => {
       style={styles.row}
       onPress={() => {
         setSelectedDate(item.date);
-        navigation.navigate("Today", { selectedDay: item.date });
+        rootNavigation.navigate("TodayStack", { screen: "Today", params: { selectedDay: item.date } });
       }}
       accessibilityRole="button"
     >
@@ -61,23 +64,35 @@ const AchievementListScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button">
-          <Text style={styles.back}>＜ 戻る</Text>
+        <TouchableOpacity onPress={() => rootNavigation.navigate("TodayStack")} accessibilityRole="button">
+          <Text style={styles.back}>← 戻る</Text>
         </TouchableOpacity>
         <Text style={styles.title}>できた・頑張った一覧</Text>
       </View>
       <View style={styles.filters}>
         <Button title="すべて" onPress={() => setFilter("all")} color={filter === "all" ? "#3A86FF" : "#BABABA"} />
         <Button title="できた" onPress={() => setFilter("did")} color={filter === "did" ? "#3A86FF" : "#BABABA"} />
-        <Button title="頑張った" onPress={() => setFilter("tried")} color={filter === "tried" ? "#3A86FF" : "#BABABA"} />
+        <Button
+          title="頑張った"
+          onPress={() => setFilter("tried")}
+          color={filter === "tried" ? "#3A86FF" : "#BABABA"}
+        />
       </View>
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<Text style={styles.empty}>{loading ? "読み込み中..." : "まだ記録がありません。"}</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>{loading ? "読み込み中..." : "まだ記録がありません"}</Text>}
       />
+      <TouchableOpacity
+        style={styles.fab}
+        accessibilityRole="button"
+        // Phase 1: FAB は記録入力画面への入口だけを担う
+        onPress={() => rootNavigation.navigate("RecordInput")}
+      >
+        <Text style={styles.fabText}>＋ 記録</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -144,6 +159,24 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#6B665E",
     paddingTop: 40,
+  },
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: 24,
+    backgroundColor: "#3A86FF",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 32,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  fabText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
 

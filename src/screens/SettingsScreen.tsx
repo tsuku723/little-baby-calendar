@@ -3,13 +3,13 @@ import { Button, SafeAreaView, ScrollView, StyleSheet, Switch, Text, View } from
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-import { RootStackParamList } from "@/navigation";
+import { SettingsStackParamList } from "@/navigation";
 import { DEFAULT_SETTINGS, UserSettings } from "@/types/models";
 import { useSettings } from "@/state/SettingsContext";
 
 // 出生日・予定日はプロフィール編集でのみ扱うため、この画面では表示設定のみを編集する。
 
-type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
+type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
 
 const MONTH_LIMIT_OPTIONS: Array<UserSettings["showCorrectedUntilMonths"]> = [24, 36, null];
 

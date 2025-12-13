@@ -1,19 +1,22 @@
-﻿import React, { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Button, SafeAreaView, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 
+import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-import { RootStackParamList } from "@/navigation";
+import { RootStackParamList, TabParamList, TodayStackParamList } from "@/navigation";
 import { DEFAULT_SETTINGS, UserSettings } from "@/types/models";
 import { useSettings } from "@/state/SettingsContext";
 
 // 出生日・予定日はプロフィール編集画面でのみ入力できるため、ここでは表示設定だけを初期設定する。
 
-type Props = NativeStackScreenProps<RootStackParamList, "Setup">;
+type Props = NativeStackScreenProps<TodayStackParamList, "Setup">;
+type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
 const MONTH_LIMIT_OPTIONS: Array<UserSettings["showCorrectedUntilMonths"]> = [24, 36, null];
 
 const SetupScreen: React.FC<Props> = ({ navigation }) => {
+  const rootNavigation = useNavigation<RootNavigation>();
   const { settings, updateSettings } = useSettings();
   const [localSettings, setLocalSettings] = useState<UserSettings>({ ...DEFAULT_SETTINGS, ...settings });
 
@@ -24,8 +27,9 @@ const SetupScreen: React.FC<Props> = ({ navigation }) => {
   const handleSubmit = useCallback(async () => {
     // 表示設定のみ保存し、プロフィール情報は別画面で入力してもらう
     await updateSettings({ ...localSettings });
-    navigation.replace("Calendar");
-  }, [localSettings, navigation, updateSettings]);
+    // 初回設定完了後はカレンダーのタブに遷移
+    rootNavigation.navigate("CalendarStack");
+  }, [localSettings, rootNavigation, updateSettings]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

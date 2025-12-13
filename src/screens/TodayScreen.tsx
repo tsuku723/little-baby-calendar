@@ -2,25 +2,28 @@
 // Renaming to DayScreen is deferred for future refactor.
 
 import React, { useMemo, useState } from "react";
-import { Button, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import AchievementForm from "@/components/AchievementForm";
-import { RootStackParamList } from "@/navigation";
+import { RootStackParamList, TabParamList, TodayStackParamList } from "@/navigation";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
 import { calculateAgeInfo, toIsoDateString } from "@/utils/dateUtils";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Today">;
+type Props = NativeStackScreenProps<TodayStackParamList, "Today">;
+type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
-const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
+const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) => {
+  const rootNavigation = useNavigation<RootNavigation>();
   // Hooks should remain at top level (no conditional hooks)
   const user = useActiveUser();
   const { byDay, loading: achievementsLoading, selectedDate, setSelectedDate } = useAchievements();
   const [formVisible, setFormVisible] = useState(false);
 
-  // 表示対象日付（param優先）。Navigator側互換のため selectedDay / isoDay 両方を見る。
+  // 表示対象日付。Navigator側互換のため selectedDay / isoDay 両方を見る
   const isoDay = useMemo(() => {
     const incoming = route.params?.isoDay ?? route.params?.selectedDay;
     if (incoming) {
@@ -61,9 +64,9 @@ const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <Text style={styles.title}>プロフィールを作成してください</Text>
-          <Text style={styles.subtitle}>最初にプロフィール設定からはじめましょう</Text>
+          <Text style={styles.subtitle}>最初にプロフィール設定から始めましょう</Text>
           <View style={styles.buttonRow}>
-            <Button title="セットアップへ" onPress={() => navigation.navigate("ProfileManager")} />
+            <Button title="セットアップへ" onPress={() => stackNavigation.navigate("ProfileManager")} />
           </View>
         </View>
       </SafeAreaView>
@@ -76,7 +79,7 @@ const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.container}>
           <Text style={styles.title}>{user.name}</Text>
           <Text style={styles.subtitle}>生年月日が未設定です</Text>
-          <Button title="プロフィールを編集" onPress={() => navigation.navigate("ProfileManager")} />
+          <Button title="プロフィールを編集" onPress={() => stackNavigation.navigate("ProfileManager")} />
         </View>
       </SafeAreaView>
     );
@@ -105,7 +108,7 @@ const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
           {achievementsLoading ? (
             <Text style={styles.empty}>読み込み中...</Text>
           ) : todaysAchievements.length === 0 ? (
-            <Text style={styles.empty}>まだ記録はありません。</Text>
+            <Text style={styles.empty}>まだ記録はありません</Text>
           ) : (
             todaysAchievements.map((item) => (
               <View key={item.id} style={styles.card}>
@@ -122,9 +125,9 @@ const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
             onPress={() => setFormVisible((prev) => !prev)}
             color="#3A86FF"
           />
-          <Button title="カレンダーを見る" onPress={() => navigation.navigate("Calendar")} color="#6B665E" />
-          <Button title="記録一覧" onPress={() => navigation.navigate("AchievementList")} color="#6B665E" />
-          <Button title="プロフィール切り替え" onPress={() => navigation.navigate("ProfileManager")} color="#6B665E" />
+          <Button title="カレンダーを見る" onPress={() => rootNavigation.navigate("CalendarStack")} color="#6B665E" />
+          <Button title="記録一覧" onPress={() => rootNavigation.navigate("RecordListStack")} color="#6B665E" />
+          <Button title="プロフィール切り替え" onPress={() => stackNavigation.navigate("ProfileManager")} color="#6B665E" />
         </View>
 
         {formVisible ? (
@@ -133,6 +136,14 @@ const TodayScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         ) : null}
       </ScrollView>
+      <TouchableOpacity
+        style={styles.fab}
+        accessibilityRole="button"
+        // Phase 1: FAB は記録入力画面への入口だけを担う
+        onPress={() => rootNavigation.navigate("RecordInput")}
+      >
+        <Text style={styles.fabText}>＋ 記録</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -209,6 +220,24 @@ const styles = StyleSheet.create({
   },
   formWrapper: {
     marginTop: 16,
+  },
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: 24,
+    backgroundColor: "#3A86FF",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 32,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  fabText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
 
