@@ -5,9 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import AchievementListScreen from "@/screens/AchievementListScreen";
 import CalendarScreen from "@/screens/CalendarScreen";
-import ProfileManagerScreen from "@/screens/ProfileManagerScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
-import SetupScreen from "@/screens/SetupScreen";
 import TodayScreen from "@/screens/TodayScreen";
 import {
   CalendarStackParamList,
@@ -26,8 +24,6 @@ const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 const TodayStackNavigator: React.FC = () => (
   <TodayStack.Navigator initialRouteName="Today" screenOptions={{ headerShown: false }}>
     <TodayStack.Screen name="Today" component={TodayScreen} />
-    <TodayStack.Screen name="ProfileManager" component={ProfileManagerScreen} />
-    <TodayStack.Screen name="Setup" component={SetupScreen} />
   </TodayStack.Navigator>
 );
 

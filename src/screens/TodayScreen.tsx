@@ -1,13 +1,12 @@
 // TODO: This screen functions as a day-based view.
 // Renaming to DayScreen is deferred for future refactor.
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-import AchievementForm from "@/components/AchievementForm";
 import { RootStackParamList, TabParamList, TodayStackParamList } from "@/navigation";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
@@ -21,9 +20,8 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
   // Hooks should remain at top level (no conditional hooks)
   const user = useActiveUser();
   const { byDay, loading: achievementsLoading, selectedDate, setSelectedDate } = useAchievements();
-  const [formVisible, setFormVisible] = useState(false);
 
-  // 表示対象日付。Navigator側互換のため selectedDay / isoDay 両方を見る
+  // 表示対象日付、Navigator側互換のため selectedDay / isoDay 両方を見る
   const isoDay = useMemo(() => {
     const incoming = route.params?.isoDay ?? route.params?.selectedDay;
     if (incoming) {
@@ -118,23 +116,6 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
             ))
           )}
         </View>
-
-        <View style={styles.buttonColumn}>
-          <Button
-            title={formVisible ? "記録フォームを閉じる" : "記録する"}
-            onPress={() => setFormVisible((prev) => !prev)}
-            color="#3A86FF"
-          />
-          <Button title="カレンダーを見る" onPress={() => rootNavigation.navigate("CalendarStack")} color="#6B665E" />
-          <Button title="記録一覧" onPress={() => rootNavigation.navigate("RecordListStack")} color="#6B665E" />
-          <Button title="プロフィール切り替え" onPress={() => stackNavigation.navigate("ProfileManager")} color="#6B665E" />
-        </View>
-
-        {formVisible ? (
-          <View style={styles.formWrapper}>
-            <AchievementForm isoDay={isoDay} draft={null} onClose={() => setFormVisible(false)} />
-          </View>
-        ) : null}
       </ScrollView>
       <TouchableOpacity
         style={styles.fab}
@@ -156,6 +137,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 24,
+    paddingBottom: 140, // FAB に重ならない余白を確保
     gap: 16,
   },
   title: {
@@ -212,14 +194,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6B665E",
   },
-  buttonColumn: {
-    gap: 12,
-  },
   buttonRow: {
     marginTop: 12,
-  },
-  formWrapper: {
-    marginTop: 16,
   },
   fab: {
     position: "absolute",

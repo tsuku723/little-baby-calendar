@@ -1,9 +1,20 @@
 import { NavigatorScreenParams } from "@react-navigation/native";
 
-// Navigation 階層ごとの型定義（Phase 1 では骨組みのみ）
+// Navigation 構成の型定義。Phase 1 ベースを維持しつつ段階的に拡張する。
 export type RootStackParamList = {
   MainTabs: undefined;
-  RecordInput: undefined;
+  RecordInput:
+    | {
+        recordId?: string; // 編集時のみ使用
+        isoDate?: string; // 新規時の初期日付
+      }
+    | undefined;
+  RecordDetail:
+    | {
+        recordId: string;
+        isoDate?: string;
+      }
+    | undefined;
 };
 
 export type TodayStackParamList = {

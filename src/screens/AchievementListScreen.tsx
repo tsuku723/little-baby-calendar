@@ -41,7 +41,7 @@ const AchievementListScreen: React.FC<Props> = () => {
       style={styles.row}
       onPress={() => {
         setSelectedDate(item.date);
-        rootNavigation.navigate("TodayStack", { screen: "Today", params: { selectedDay: item.date } });
+        rootNavigation.navigate("RecordDetail", { recordId: item.id, isoDate: item.date });
       }}
       accessibilityRole="button"
     >
