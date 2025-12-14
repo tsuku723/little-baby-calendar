@@ -44,16 +44,20 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const [recordType, setRecordType] = useState<RecordType>(() =>
     editingRecord ? toRecordType(editingRecord.type) : "growth"
   );
-  const [content, setContent] = useState<string>(editingRecord?.title ?? "");
+  const [title, setTitle] = useState<string>(editingRecord?.title ?? "");
+  const [content, setContent] = useState<string>(editingRecord?.memo ?? "");
 
   // 編集対象が変わったらフォームを最新の値に合わせる
   useEffect(() => {
     if (editingRecord) {
       setDateInput(editingRecord.date);
       setRecordType(toRecordType(editingRecord.type));
-      setContent(editingRecord.title);
+      setTitle(editingRecord.title ?? "");
+      setContent(editingRecord.memo ?? "");
     } else if (preferredDate) {
       setDateInput(preferredDate);
+      setTitle("");
+      setContent("");
     }
   }, [editingRecord, preferredDate]);
 
@@ -73,17 +77,14 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     }
     const isoDate = toIsoDateString(normalizedDate);
 
-    if (!content.trim()) {
-      Alert.alert("内容が未入力です", "内容を入力してください。");
-      return;
-    }
-
     const achievementType = toAchievementType(recordType);
+    const titleValue = title.trim() || content.trim();
     const payload: SaveAchievementPayload = {
       id: editingRecord?.id,
       date: isoDate,
       type: achievementType,
-      title: content.trim(),
+      title: titleValue,
+      memo: content,
       // TODO (Phase 4): メモや写真など詳細入力を追加する場合はここで拡張する
     };
 
@@ -149,6 +150,17 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>{editingRecord ? "記録を編集" : "記録入力"}</Text>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>タイトル</Text>
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={(text) => setTitle(text.slice(0, 80))}
+            placeholder="短いタイトル（任意）"
+            accessibilityLabel="タイトル"
+          />
+        </View>
 
         <View style={styles.field}>
           <Text style={styles.label}>日付</Text>
