@@ -34,6 +34,11 @@ export type RecordListStackParamList = {
 export type SettingsStackParamList = {
   Settings: undefined;
   ProfileManager: undefined;
+  ProfileEdit:
+    | {
+        profileId?: string;
+      }
+    | undefined;
 };
 
 export type TabParamList = {

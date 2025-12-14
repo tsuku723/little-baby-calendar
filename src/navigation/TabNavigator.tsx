@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import AchievementListScreen from "@/screens/AchievementListScreen";
 import CalendarScreen from "@/screens/CalendarScreen";
+import ProfileEditScreen from "@/screens/ProfileEditScreen";
 import ProfileManagerScreen from "@/screens/ProfileManagerScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
 import TodayScreen from "@/screens/TodayScreen";
@@ -43,6 +44,7 @@ const RecordListStackNavigator: React.FC = () => (
 const SettingsStackNavigator: React.FC = () => (
   <SettingsStack.Navigator initialRouteName="Settings" screenOptions={{ headerShown: false }}>
     <SettingsStack.Screen name="Settings" component={SettingsScreen} />
+    <SettingsStack.Screen name="ProfileEdit" component={ProfileEditScreen} />
     <SettingsStack.Screen name="ProfileManager" component={ProfileManagerScreen} />
   </SettingsStack.Navigator>
 );
