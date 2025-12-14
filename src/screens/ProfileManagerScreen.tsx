@@ -1,14 +1,5 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
-import {
-  Alert,
-  Button,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
@@ -33,8 +24,8 @@ const createEmptyForm = (): FormState => ({
 });
 
 const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
-  const { state, addUser, updateUser, deleteUser, setActiveUser } = useAppState();
-  const { users, activeUserId } = state;
+  const { state, addUser, updateUser, deleteUser } = useAppState();
+  const { users } = state;
 
   const [formState, setFormState] = useState<FormState>(createEmptyForm());
   const [editMode, setEditMode] = useState<EditMode>({ mode: "none" });
@@ -45,12 +36,6 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
       setFormState(createEmptyForm());
     }
   }, [users.length]);
-
-  const activeLabel = useMemo(() => new Set([activeUserId]), [activeUserId]);
-
-  const handleSelect = (userId: string) => {
-    void setActiveUser(userId);
-  };
 
   const handleDelete = (userId: string) => {
     if (users.length <= 1) {
@@ -105,14 +90,14 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
           lastViewedMonth: null,
         },
       });
-      navigation.replace("Today"); // replaceでスタックをリセットし確実にTodayへ戻る
+      navigation.replace("Today"); // 編集完了後は Today に戻る
     } else if (editMode.mode === "edit") {
       await updateUser(editMode.userId, {
         name,
         birthDate,
         dueDate,
       });
-      navigation.replace("Today"); // replaceでスタックをリセットし確実にTodayへ戻る
+      navigation.replace("Today"); // 編集完了後は Today に戻る
     }
 
     setEditMode({ mode: "none" });
@@ -127,7 +112,7 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
     // プロフィール情報（出生日・予定日含む）はこの画面の編集モードでのみ入力できるようにする。
     return (
       <View style={styles.formContainer}>
-        <Text style={styles.formTitle}>{isNew ? "新規プロフィール" : "プロフィール編集"}</Text>
+        <Text style={styles.formTitle}>{isNew ? "新しいこどもを追加" : "プロフィール編集"}</Text>
         <View style={styles.formGroup}>
           <Text style={styles.label}>名前</Text>
           <TextInput
@@ -169,43 +154,41 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <Button
-            title="Todayに戻る"
-            onPress={() => navigation.replace("Today")} // replaceでスタックを汚さずTodayを最前面に
-            color="#3A86FF"
-          />
-          <Text style={styles.title}>プロフィール管理</Text>
+          <Button title="Todayに戻る" onPress={() => navigation.replace("Today")} color="#3A86FF" />
+          <Text style={styles.title}>こどものプロフィールを編集</Text>
         </View>
 
-        {users.map((user) => {
-          const isActive = activeLabel.has(user.id);
-          return (
-            <View key={user.id} style={[styles.card, isActive ? styles.activeCard : null]}>
-              <View style={styles.cardHeader}>
-                <Text style={[styles.cardTitle, isActive ? styles.activeText : null]}>
-                  {user.name} {isActive ? "(選択中)" : ""}
-                </Text>
-              </View>
-              <Text style={styles.cardText}>誕生日: {user.birthDate}</Text>
-              <Text style={styles.cardText}>予定日: {user.dueDate ?? "なし"}</Text>
-              <View style={styles.actionsRow}>
-                <Button title="選択" onPress={() => handleSelect(user.id)} color="#3A86FF" />
-                <Button title="編集" onPress={() => handleStartEdit(user.id)} color="#6B665E" />
-                <Button
-                  title="削除"
-                  onPress={() => handleDelete(user.id)}
-                  color={users.length <= 1 ? "#A9A29A" : "#D90429"}
-                  disabled={users.length <= 1}
-                />
-              </View>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>管理するこどもを選択</Text>
+          <Text style={styles.sectionNote}>タップしてプロフィールを編集します</Text>
+        </View>
+
+        {users.map((user) => (
+          <TouchableOpacity
+            key={user.id}
+            style={styles.card}
+            onPress={() => handleStartEdit(user.id)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.cardTitle}>{user.name}</Text>
+            <Text style={styles.cardText}>誕生日: {user.birthDate}</Text>
+            <Text style={styles.cardText}>予定日: {user.dueDate ?? "なし"}</Text>
+            <View style={styles.actionsRow}>
+              <Button title="編集" onPress={() => handleStartEdit(user.id)} color="#3A86FF" />
+              <Button
+                title="削除"
+                onPress={() => handleDelete(user.id)}
+                color={users.length <= 1 ? "#A9A29A" : "#D90429"}
+                disabled={users.length <= 1}
+              />
             </View>
-          );
-        })}
+          </TouchableOpacity>
+        ))}
 
         {renderForm()}
 
         <View style={styles.footer}>
-          <Button title="新規プロフィール追加" onPress={handleStartNew} color="#3A86FF" />
+          <Button title="＋ 新しいこどもを追加" onPress={handleStartNew} color="#3A86FF" />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -230,6 +213,18 @@ const styles = StyleSheet.create({
     color: "#2E2A27",
     marginBottom: 8,
   },
+  sectionHeader: {
+    gap: 4,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#2E2A27",
+  },
+  sectionNote: {
+    fontSize: 14,
+    color: "#6B665E",
+  },
   card: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
@@ -238,21 +233,10 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 6,
   },
-  activeCard: {
-    borderColor: "#3A86FF",
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
   cardTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#2E2A27",
-  },
-  activeText: {
-    color: "#3A86FF",
   },
   cardText: {
     fontSize: 15,
