@@ -6,7 +6,9 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { Achievement, AchievementType } from "@/models/dataModels";
 import { RecordListStackParamList, RootStackParamList, TabParamList } from "@/navigation";
+import AchievementGraphSection from "@/components/graphs/AchievementGraphSection";
 import { useAchievements } from "@/state/AchievementsContext";
+import { GraphPeriod } from "@/utils/ageUtils";
 
 type Props = NativeStackScreenProps<RecordListStackParamList, "AchievementList">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
@@ -20,6 +22,8 @@ const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
 const AchievementListScreen: React.FC<Props> = () => {
   const rootNavigation = useNavigation<RootNavigation>();
   const { loading, store, setSelectedDate } = useAchievements();
+  const [viewMode, setViewMode] = useState<"list" | "graph">("list");
+  const [period, setPeriod] = useState<GraphPeriod>("1y");
   const [filter, setFilter] = useState<Filter>("all");
 
   const items = useMemo(() => {
@@ -67,24 +71,47 @@ const AchievementListScreen: React.FC<Props> = () => {
         <TouchableOpacity onPress={() => rootNavigation.navigate("TodayStack")} accessibilityRole="button">
           <Text style={styles.back}>← 戻る</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>できた・頑張った一覧</Text>
+        <View style={styles.headerRight}>
+          <Text style={styles.title}>できた・頑張った一覧</Text>
+          <TouchableOpacity
+            style={styles.viewModeButton}
+            accessibilityRole="button"
+            onPress={() => {
+              // 一覧とグラフの切替。プロフィール・期間は保持し、表示形式のみを変更する
+              setViewMode((prev) => (prev === "list" ? "graph" : "list"));
+            }}
+          >
+            <Text style={styles.viewModeText}>{viewMode === "list" ? "📈 グラフ" : "📃 一覧"}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={styles.filters}>
-        <Button title="すべて" onPress={() => setFilter("all")} color={filter === "all" ? "#3A86FF" : "#BABABA"} />
-        <Button title="できた" onPress={() => setFilter("did")} color={filter === "did" ? "#3A86FF" : "#BABABA"} />
-        <Button
-          title="頑張った"
-          onPress={() => setFilter("tried")}
-          color={filter === "tried" ? "#3A86FF" : "#BABABA"}
-        />
-      </View>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={<Text style={styles.empty}>{loading ? "読み込み中..." : "まだ記録がありません"}</Text>}
-      />
+
+      {viewMode === "list" ? (
+        <>
+          <View style={styles.filters}>
+            <Button title="すべて" onPress={() => setFilter("all")} color={filter === "all" ? "#3A86FF" : "#BABABA"} />
+            <Button title="できた" onPress={() => setFilter("did")} color={filter === "did" ? "#3A86FF" : "#BABABA"} />
+            <Button
+              title="頑張った"
+              onPress={() => setFilter("tried")}
+              color={filter === "tried" ? "#3A86FF" : "#BABABA"}
+            />
+          </View>
+          <FlatList
+            data={items}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.list}
+            ListEmptyComponent={<Text style={styles.empty}>{loading ? "読み込み中..." : "まだ記録がありません"}</Text>}
+          />
+        </>
+      ) : (
+        // グラフ表示時はロジックを再利用し、一覧の状態（プロフィール・期間選択）を保持したまま見せ方だけを切替
+        <View style={styles.graphWrapper}>
+          <AchievementGraphSection period={period} onPeriodChange={setPeriod} />
+        </View>
+      )}
+
       <TouchableOpacity
         style={styles.fab}
         accessibilityRole="button"
@@ -109,6 +136,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 8,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
   back: {
     fontSize: 16,
@@ -159,6 +191,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#6B665E",
     paddingTop: 40,
+  },
+  graphWrapper: {
+    flex: 1,
+    backgroundColor: "#FFFDF9",
+  },
+  viewModeButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#D7D3CC",
+    backgroundColor: "#FFFFFF",
+  },
+  viewModeText: {
+    fontSize: 12,
+    color: "#2E2A27",
   },
   fab: {
     position: "absolute",
