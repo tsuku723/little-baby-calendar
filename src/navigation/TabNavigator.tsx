@@ -5,12 +5,14 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import AchievementListScreen from "@/screens/AchievementListScreen";
 import CalendarScreen from "@/screens/CalendarScreen";
+import GraphScreen from "@/screens/GraphScreen";
 import ProfileEditScreen from "@/screens/ProfileEditScreen";
 import ProfileManagerScreen from "@/screens/ProfileManagerScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
 import TodayScreen from "@/screens/TodayScreen";
 import {
   CalendarStackParamList,
+  GraphStackParamList,
   RecordListStackParamList,
   SettingsStackParamList,
   TabParamList,
@@ -20,6 +22,7 @@ import {
 const Tab = createBottomTabNavigator<TabParamList>();
 const TodayStack = createNativeStackNavigator<TodayStackParamList>();
 const CalendarStack = createNativeStackNavigator<CalendarStackParamList>();
+const GraphStack = createNativeStackNavigator<GraphStackParamList>();
 const RecordListStack = createNativeStackNavigator<RecordListStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
@@ -41,6 +44,12 @@ const RecordListStackNavigator: React.FC = () => (
   </RecordListStack.Navigator>
 );
 
+const GraphStackNavigator: React.FC = () => (
+  <GraphStack.Navigator initialRouteName="Graph" screenOptions={{ headerShown: false }}>
+    <GraphStack.Screen name="Graph" component={GraphScreen} />
+  </GraphStack.Navigator>
+);
+
 const SettingsStackNavigator: React.FC = () => (
   <SettingsStack.Navigator initialRouteName="Settings" screenOptions={{ headerShown: false }}>
     <SettingsStack.Screen name="Settings" component={SettingsScreen} />
@@ -60,6 +69,7 @@ const TabNavigator: React.FC = () => {
         component={RecordListStackNavigator}
         options={{ tabBarLabel: "記録一覧" }}
       />
+      <Tab.Screen name="GraphStack" component={GraphStackNavigator} options={{ tabBarLabel: "グラフ" }} />
       <Tab.Screen name="SettingsStack" component={SettingsStackNavigator} options={{ tabBarLabel: "設定" }} />
     </Tab.Navigator>
   );

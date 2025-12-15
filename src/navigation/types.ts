@@ -31,6 +31,10 @@ export type RecordListStackParamList = {
   AchievementList: undefined;
 };
 
+export type GraphStackParamList = {
+  Graph: undefined;
+};
+
 export type SettingsStackParamList = {
   Settings: undefined;
   ProfileManager: undefined;
@@ -45,5 +49,6 @@ export type TabParamList = {
   TodayStack: NavigatorScreenParams<TodayStackParamList>;
   CalendarStack: NavigatorScreenParams<CalendarStackParamList>;
   RecordListStack: NavigatorScreenParams<RecordListStackParamList>;
+  GraphStack: NavigatorScreenParams<GraphStackParamList>;
   SettingsStack: NavigatorScreenParams<SettingsStackParamList>;
 };
