@@ -1,8 +1,13 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet } from "react-native";
-
-// gifted-charts を使用した複合グラフ
-import { BarChart } from "react-native-gifted-charts";
+import { Dimensions, ScrollView, View, StyleSheet } from "react-native";
+import {
+  VictoryAxis,
+  VictoryBar,
+  VictoryChart,
+  VictoryLabel,
+  VictoryLine,
+  VictoryStack,
+} from "victory-native";
 
 import { GraphBucket, GraphPeriod } from "@/utils/ageUtils";
 
@@ -11,105 +16,196 @@ type Props = {
   buckets: GraphBucket[];
 };
 
-const BAR_WIDTH = 16;
-const BAR_SPACING = 10;
-const LABEL_HEIGHT_ALL = 56;
-const LABEL_HEIGHT_MONTHLY = 72;
+// Victory ベースの共通レイアウト値
+const BAR_WIDTH = 12;
+const BAR_GAP = 8;
+const DATA_HEIGHT = 230;
+const AXIS_HEIGHT = 96;
+const PADDING = { top: 12, bottom: 12, left: 52, right: 28 };
+const SCROLL_PADDING = 16;
 
 const AchievementComposedChart: React.FC<Props> = ({ period, buckets }) => {
-  // 棒グラフと折れ線グラフのデータを gift-charts 用に整形
-  const { stackData, lineData } = useMemo(() => {
-    // 積み上げ棒の1本ごとにラベルや色を定義する
-    const stack = buckets.map((bucket) => ({
-      labelComponent: () => (
-        <View
-          // ラベル高さを明示的に確保し、グラフと重ならないようにする
-          style={[
-            styles.labelContainer,
-            { minHeight: period === "all" ? LABEL_HEIGHT_ALL : LABEL_HEIGHT_MONTHLY },
-          ]}
-        >
-          {bucket.showActualLabel ? (
-            <Text style={styles.actualLabel}>{bucket.actualLabel}</Text>
-          ) : (
-            <Text style={styles.actualLabel} />
-          )}
-          {bucket.correctedLabel && bucket.showCorrectedLabel ? (
-            <Text style={styles.correctedLabel}>{bucket.correctedLabel}</Text>
-          ) : null}
-          {bucket.showCorrectedZeroLine ? <View style={styles.correctedLine} /> : null}
-        </View>
-      ),
-      stacks: [
-        { value: bucket.tried, color: "#FFE5A4" },
-        { value: bucket.did, color: "#3A86FF" },
-      ],
-    }));
+  const windowWidth = Dimensions.get("window").width;
 
-    // 累計値を折れ線で前面に描画する
-    const line = buckets.map((bucket) => ({ value: bucket.cumulative }));
+  // Victory 用のデータを index 基準で統一する
+  const chartData = useMemo(() => {
+    // 欠損月があっても線が途切れないよう、全バケットを 0 も含めて渡す
+    const barTried = buckets.map((bucket, index) => ({ x: index, y: bucket.tried }));
+    const barDid = buckets.map((bucket, index) => ({ x: index, y: bucket.did }));
+    const line = buckets.map((bucket, index) => ({ x: index, y: bucket.cumulative }));
+    const tickValues = buckets.map((_, index) => index);
 
-    return { stackData: stack, lineData: line };
+    // 最大値を計算し、棒と線が同じスケールで描けるようにする
+    const maxStack = Math.max(...buckets.map((b) => b.tried + b.did), 0);
+    const maxLine = Math.max(...buckets.map((b) => b.cumulative), 0);
+    const yMax = Math.max(1, maxStack, maxLine);
+
+    return { barTried, barDid, line, tickValues, yMax };
   }, [buckets]);
+
+  // バーとラベルの位置合わせを保証するため、x 軸のドメインを固定
+  const xDomain: [number, number] = [-0.5, buckets.length - 0.5];
+  const domainPadding = { x: BAR_WIDTH / 2 };
+
+  // 横スクロール用に描画幅を計算（バー間隔を考慮し、狭すぎないようにする）
+  const chartWidth = useMemo(() => {
+    const estimate = buckets.length * (BAR_WIDTH + BAR_GAP) + PADDING.left + PADDING.right;
+    return Math.max(windowWidth - SCROLL_PADDING * 2, estimate);
+  }, [buckets.length, windowWidth]);
+
+  // 修正月齢ラベルに必ず「修」を付ける（週数などプレフィックスがない場合を補完）
+  const withCorrectedPrefix = (label?: string | null) => {
+    if (!label) return "";
+    return label.startsWith("修") ? label : `修${label}`;
+  };
 
   return (
     <View style={styles.container}>
-      <BarChart
-        height={260}
-        // 棒と折れ線の座標基準を統一するため、バー幅と間隔を定数化
-        barWidth={BAR_WIDTH}
-        spacing={BAR_SPACING}
-        // 罫線を破線で表示し、見やすさを補助
-        rulesType="dashed"
-        rulesThickness={1}
-        rulesColor="#E5E5EA"
-        dashWidth={4}
-        dashGap={6}
-        showVerticalLines
-        stackData={stackData as any}
-        lineData={lineData as any}
-        showLine
-        // 折れ線の点が棒の中心に揃うように同一間隔を指定
-        lineConfig={{ spacing: BAR_SPACING }}
-        yAxisThickness={1}
-        xAxisThickness={1}
-        yAxisTextStyle={styles.axisText}
-        xAxisLabelTextStyle={styles.axisText}
-        xAxisLabelsHeight={period === "all" ? LABEL_HEIGHT_ALL : LABEL_HEIGHT_MONTHLY}
-        noOfSections={4}
-      />
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View>
+          {/* データレイヤ（棒＋折れ線） */}
+          <VictoryChart
+            width={chartWidth}
+            height={DATA_HEIGHT}
+            padding={PADDING}
+            domain={{ x: xDomain, y: [0, chartData.yMax * 1.1] }}
+            domainPadding={domainPadding}
+            standalone
+          >
+            {/* Y 軸のみ表示（X 軸は下のレイヤに分離） */}
+            <VictoryAxis
+              dependentAxis
+              style={{
+                axis: { stroke: "#CFCFD6" },
+                tickLabels: styles.axisText,
+                grid: { stroke: "#E5E5EA", strokeDasharray: "6,6" },
+              }}
+            />
+
+            {/* 縦罫線を VictoryLine で明示的に描画 */}
+            {chartData.tickValues.map((x) => {
+              const emphasize = buckets[x]?.showCorrectedZeroLine;
+              return (
+                <VictoryLine
+                  // 予定日位置は太線で強調、それ以外は破線
+                  key={`vline-${x}`}
+                  standalone={false}
+                  data={[
+                    { x, y: 0 },
+                    { x, y: chartData.yMax * 1.1 },
+                  ]}
+                  style={{
+                    data: {
+                      stroke: emphasize ? "#FF6F61" : "#CFCFD6",
+                      strokeWidth: emphasize ? 2 : 1,
+                      strokeDasharray: emphasize ? undefined : "6,6",
+                      opacity: emphasize ? 0.9 : 0.6,
+                    },
+                  }}
+                />
+              );
+            })}
+
+            {/* 積み上げ棒（tried / did） */}
+            <VictoryStack colorScale={["#FFE5A4", "#3A86FF"]}>
+              <VictoryBar
+                data={chartData.barTried}
+                barWidth={BAR_WIDTH}
+                style={{ data: { width: BAR_WIDTH } }}
+              />
+              <VictoryBar
+                data={chartData.barDid}
+                barWidth={BAR_WIDTH}
+                style={{ data: { width: BAR_WIDTH } }}
+              />
+            </VictoryStack>
+
+            {/* 累計の折れ線。欠損を作らないよう全点を渡す */}
+            <VictoryLine
+              data={chartData.line}
+              interpolation="monotoneX"
+              style={{
+                data: { stroke: "#2E2A27", strokeWidth: 2 },
+              }}
+            />
+          </VictoryChart>
+
+          {/* X 軸レイヤ（実月齢＋修正月齢を上下に分離） */}
+          <VictoryChart
+            width={chartWidth}
+            height={AXIS_HEIGHT}
+            padding={{ top: 0, bottom: 28, left: PADDING.left, right: PADDING.right }}
+            domain={{ x: xDomain }}
+            domainPadding={domainPadding}
+            standalone
+          >
+            <VictoryAxis
+              tickValues={chartData.tickValues}
+              // tickLabelComponent で 2 行テキスト（実月齢 / 修正月齢）を完全自前制御
+              tickLabelComponent={
+                <VictoryLabel
+                  dy={8}
+                  text={({ index }) => {
+                    const bucket = index != null ? buckets[index] : undefined;
+                    if (!bucket) return "";
+                    const actual = bucket.showActualLabel ? bucket.actualLabel : "";
+                    const corrected =
+                      bucket.showCorrectedLabel && bucket.correctedLabel
+                        ? withCorrectedPrefix(bucket.correctedLabel)
+                        : "";
+                    // 実月齢の真下に修正月齢を並べ、重ならないよう 2 行に分割
+                    return corrected ? [actual || " ", corrected] : [actual];
+                  }}
+                  style={({ index }) => {
+                    const bucket = index != null ? buckets[index] : undefined;
+                    const actualStyle = styles.actualLabel;
+                    const correctedStyle = styles.correctedLabel;
+                    if (
+                      bucket &&
+                      bucket.showCorrectedLabel &&
+                      bucket.correctedLabel
+                    ) {
+                      return [actualStyle, correctedStyle];
+                    }
+                    return [actualStyle];
+                  }}
+                />
+              }
+              style={{
+                axis: { stroke: "#CFCFD6" },
+                tickLabels: { padding: 6 },
+              }}
+            />
+          </VictoryChart>
+        </View>
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 16,
-  },
-  labelContainer: {
-    alignItems: "center",
-    justifyContent: "flex-start",
-    paddingTop: 4,
+    paddingVertical: 12,
   },
   actualLabel: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#2E2A27",
+    fill: "#2E2A27",
   },
   correctedLabel: {
     fontSize: 10,
-    color: "#8C8C8C",
-  },
-  correctedLine: {
-    width: 4,
-    height: 12,
-    backgroundColor: "#FF6F61",
-    marginTop: 4,
-    borderRadius: 2,
+    fill: "#8C8C8C",
   },
   axisText: {
-    color: "#8C8C8C",
+    fill: "#8C8C8C",
     fontSize: 10,
+  },
+  scrollContent: {
+    paddingHorizontal: SCROLL_PADDING,
   },
 });
 
