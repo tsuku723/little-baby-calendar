@@ -103,6 +103,8 @@ export const buildAxisLabels = (params: {
 
   // ラベル数が最大 12 件を超える場合、等間隔で間引くステップを算出する
   const step = period === "all" ? 1 : Math.max(1, Math.ceil(totalSlots / 12));
+  // 修正月齢ラベルは独立した間引きルールとし、予定日や週数表示は必ず残す
+  const correctedStep = step;
 
   if (period === "all") {
     // 全期間は実年齢のみ表示する
@@ -128,14 +130,17 @@ export const buildAxisLabels = (params: {
     if (showCorrected && correctedMonth !== null) {
       if (correctedMonth < 0) {
         correctedLabel = buildGestationalWeekLabel(targetDate, due);
-        showCorrectedLabel = Boolean(correctedLabel && showActualLabel);
+        // 週数ラベルは間引きせず必ず表示する
+        showCorrectedLabel = Boolean(correctedLabel);
       } else if (correctedMonth === 0) {
         correctedLabel = "修0M（予定日）";
-        showCorrectedLabel = showActualLabel;
+        // 予定日は必ず表示し、ゼロラインも描画する
+        showCorrectedLabel = true;
         showCorrectedZeroLine = true;
       } else {
         correctedLabel = `修${correctedMonth}M`;
-        showCorrectedLabel = showActualLabel;
+        // 正の修正月齢は実月齢とは独立に間引く
+        showCorrectedLabel = correctedMonth % correctedStep === 0;
       }
     }
 

@@ -11,13 +11,24 @@ type Props = {
   buckets: GraphBucket[];
 };
 
+const BAR_WIDTH = 16;
+const BAR_SPACING = 10;
+const LABEL_HEIGHT_ALL = 56;
+const LABEL_HEIGHT_MONTHLY = 72;
+
 const AchievementComposedChart: React.FC<Props> = ({ period, buckets }) => {
   // 棒グラフと折れ線グラフのデータを gift-charts 用に整形
   const { stackData, lineData } = useMemo(() => {
     // 積み上げ棒の1本ごとにラベルや色を定義する
     const stack = buckets.map((bucket) => ({
       labelComponent: () => (
-        <View style={styles.labelContainer}>
+        <View
+          // ラベル高さを明示的に確保し、グラフと重ならないようにする
+          style={[
+            styles.labelContainer,
+            { minHeight: period === "all" ? LABEL_HEIGHT_ALL : LABEL_HEIGHT_MONTHLY },
+          ]}
+        >
           {bucket.showActualLabel ? (
             <Text style={styles.actualLabel}>{bucket.actualLabel}</Text>
           ) : (
@@ -33,7 +44,6 @@ const AchievementComposedChart: React.FC<Props> = ({ period, buckets }) => {
         { value: bucket.tried, color: "#FFE5A4" },
         { value: bucket.did, color: "#3A86FF" },
       ],
-      barWidth: 18,
     }));
 
     // 累計値を折れ線で前面に描画する
@@ -45,19 +55,27 @@ const AchievementComposedChart: React.FC<Props> = ({ period, buckets }) => {
   return (
     <View style={styles.container}>
       <BarChart
-        height={220}
-        barWidth={22}
-        spacing={14}
-        hideRules
-        disableScroll
+        height={260}
+        // 棒と折れ線の座標基準を統一するため、バー幅と間隔を定数化
+        barWidth={BAR_WIDTH}
+        spacing={BAR_SPACING}
+        // 罫線を破線で表示し、見やすさを補助
+        rulesType="dashed"
+        rulesThickness={1}
+        rulesColor="#E5E5EA"
+        dashWidth={4}
+        dashGap={6}
+        showVerticalLines
         stackData={stackData as any}
         lineData={lineData as any}
         showLine
+        // 折れ線の点が棒の中心に揃うように同一間隔を指定
+        lineConfig={{ spacing: BAR_SPACING }}
         yAxisThickness={1}
         xAxisThickness={1}
         yAxisTextStyle={styles.axisText}
         xAxisLabelTextStyle={styles.axisText}
-        xAxisLabelsHeight={period === "all" ? 36 : 48}
+        xAxisLabelsHeight={period === "all" ? LABEL_HEIGHT_ALL : LABEL_HEIGHT_MONTHLY}
         noOfSections={4}
       />
     </View>
@@ -66,12 +84,12 @@ const AchievementComposedChart: React.FC<Props> = ({ period, buckets }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
   labelContainer: {
     alignItems: "center",
     justifyContent: "flex-start",
-    minHeight: 48,
+    paddingTop: 4,
   },
   actualLabel: {
     fontSize: 14,
