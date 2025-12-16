@@ -31,10 +31,6 @@ export type RecordListStackParamList = {
   AchievementList: undefined;
 };
 
-export type GraphStackParamList = {
-  Graph: undefined;
-};
-
 export type SettingsStackParamList = {
   Settings: undefined;
   ProfileManager: undefined;
@@ -49,6 +45,6 @@ export type TabParamList = {
   TodayStack: NavigatorScreenParams<TodayStackParamList>;
   CalendarStack: NavigatorScreenParams<CalendarStackParamList>;
   RecordListStack: NavigatorScreenParams<RecordListStackParamList>;
-  GraphStack: NavigatorScreenParams<GraphStackParamList>;
+  // グラフ導線は記録一覧画面の表示切替に統合したため、タブには含めない
   SettingsStack: NavigatorScreenParams<SettingsStackParamList>;
 };
