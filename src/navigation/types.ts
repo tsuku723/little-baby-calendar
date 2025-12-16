@@ -45,5 +45,6 @@ export type TabParamList = {
   TodayStack: NavigatorScreenParams<TodayStackParamList>;
   CalendarStack: NavigatorScreenParams<CalendarStackParamList>;
   RecordListStack: NavigatorScreenParams<RecordListStackParamList>;
+  // グラフ導線は記録一覧画面の表示切替に統合したため、タブには含めない
   SettingsStack: NavigatorScreenParams<SettingsStackParamList>;
 };

@@ -9,13 +9,7 @@ import ProfileEditScreen from "@/screens/ProfileEditScreen";
 import ProfileManagerScreen from "@/screens/ProfileManagerScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
 import TodayScreen from "@/screens/TodayScreen";
-import {
-  CalendarStackParamList,
-  RecordListStackParamList,
-  SettingsStackParamList,
-  TabParamList,
-  TodayStackParamList,
-} from "./types";
+import { CalendarStackParamList, RecordListStackParamList, SettingsStackParamList, TabParamList, TodayStackParamList } from "./types";
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const TodayStack = createNativeStackNavigator<TodayStackParamList>();
@@ -51,15 +45,11 @@ const SettingsStackNavigator: React.FC = () => (
 
 const TabNavigator: React.FC = () => {
   return (
-    // タブは全画面共通。Phase 1 では仮のラベルのみで機能は画面切替だけ。
+    // グラフは記録一覧画面の表示切替に集約したためタブから削除
     <Tab.Navigator initialRouteName="TodayStack" screenOptions={{ headerShown: false }}>
       <Tab.Screen name="TodayStack" component={TodayStackNavigator} options={{ tabBarLabel: "Today" }} />
       <Tab.Screen name="CalendarStack" component={CalendarStackNavigator} options={{ tabBarLabel: "カレンダー" }} />
-      <Tab.Screen
-        name="RecordListStack"
-        component={RecordListStackNavigator}
-        options={{ tabBarLabel: "記録一覧" }}
-      />
+      <Tab.Screen name="RecordListStack" component={RecordListStackNavigator} options={{ tabBarLabel: "記録一覧" }} />
       <Tab.Screen name="SettingsStack" component={SettingsStackNavigator} options={{ tabBarLabel: "設定" }} />
     </Tab.Navigator>
   );
