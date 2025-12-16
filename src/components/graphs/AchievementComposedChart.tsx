@@ -1,13 +1,5 @@
 import React, { useMemo } from "react";
-import { Dimensions, ScrollView, View, StyleSheet } from "react-native";
-import {
-  VictoryAxis,
-  VictoryBar,
-  VictoryChart,
-  VictoryLabel,
-  VictoryLine,
-  VictoryStack,
-} from "victory-native";
+import { Dimensions, Platform, ScrollView, View, Text, StyleSheet } from "react-native";
 
 import { GraphBucket, GraphPeriod } from "@/utils/ageUtils";
 
@@ -15,6 +7,26 @@ type Props = {
   period: GraphPeriod;
   buckets: GraphBucket[];
 };
+
+// Web では victory-native を import しないため、ここで参照を入れておく
+let VictoryChart: any;
+let VictoryBar: any;
+let VictoryLine: any;
+let VictoryAxis: any;
+let VictoryStack: any;
+let VictoryLabel: any;
+
+// iOS / Android のみ動的に victory-native を読み込む
+if (Platform.OS !== "web") {
+  ({
+    VictoryChart,
+    VictoryBar,
+    VictoryLine,
+    VictoryAxis,
+    VictoryStack,
+    VictoryLabel,
+  } = require("victory-native"));
+}
 
 // Victory ベースの共通レイアウト値
 const BAR_WIDTH = 12;
@@ -58,6 +70,15 @@ const AchievementComposedChart: React.FC<Props> = ({ period, buckets }) => {
     if (!label) return "";
     return label.startsWith("修") ? label : `修${label}`;
   };
+
+  // Web ではライブラリを読み込まず、簡易表示のみ返す
+  if (Platform.OS === "web" || !VictoryChart) {
+    return (
+      <View style={styles.webContainer}>
+        <Text style={styles.webText}>このグラフはモバイル専用です</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -206,6 +227,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: SCROLL_PADDING,
+  },
+  webContainer: {
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  webText: {
+    color: "#8C8C8C",
+    fontSize: 14,
   },
 });
 
