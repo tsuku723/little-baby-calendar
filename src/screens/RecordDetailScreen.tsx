@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo } from "react";
-import { Button, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { Button, Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { RootStackParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
+import { ensureFileExistsAsync } from "@/utils/photo";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RecordDetail">;
 
@@ -13,6 +14,7 @@ const typeLabel = (type: "did" | "tried"): string => (type === "did" ? "成長" 
 const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { recordId, isoDate } = route.params ?? {};
   const { store, setSelectedDate } = useAchievements();
+  const [photoPath, setPhotoPath] = useState<string | null>(null);
 
   const record = useMemo(() => {
     const scoped = isoDate ? store[isoDate] ?? [] : [];
@@ -32,6 +34,19 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       setSelectedDate(record.date);
     }
   }, [navigation, record, setSelectedDate]);
+
+  useEffect(() => {
+    let mounted = true;
+    const verifyPhoto = async () => {
+      const ensured = await ensureFileExistsAsync(record?.photoPath ?? null);
+      if (!mounted) return;
+      setPhotoPath(ensured);
+    };
+    void verifyPhoto();
+    return () => {
+      mounted = false;
+    };
+  }, [record?.photoPath]);
 
   if (!record) {
     return null;
@@ -61,6 +76,13 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.field}>
             <Text style={styles.label}>メモ</Text>
             <Text style={styles.value}>{record.memo}</Text>
+          </View>
+        ) : null}
+
+        {photoPath ? (
+          <View style={styles.field}>
+            <Text style={styles.label}>写真</Text>
+            <Image source={{ uri: photoPath }} style={styles.photo} resizeMode="cover" />
           </View>
         ) : null}
 
@@ -108,6 +130,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     justifyContent: "space-between",
+  },
+  photo: {
+    width: "100%",
+    height: 240,
+    borderRadius: 12,
+    backgroundColor: "#F1EEE8",
   },
 });
 

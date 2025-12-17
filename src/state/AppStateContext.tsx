@@ -34,8 +34,9 @@ export type Achievement = {
   tag: "growth" | "effort";
   title: string;
   memo?: string;
+  photoPath?: string | null;
   createdAt: string;
-  updatedAt?: string;
+  updatedAt: string;
 };
 
 export type AppState = {
@@ -93,6 +94,17 @@ const ensureStateIntegrity = (state: AppState): AppState => {
     achievements: state.achievements ?? {},
   };
 
+  const normalizeAchievement = (item: Achievement): Achievement => {
+    const fallbackDate = new Date().toISOString();
+    const createdAt = item.createdAt ?? fallbackDate;
+    const updatedAt = item.updatedAt ?? createdAt;
+    return {
+      ...item,
+      createdAt,
+      updatedAt,
+    };
+  };
+
   if (
     nextState.activeUserId &&
     !nextState.users.some((u) => u.id === nextState.activeUserId)
@@ -104,6 +116,7 @@ const ensureStateIntegrity = (state: AppState): AppState => {
     if (!nextState.achievements[user.id]) {
       nextState.achievements[user.id] = [];
     }
+    nextState.achievements[user.id] = (nextState.achievements[user.id] ?? []).map(normalizeAchievement);
   });
 
   return nextState;
@@ -147,8 +160,9 @@ const migrateLegacyState = async (): Promise<AppState | null> => {
         tag,
         title: (item as any).title ?? "",
         memo: (item as any).memo,
+        photoPath: (item as any).photoPath ?? null,
         createdAt: (item as any).createdAt ?? now,
-        updatedAt: (item as any).updatedAt,
+        updatedAt: (item as any).updatedAt ?? (item as any).createdAt ?? now,
       });
     });
   });
