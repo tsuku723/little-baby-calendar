@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Button, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
@@ -9,11 +9,9 @@ import { useActiveUser } from "@/state/AppStateContext";
 import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
 import { clampComment, remainingChars } from "@/utils/text";
 import { normalizeToUtcDate, toIsoDateString, todayIsoDate } from "@/utils/dateUtils";
+import { RECORD_TITLE_CANDIDATES, RecordType } from "./recordTitleCandidates";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RecordInput">;
-
-// RecordType は AppStateContext のタグ（growth/effort）に合わせる
-type RecordType = "growth" | "effort";
 
 const TYPE_OPTIONS: { value: RecordType; label: string; description: string }[] = [
   { value: "growth", label: "成長", description: "できた・成長記録" },
@@ -46,6 +44,10 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   );
   const [title, setTitle] = useState<string>(editingRecord?.title ?? "");
   const [content, setContent] = useState<string>(editingRecord?.memo ?? "");
+  const [isTitleSheetVisible, setTitleSheetVisible] = useState(false);
+  const [titleCandidateTab, setTitleCandidateTab] = useState<RecordType>(() =>
+    editingRecord ? toRecordType(editingRecord.type) : "growth"
+  );
 
   // 編集対象が変わったらフォームを最新の値に合わせる
   useEffect(() => {
@@ -60,6 +62,23 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       setContent("");
     }
   }, [editingRecord, preferredDate]);
+
+  // ボトムシートを開くタイミングで、現在の種別に合わせてタブを初期化する
+  const openTitleSheet = () => {
+    setTitleCandidateTab(recordType);
+    setTitleSheetVisible(true);
+  };
+
+  const closeTitleSheet = () => setTitleSheetVisible(false);
+
+  // 候補選択時のハンドリング（種別の自動切り替えは growth → effort のみ）
+  const handleSelectCandidate = (candidate: string, candidateType: RecordType) => {
+    setTitle(candidate);
+    if (recordType === "growth" && candidateType === "effort") {
+      setRecordType("effort");
+    }
+    setTitleSheetVisible(false);
+  };
 
   const charsLeft = useMemo(() => remainingChars(content), [content]);
 
@@ -160,6 +179,9 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             placeholder="短いタイトル（任意）"
             accessibilityLabel="タイトル"
           />
+          <TouchableOpacity style={styles.titleSuggestionButton} onPress={openTitleSheet} accessibilityRole="button">
+            <Text style={styles.titleSuggestionText}>候補から選ぶ（任意）</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.field}>
@@ -227,6 +249,48 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         ) : null}
       </ScrollView>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isTitleSheetVisible}
+        onRequestClose={closeTitleSheet}
+        statusBarTranslucent
+      >
+        <Pressable style={styles.sheetOverlay} onPress={closeTitleSheet} accessibilityRole="button" />
+        <View style={styles.sheetContainer}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>タイトル候補</Text>
+          <View style={styles.sheetTabs}>
+            {TYPE_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[styles.sheetTab, titleCandidateTab === option.value && styles.sheetTabActive]}
+                onPress={() => setTitleCandidateTab(option.value)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: titleCandidateTab === option.value }}
+              >
+                <Text style={[styles.sheetTabLabel, titleCandidateTab === option.value && styles.sheetTabLabelActive]}>
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <ScrollView contentContainerStyle={styles.sheetList} keyboardShouldPersistTaps="handled">
+            {RECORD_TITLE_CANDIDATES[titleCandidateTab].map((candidate) => (
+              <TouchableOpacity
+                key={candidate}
+                style={styles.candidateItem}
+                onPress={() => handleSelectCandidate(candidate, titleCandidateTab)}
+                accessibilityRole="button"
+              >
+                <Text style={styles.candidateText}>{candidate}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -269,6 +333,15 @@ const styles = StyleSheet.create({
   helper: {
     fontSize: 12,
     color: "#6B665E",
+  },
+  titleSuggestionButton: {
+    alignSelf: "flex-start",
+    paddingVertical: 4,
+  },
+  titleSuggestionText: {
+    fontSize: 13,
+    color: "#3A86FF",
+    textDecorationLine: "underline",
   },
   input: {
     borderWidth: 1,
@@ -336,6 +409,77 @@ const styles = StyleSheet.create({
   },
   deleteArea: {
     marginTop: 8,
+  },
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+  },
+  sheetContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    maxHeight: "70%",
+  },
+  sheetHandle: {
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#E5E1DA",
+    marginBottom: 12,
+  },
+  sheetTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2E2A27",
+    marginBottom: 12,
+  },
+  sheetTabs: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+  sheetTab: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D7D3CC",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  sheetTabActive: {
+    borderColor: "#3A86FF",
+    backgroundColor: "#E9F2FF",
+  },
+  sheetTabLabel: {
+    fontSize: 14,
+    color: "#2E2A27",
+    fontWeight: "600",
+  },
+  sheetTabLabelActive: {
+    color: "#1D5BBF",
+  },
+  sheetList: {
+    paddingBottom: 12,
+    gap: 10,
+  },
+  candidateItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E5E1DA",
+    backgroundColor: "#FAF8F4",
+  },
+  candidateText: {
+    fontSize: 15,
+    color: "#2E2A27",
   },
 });
 
