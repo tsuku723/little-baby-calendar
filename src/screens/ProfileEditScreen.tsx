@@ -1,8 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Alert, Button, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  Button,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
+import { UserSettings } from "@/models/dataModels";
 import { SettingsStackParamList } from "@/navigation";
 import { useAppState } from "@/state/AppStateContext";
 import { toIsoDateString } from "@/utils/dateUtils";
@@ -39,12 +51,31 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     return createEmptyForm();
   });
 
+  const [draftSettings, setDraftSettings] = useState<UserSettings>(() => {
+    if (existing) return { ...existing.settings };
+    return {
+      showCorrectedUntilMonths: 24,
+      ageFormat: "md",
+      showDaysSinceBirth: true,
+      lastViewedMonth: null,
+    };
+  });
+
   useEffect(() => {
     if (existing) {
       setFormState({
         name: existing.name,
         birthDate: existing.birthDate,
         dueDate: existing.dueDate ?? "",
+      });
+      setDraftSettings({ ...existing.settings });
+    } else {
+      setFormState(createEmptyForm());
+      setDraftSettings({
+        showCorrectedUntilMonths: 24,
+        ageFormat: "md",
+        showDaysSinceBirth: true,
+        lastViewedMonth: null,
       });
     }
   }, [existing]);
@@ -60,18 +91,18 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     }
 
     if (existing) {
-      await updateUser(existing.id, { name, birthDate, dueDate });
+      await updateUser(existing.id, {
+        name,
+        birthDate,
+        dueDate,
+        settings: draftSettings,
+      });
     } else {
       await addUser({
         name,
         birthDate,
         dueDate,
-        settings: {
-          showCorrectedUntilMonths: 24,
-          ageFormat: "md",
-          showDaysSinceBirth: true,
-          lastViewedMonth: null,
-        },
+        settings: draftSettings,
       });
     }
 
@@ -136,6 +167,75 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           />
         </View>
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>この子の表示設定</Text>
+          <Text style={styles.description}>ここで変更した設定は、「保存」を押すまで反映されません。</Text>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>修正月齢の表示上限</Text>
+            <View style={styles.optionRow}>
+              {[
+                { label: "24か月", value: 24 },
+                { label: "36か月", value: 36 },
+                { label: "制限なし", value: null },
+              ].map((option) => (
+                <Pressable
+                  key={option.label}
+                  style={[
+                    styles.optionButton,
+                    draftSettings.showCorrectedUntilMonths === option.value && styles.optionButtonSelected,
+                  ]}
+                  onPress={() =>
+                    setDraftSettings((prev) => ({ ...prev, showCorrectedUntilMonths: option.value }))
+                  }
+                >
+                  <Text
+                    style={[
+                      styles.optionLabel,
+                      draftSettings.showCorrectedUntilMonths === option.value && styles.optionLabelSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>月齢表示形式</Text>
+            <View style={styles.optionRow}>
+              {[
+                { label: "2M4D", value: "md" },
+                { label: "1Y2M4D", value: "ymd" },
+              ].map((option) => (
+                <Pressable
+                  key={option.value}
+                  style={[styles.optionButton, draftSettings.ageFormat === option.value && styles.optionButtonSelected]}
+                  onPress={() => setDraftSettings((prev) => ({ ...prev, ageFormat: option.value as UserSettings["ageFormat"] }))}
+                >
+                  <Text
+                    style={[styles.optionLabel, draftSettings.ageFormat === option.value && styles.optionLabelSelected]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>生まれてからの日数表示</Text>
+            <View style={styles.switchRow}>
+              <Text style={styles.optionLabel}>{draftSettings.showDaysSinceBirth ? "ON" : "OFF"}</Text>
+              <Switch
+                value={draftSettings.showDaysSinceBirth}
+                onValueChange={(value) => setDraftSettings((prev) => ({ ...prev, showDaysSinceBirth: value }))}
+              />
+            </View>
+          </View>
+        </View>
+
         <View style={styles.actions}>
           {existing ? (
             <Button title="削除" onPress={handleDelete} color={users.length <= 1 ? "#A9A29A" : "#D90429"} />
@@ -177,6 +277,54 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     fontSize: 16,
     color: "#2E2A27",
+  },
+  section: {
+    gap: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E7E2D9",
+    borderRadius: 12,
+    backgroundColor: "#FFFEFB",
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#2E2A27",
+  },
+  description: {
+    fontSize: 14,
+    color: "#6B665E",
+  },
+  optionRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  optionButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D7D3CC",
+    backgroundColor: "#FFFFFF",
+  },
+  optionButtonSelected: {
+    borderColor: "#3A86FF",
+    backgroundColor: "#E8F1FF",
+  },
+  optionLabel: {
+    fontSize: 14,
+    color: "#2E2A27",
+  },
+  optionLabelSelected: {
+    color: "#1A5FB4",
+    fontWeight: "700",
+  },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 6,
   },
   actions: {
     gap: 12,

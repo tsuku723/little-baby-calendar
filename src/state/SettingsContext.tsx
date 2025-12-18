@@ -1,4 +1,23 @@
-﻿import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+﻿/**
+ * ⚠️ IMPORTANT（MVP設計方針）
+ *
+ * この SettingsContext は、過去の「即時反映」設計の名残として残している。
+ *
+ * 現在のMVP仕様では：
+ * - 表示設定（UserSettings）は ProfileEditScreen で編集し
+ * - 「保存」押下時にのみ AppStateContext.updateUser 経由で反映・永続化する
+ *
+ * そのため、この SettingsContext は
+ * ❌ 新規実装では使用してはならない
+ * ❌ 画面から直接 updateSettings / resetSettings を呼んではならない
+ *
+ * 表示設定の参照は必ず
+ *   useActiveUser().settings
+ * を使用すること。
+ *
+ * 本 Context は将来の再設計または削除候補である。
+ */
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { UserSettings } from "@/models/dataModels";
 import { DEFAULT_SETTINGS } from "@/types/models";
@@ -14,6 +33,9 @@ interface SettingsContextValue {
   resetSettings: () => Promise<void>;
 }
 
+// NOTE:
+// SettingsContext は MVP では使用しない。
+// 表示設定の単一の正は AppStateContext.user.settings とする。
 const SettingsContext = createContext<SettingsContextValue | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -86,6 +108,12 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 };
 
 export const useSettings = (): SettingsContextValue => {
+  /**
+   * ⚠️ WARNING
+   *
+   * このフックは MVP では使用禁止。
+   * ProfileEditScreen 以外で表示設定を変更・参照する設計は禁止されている。
+   */
   const ctx = useContext(SettingsContext);
   if (!ctx) {
     throw new Error("useSettings must be used within SettingsProvider");
