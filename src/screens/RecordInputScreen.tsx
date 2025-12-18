@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Image, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Button, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
@@ -9,7 +9,6 @@ import { useActiveUser } from "@/state/AppStateContext";
 import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
 import { clampComment, remainingChars } from "@/utils/text";
 import { normalizeToUtcDate, toIsoDateString, todayIsoDate } from "@/utils/dateUtils";
-import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync } from "@/utils/photo";
 import { RECORD_TITLE_CANDIDATES, RecordType } from "./recordTitleCandidates";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RecordInput">;
@@ -45,8 +44,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   );
   const [title, setTitle] = useState<string>(editingRecord?.title ?? "");
   const [content, setContent] = useState<string>(editingRecord?.memo ?? "");
-  const [photoPath, setPhotoPath] = useState<string | null>(editingRecord?.photoPath ?? null);
-  const [hasRemovedPhoto, setHasRemovedPhoto] = useState<boolean>(false);
   const [isTitleSheetVisible, setTitleSheetVisible] = useState(false);
   const [titleCandidateTab, setTitleCandidateTab] = useState<RecordType>(() =>
     editingRecord ? toRecordType(editingRecord.type) : "growth"
@@ -59,31 +56,12 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       setRecordType(toRecordType(editingRecord.type));
       setTitle(editingRecord.title ?? "");
       setContent(editingRecord.memo ?? "");
-      setPhotoPath(editingRecord.photoPath ?? null);
-      setHasRemovedPhoto(false);
     } else if (preferredDate) {
       setDateInput(preferredDate);
       setTitle("");
       setContent("");
-      setPhotoPath(null);
-      setHasRemovedPhoto(false);
     }
   }, [editingRecord, preferredDate]);
-
-  // 編集対象の photoPath が実ファイルとして存在するかを確認する
-  useEffect(() => {
-    let mounted = true;
-    const verifyPhoto = async () => {
-      const ensured = await ensureFileExistsAsync(editingRecord?.photoPath ?? null);
-      if (!mounted) return;
-      setPhotoPath(ensured);
-      setHasRemovedPhoto(!ensured && Boolean(editingRecord?.photoPath));
-    };
-    void verifyPhoto();
-    return () => {
-      mounted = false;
-    };
-  }, [editingRecord?.photoPath]);
 
   // ボトムシートを開くタイミングで、現在の種別に合わせてタブを初期化する
   const openTitleSheet = () => {
@@ -100,38 +78,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       setRecordType("effort");
     }
     setTitleSheetVisible(false);
-  };
-
-  const handlePickPhoto = async () => {
-    const previousTempPhoto = photoPath && photoPath !== editingRecord?.photoPath ? photoPath : null;
-    try {
-      const next = await pickAndSavePhotoAsync();
-      if (!next) return;
-
-      if (previousTempPhoto && previousTempPhoto !== next) {
-        // 編集画面で選び直した未保存の写真は不要になるためクリーンアップする
-        await deleteIfExistsAsync(previousTempPhoto);
-      }
-
-      setPhotoPath(next);
-      setHasRemovedPhoto(false);
-    } catch (error) {
-      console.error("Failed to pick photo", error);
-      Alert.alert("写真の追加に失敗しました", "再度お試しください。");
-    }
-  };
-
-  const handleRemovePhoto = async () => {
-    try {
-      if (photoPath && photoPath !== editingRecord?.photoPath) {
-        // 保存前に追加した写真はここで破棄する
-        await deleteIfExistsAsync(photoPath);
-      }
-    } catch (error) {
-      console.warn("Failed to delete temp photo", error);
-    }
-    setPhotoPath(null);
-    setHasRemovedPhoto(Boolean(editingRecord?.photoPath));
   };
 
   const charsLeft = useMemo(() => remainingChars(content), [content]);
@@ -152,19 +98,13 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
     const achievementType = toAchievementType(recordType);
     const titleValue = title.trim() || content.trim();
-    const photoPayload: string | null | undefined = (() => {
-      if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存写真の削除
-      if (photoPath && photoPath !== editingRecord?.photoPath) return photoPath; // 新規・差し替え
-      if (!editingRecord && photoPath) return photoPath; // 新規レコードで写真あり
-      return undefined; // 変更なし
-    })();
     const payload: SaveAchievementPayload = {
       id: editingRecord?.id,
       date: isoDate,
       type: achievementType,
       title: titleValue,
       memo: content,
-      photoPath: photoPayload,
+      // TODO (Phase 4): メモや写真など詳細入力を追加する場合はここで拡張する
     };
 
     try {
@@ -298,34 +238,12 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.helper}>残り {charsLeft} / 500</Text>
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>写真（任意）</Text>
-          <View style={styles.photoActions}>
-            <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto} accessibilityRole="button">
-              <Text style={styles.photoButtonText}>{photoPath ? "写真を差し替える" : "写真を追加"}</Text>
-            </TouchableOpacity>
-            {photoPath ? (
-              <TouchableOpacity style={styles.photoRemoveButton} onPress={handleRemovePhoto} accessibilityRole="button">
-                <Text style={styles.photoRemoveText}>写真を外す</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-          {photoPath ? (
-            <View style={styles.photoPreviewWrapper}>
-              <Image source={{ uri: photoPath }} style={styles.photoPreview} resizeMode="cover" />
-              <Text style={styles.helper}>保存時にこの写真を記録へ紐付けます。</Text>
-            </View>
-          ) : (
-            <Text style={styles.helper}>写真はアプリ内に JPEG 形式で保存されます。</Text>
-          )}
-        </View>
-
         <View style={styles.actions}>
           <Button title="キャンセル" color="#6B665E" onPress={() => navigation.goBack()} />
           <Button title="保存" color="#3A86FF" onPress={handleSave} />
         </View>
 
-      {editingRecord ? (
+        {editingRecord ? (
           <View style={styles.deleteArea}>
             <Button title="この記録を削除" color="#D9534F" onPress={confirmDelete} />
           </View>
@@ -415,45 +333,6 @@ const styles = StyleSheet.create({
   helper: {
     fontSize: 12,
     color: "#6B665E",
-  },
-  photoActions: {
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "center",
-  },
-  photoButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: "#E9F2FF",
-    borderWidth: 1,
-    borderColor: "#B8D0FF",
-  },
-  photoButtonText: {
-    color: "#1D5BBF",
-    fontWeight: "700",
-  },
-  photoRemoveButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E5E1DA",
-    backgroundColor: "#FAF8F4",
-  },
-  photoRemoveText: {
-    color: "#8A8277",
-    fontWeight: "600",
-  },
-  photoPreviewWrapper: {
-    marginTop: 10,
-    gap: 6,
-  },
-  photoPreview: {
-    width: "100%",
-    height: 220,
-    borderRadius: 12,
-    backgroundColor: "#F1EEE8",
   },
   titleSuggestionButton: {
     alignSelf: "flex-start",

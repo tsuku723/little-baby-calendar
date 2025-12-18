@@ -25,7 +25,6 @@ export type Achievement = {
   type: AchievementType;
   title: string;
   memo?: string;
-  photoPath?: string;  // アプリ内に保存した JPEG のファイルパス
 
   // storage.ts に合わせて「必須」に統一
   createdAt: string;   // ISO datetime
