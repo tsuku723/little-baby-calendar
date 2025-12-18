@@ -1,13 +1,21 @@
+/**
+ * NOTE:
+ * データエクスポート機能は MVP では一旦見送る。
+ *
+ * 理由：
+ * - Expo Go（iOS）では FileSystem / Sharing に制約があり
+ * - 実行環境による挙動差が大きいため
+ *
+ * 将来：
+ * - Development Build / 製品版アプリでは再検討可能
+ */
 import React, { useCallback } from "react";
-import { Alert, Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { SettingsStackParamList } from "@/navigation";
 import { useAppState } from "@/state/AppStateContext";
-import { exportAppDataToJson } from "@/services/exportService";
-
-// 出生日・予定日はプロフィール編集でのみ扱うため、この画面では表示設定を扱わない。
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
 
@@ -15,7 +23,6 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { state, setActiveUser } = useAppState();
 
   const handleClose = useCallback(() => {
-    // プロフィール情報の検証は行わない（プロフィール編集に責務を限定するため）
     navigation.goBack();
   }, [navigation]);
 
@@ -25,26 +32,6 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
     },
     [setActiveUser]
   );
-
-  const handleExportPress = useCallback(() => {
-    Alert.alert(
-      "データを書き出します",
-      "この端末に保存されているデータをJSONファイルとして書き出します。\n写真は含まれません。",
-      [
-        { text: "キャンセル", style: "cancel" },
-        {
-          text: "OK",
-          onPress: async () => {
-            try {
-              await exportAppDataToJson({ profiles: state.users, achievements: state.achievements });
-            } catch (error) {
-              Alert.alert("エラー", "書き出しに失敗しました。");
-            }
-          },
-        },
-      ]
-    );
-  }, [state.achievements, state.users]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -67,7 +54,9 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                   accessibilityRole="button"
                 >
                   <View style={styles.childInfo}>
-                    <Text style={[styles.childName, isActive && styles.childNameActive]}>{child.name || "名前未設定"}</Text>
+                    <Text style={[styles.childName, isActive && styles.childNameActive]}>
+                      {child.name || "名前未設定"}
+                    </Text>
                     <Text style={styles.childMeta}>{child.birthDate ? child.birthDate : "生年月日未設定"}</Text>
                   </View>
                   <Text style={[styles.childCheck, isActive && styles.childCheckActive]}>{isActive ? "✓" : ""}</Text>
@@ -86,16 +75,6 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
 
         <Text style={styles.notice}>※出生情報はプロフィール編集画面でのみ入力できます。</Text>
         <Text style={styles.notice}>※このアプリの記録は、この端末の中だけに保存されます。</Text>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>データ管理</Text>
-          <View style={styles.descriptionBox}>
-            <Text style={styles.descriptionText}>この端末に保存されているデータを書き出します。</Text>
-            <Text style={styles.descriptionText}>写真は含まれません。</Text>
-            <Text style={styles.descriptionText}>自動バックアップは行われません。</Text>
-          </View>
-          <Button title="データを書き出す（JSON）" onPress={handleExportPress} color="#3A86FF" />
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -189,18 +168,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F2EFEA",
     padding: 12,
     borderRadius: 8,
-  },
-  descriptionBox: {
-    gap: 4,
-    padding: 12,
-    backgroundColor: "#F7F3EC",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E1DA",
-  },
-  descriptionText: {
-    fontSize: 14,
-    color: "#2E2A27",
   },
 });
 
