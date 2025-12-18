@@ -7,6 +7,8 @@ import React, {
   useState,
 } from "react";
 
+import * as FileSystem from "expo-file-system";
+
 import { v4 as uuid } from "uuid";
 
 import { Achievement, AchievementType, AchievementStore } from "@/models/dataModels";
@@ -39,6 +41,7 @@ export type SaveAchievementPayload = {
   type: AchievementType;
   title: string;
   memo?: string;
+  photoPath?: string | null; // null は「写真を外す」
 };
 
 // tag 変換: AppStateContext は growth/effort、Achievement UI は did/tried を使用するため相互変換する。
@@ -68,8 +71,9 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         type: fromAppStateTag(item.tag as "growth" | "effort"),
         title: item.title,
         memo: item.memo,
+        photoPath: item.photoPath ?? undefined,
         createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
+        updatedAt: item.updatedAt ?? item.createdAt,
       };
       if (!map[dateKey]) {
         map[dateKey] = [];
@@ -127,25 +131,48 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const normalizedDate = toIsoDateString(normalizeToUtcDate(payload.date));
       const now = new Date().toISOString();
       const recordId = payload.id ?? uuid();
+      const existing = activeAchievements.find((item) => item.id === recordId);
+      const previousPhotoPath = existing?.photoPath ?? undefined;
+
+      // photoPath: undefined=変更なし、string=更新、null=削除
+      const nextPhotoPath = payload.photoPath === null
+        ? undefined
+        : payload.photoPath ?? previousPhotoPath;
+
       const appStateRecord = {
         id: recordId,
         date: normalizedDate,
         tag: toAppStateTag(payload.type),
         title: payload.title,
         memo: payload.memo,
-        createdAt: now,
+        photoPath: nextPhotoPath,
+        createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       };
 
       setLoading(true);
       try {
-        const exists = activeAchievements.some((item) => item.id === recordId);
+        const exists = Boolean(existing);
+        // 既存 photoPath と違う場合は後で削除を試みる
+        const shouldDeletePreviousPhoto = Boolean(previousPhotoPath && previousPhotoPath !== nextPhotoPath);
+
         if (exists) {
           // 既存実績の更新。profileId ごとのストアを保つため updateAchievement を使用する。
           await updateAchievement(state.activeUserId, recordId, appStateRecord);
         } else {
           // 新規追加。必ず activeUserId に紐づける。
           await addAchievement(state.activeUserId, appStateRecord as any);
+        }
+
+        if (shouldDeletePreviousPhoto) {
+          try {
+            const info = await FileSystem.getInfoAsync(previousPhotoPath as string);
+            if (info.exists) {
+              await FileSystem.deleteAsync(previousPhotoPath as string, { idempotent: true });
+            }
+          } catch (cleanupError) {
+            console.warn("Failed to delete old photo", cleanupError);
+          }
         }
       } catch (err) {
         console.error("upsert failed:", err);
@@ -162,17 +189,29 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         console.warn("remove skipped: active user not set");
         return;
       }
+      const record = Object.values(store).flat().find((item) => item.id === id);
       setLoading(true);
       try {
         // profileId ごとに deleteAchievement を呼ぶことで他プロフィールのデータを触らない。
         await deleteAchievement(state.activeUserId, id);
+
+        if (record?.photoPath) {
+          try {
+            const info = await FileSystem.getInfoAsync(record.photoPath);
+            if (info.exists) {
+              await FileSystem.deleteAsync(record.photoPath, { idempotent: true });
+            }
+          } catch (err) {
+            console.warn("Failed to delete photo with record", err);
+          }
+        }
       } catch (err) {
         console.error("remove failed:", err);
       } finally {
         setLoading(false);
       }
     },
-    [deleteAchievement, state.activeUserId]
+    [deleteAchievement, state.activeUserId, store]
   );
 
   const value = useMemo(
