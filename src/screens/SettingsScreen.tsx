@@ -1,35 +1,18 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { Button, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback } from "react";
+import { Alert, Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { SettingsStackParamList } from "@/navigation";
 import { useAppState } from "@/state/AppStateContext";
-import { DEFAULT_SETTINGS, UserSettings } from "@/types/models";
-import { useSettings } from "@/state/SettingsContext";
+import { exportAppDataToJson } from "@/services/exportService";
 
-// 出生日・予定日はプロフィール編集でのみ扱うため、この画面では表示設定のみを編集する。
+// 出生日・予定日はプロフィール編集でのみ扱うため、この画面では表示設定を扱わない。
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
 
-const MONTH_LIMIT_OPTIONS: Array<UserSettings["showCorrectedUntilMonths"]> = [24, 36, null];
-
 const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { state, setActiveUser } = useAppState();
-  const { settings, updateSettings } = useSettings();
-  const [localSettings, setLocalSettings] = useState<UserSettings>({ ...DEFAULT_SETTINGS, ...settings });
-
-  const handleChange = useCallback(
-    async <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
-      // birthDate / dueDate はプロフィール側でのみ編集するため、ここでは表示設定だけを即時保存する
-      const next = { ...localSettings, [key]: value } as UserSettings;
-      setLocalSettings(next);
-      await updateSettings({ [key]: value } as Partial<UserSettings>);
-    },
-    [localSettings, updateSettings]
-  );
-
-  const canSave = useMemo(() => true, []);
 
   const handleClose = useCallback(() => {
     // プロフィール情報の検証は行わない（プロフィール編集に責務を限定するため）
@@ -42,6 +25,26 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
     },
     [setActiveUser]
   );
+
+  const handleExportPress = useCallback(() => {
+    Alert.alert(
+      "データを書き出します",
+      "この端末に保存されているデータをJSONファイルとして書き出します。\n写真は含まれません。",
+      [
+        { text: "キャンセル", style: "cancel" },
+        {
+          text: "OK",
+          onPress: async () => {
+            try {
+              await exportAppDataToJson({ profiles: state.users, achievements: state.achievements });
+            } catch (error) {
+              Alert.alert("エラー", "書き出しに失敗しました。");
+            }
+          },
+        },
+      ]
+    );
+  }, [state.achievements, state.users]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -81,53 +84,17 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>修正月齢の表示上限</Text>
-          <View style={styles.optionsRow}>
-            {MONTH_LIMIT_OPTIONS.map((option) => (
-              <View key={option === null ? "none" : option} style={styles.optionButton}>
-                <Button
-                  title={option === null ? "制限なし" : `${option}か月`}
-                  color={localSettings.showCorrectedUntilMonths === option ? "#3A86FF" : "#BABABA"}
-                  onPress={() => handleChange("showCorrectedUntilMonths", option)}
-                />
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>表示形式</Text>
-          <View style={styles.optionsRow}>
-            {["md", "ymd"].map((option) => (
-              <View key={option} style={styles.optionButton}>
-                <Button
-                  title={option === "md" ? "2m4d" : "1y2m4d"}
-                  color={localSettings.ageFormat === option ? "#3A86FF" : "#BABABA"}
-                  onPress={() => handleChange("ageFormat", option as UserSettings["ageFormat"])}
-                />
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>生まれてからの日数を表示</Text>
-          <View style={styles.toggleRow}>
-            <Switch
-              value={localSettings.showDaysSinceBirth}
-              onValueChange={(value) => handleChange("showDaysSinceBirth", value)}
-              trackColor={{ false: "#D7D3CC", true: "#3A86FF" }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-        </View>
-
         <Text style={styles.notice}>※出生情報はプロフィール編集画面でのみ入力できます。</Text>
         <Text style={styles.notice}>※このアプリの記録は、この端末の中だけに保存されます。</Text>
 
-        <View style={styles.footer}>
-          <Button title="保存して戻る" onPress={handleClose} disabled={!canSave} color="#3A86FF" />
+        <View style={styles.field}>
+          <Text style={styles.label}>データ管理</Text>
+          <View style={styles.descriptionBox}>
+            <Text style={styles.descriptionText}>この端末に保存されているデータを書き出します。</Text>
+            <Text style={styles.descriptionText}>写真は含まれません。</Text>
+            <Text style={styles.descriptionText}>自動バックアップは行われません。</Text>
+          </View>
+          <Button title="データを書き出す（JSON）" onPress={handleExportPress} color="#3A86FF" />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -159,18 +126,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     color: "#2E2A27",
-  },
-  optionsRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  optionButton: {
-    flex: 1,
-  },
-  toggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 4,
   },
   childList: {
     borderRadius: 8,
@@ -235,8 +190,17 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
   },
-  footer: {
-    marginTop: 12,
+  descriptionBox: {
+    gap: 4,
+    padding: 12,
+    backgroundColor: "#F7F3EC",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E5E1DA",
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: "#2E2A27",
   },
 });
 
