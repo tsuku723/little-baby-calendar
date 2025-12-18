@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Button, FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Button, FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -7,8 +7,6 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Achievement, AchievementType } from "@/models/dataModels";
 import { RecordListStackParamList, RootStackParamList, TabParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
-import { isIsoDateString } from "@/utils/dateUtils";
-import { normalizeSearchText } from "@/utils/text";
 
 type Props = NativeStackScreenProps<RecordListStackParamList, "AchievementList">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
@@ -23,43 +21,20 @@ const AchievementListScreen: React.FC<Props> = () => {
   const rootNavigation = useNavigation<RootNavigation>();
   const { loading, store, setSelectedDate } = useAchievements();
   const [filter, setFilter] = useState<Filter>("all");
-  const [searchText, setSearchText] = useState<string>("");
-  const [fromDate, setFromDate] = useState<string>("");
-  const [toDate, setToDate] = useState<string>("");
 
   const items = useMemo(() => {
     // AchievementStore = { "2025-02-05": [A], "2025-02-06": [B, C], ... }
     const allList: Achievement[] = Object.values(store).flat();
 
-    // 1) type フィルタ
-    const filteredByType = filter === "all" ? allList : allList.filter((a) => a.type === filter);
+    const filtered = filter === "all" ? allList : allList.filter((a) => a.type === filter);
 
-    // 2) フリーワード検索（title / memo 部分一致）
-    const normalizedQuery = normalizeSearchText(searchText);
-    const filteredBySearch = normalizedQuery
-      ? filteredByType.filter((item) => {
-          const normalizedTarget = normalizeSearchText(`${item.title} ${item.memo ?? ""}`);
-          return normalizedTarget.includes(normalizedQuery);
-        })
-      : filteredByType;
-
-    // 3) 期間フィルタ（日付は ISO 文字列比較で OK）
-    const validFrom = isIsoDateString(fromDate) ? fromDate : null;
-    const validTo = isIsoDateString(toDate) ? toDate : null;
-    const filteredByRange = filteredBySearch.filter((item) => {
-      if (validFrom && item.date < validFrom) return false;
-      if (validTo && item.date > validTo) return false;
-      return true;
-    });
-
-    // 4) ソート: date desc, createdAt desc
-    return filteredByRange
+    return filtered
       .slice()
       .sort((a, b) => {
-        if (a.date === b.date) return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+        if (a.date === b.date) return b.createdAt.localeCompare(a.createdAt);
         return b.date.localeCompare(a.date);
       });
-  }, [filter, fromDate, searchText, store, toDate]);
+  }, [filter, store]);
 
   const renderItem = ({ item }: { item: Achievement }) => (
     <TouchableOpacity
@@ -93,42 +68,6 @@ const AchievementListScreen: React.FC<Props> = () => {
           <Text style={styles.back}>← 戻る</Text>
         </TouchableOpacity>
         <Text style={styles.title}>できた・頑張った一覧</Text>
-      </View>
-      <View style={styles.searchArea}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="タイトル / メモを検索"
-          value={searchText}
-          onChangeText={(text) => setSearchText(text)}
-          accessibilityLabel="フリーワード検索"
-        />
-        <View style={styles.dateRangeRow}>
-          <View style={styles.dateField}>
-            <Text style={styles.rangeLabel}>From</Text>
-            <TextInput
-              style={styles.dateInput}
-              placeholder="YYYY-MM-DD"
-              value={fromDate}
-              onChangeText={(text) => setFromDate(text.trim().slice(0, 10))}
-              keyboardType="numbers-and-punctuation"
-              maxLength={10}
-              accessibilityLabel="開始日"
-            />
-          </View>
-          <View style={styles.dateField}>
-            <Text style={styles.rangeLabel}>To</Text>
-            <TextInput
-              style={styles.dateInput}
-              placeholder="YYYY-MM-DD"
-              value={toDate}
-              onChangeText={(text) => setToDate(text.trim().slice(0, 10))}
-              keyboardType="numbers-and-punctuation"
-              maxLength={10}
-              accessibilityLabel="終了日"
-            />
-          </View>
-        </View>
-        <Text style={styles.searchHint}>※ 英字小文字化 / 全角英数の半角化 / 空白整理のみ正規化します。</Text>
       </View>
       <View style={styles.filters}>
         <Button title="すべて" onPress={() => setFilter("all")} color={filter === "all" ? "#3A86FF" : "#BABABA"} />
@@ -170,47 +109,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 8,
-  },
-  searchArea: {
-    gap: 10,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E6E2DA",
-    padding: 12,
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: "#D7D3CC",
-    borderRadius: 10,
-    padding: 10,
-    fontSize: 15,
-    color: "#2E2A27",
-  },
-  dateRangeRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  dateField: {
-    flex: 1,
-    gap: 4,
-  },
-  rangeLabel: {
-    fontSize: 13,
-    color: "#6B665E",
-    fontWeight: "600",
-  },
-  dateInput: {
-    borderWidth: 1,
-    borderColor: "#D7D3CC",
-    borderRadius: 10,
-    padding: 10,
-    fontSize: 14,
-    color: "#2E2A27",
-  },
-  searchHint: {
-    fontSize: 12,
-    color: "#8A8277",
   },
   back: {
     fontSize: 16,

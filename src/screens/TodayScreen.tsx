@@ -1,11 +1,8 @@
 // TODO: This screen functions as a day-based view.
 // Renaming to DayScreen is deferred for future refactor.
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Button, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
-import * as MediaLibrary from "expo-media-library";
-import ViewShot from "react-native-view-shot";
+import React, { useMemo } from "react";
+import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -14,7 +11,6 @@ import { RootStackParamList, TabParamList, TodayStackParamList } from "@/navigat
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
 import { calculateAgeInfo, toIsoDateString } from "@/utils/dateUtils";
-import { ensureFileExistsAsync } from "@/utils/photo";
 
 type Props = NativeStackScreenProps<TodayStackParamList, "Today">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
@@ -24,8 +20,6 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
   // Hooks should remain at top level (no conditional hooks)
   const user = useActiveUser();
   const { byDay, loading: achievementsLoading, selectedDate, setSelectedDate } = useAchievements();
-  const viewShotRef = useRef<ViewShot | null>(null);
-  const [latestPhotoPath, setLatestPhotoPath] = useState<string | null>(null);
 
   // 表示対象日付、Navigator側互換のため selectedDay / isoDay 両方を見る
   const isoDay = useMemo(() => {
@@ -60,49 +54,8 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
   ]);
 
   const todaysAchievements = useMemo(() => byDay[isoDay] ?? [], [byDay, isoDay]);
-  const sortedAchievements = useMemo(
-    () => todaysAchievements.slice().sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)),
-    [todaysAchievements]
-  );
-  const topTitles = useMemo(() => sortedAchievements.slice(0, 10), [sortedAchievements]);
 
   const displayDate = isoDay.replace(/-/g, "/");
-
-  useEffect(() => {
-    let mounted = true;
-    const resolveLatestPhoto = async () => {
-      const photoCandidate = sortedAchievements.find((item) => item.photoPath);
-      const ensured = await ensureFileExistsAsync(photoCandidate?.photoPath ?? null);
-      if (!mounted) return;
-      setLatestPhotoPath(ensured);
-    };
-
-    void resolveLatestPhoto();
-    return () => {
-      mounted = false;
-    };
-  }, [sortedAchievements]);
-
-  const handleSaveImage = async () => {
-    try {
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert("権限を確認してください", "写真へのアクセスを許可すると画像を保存できます。");
-        return;
-      }
-
-      const uri = await viewShotRef.current?.capture?.();
-      if (!uri) {
-        throw new Error("capture failed");
-      }
-
-      await MediaLibrary.saveToLibraryAsync(uri);
-      Alert.alert("保存しました", "写真アプリに画像を保存しました。");
-    } catch (error) {
-      console.error("Failed to save day image", error);
-      Alert.alert("保存に失敗しました", "時間をおいて再度お試しください。");
-    }
-  };
 
   if (!user) {
     return (
@@ -136,10 +89,6 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
         <Text style={styles.title}>{user.name}</Text>
         <Text style={styles.date}>{displayDate}</Text>
 
-        <View style={styles.exportActionRow}>
-          <Button title="画像として保存" color="#3A86FF" onPress={handleSaveImage} />
-        </View>
-
         {ageInfo ? (
           <View style={styles.ageBlock}>
             <Text style={styles.ageText}>暦: {ageInfo.chronological.formatted}</Text>
@@ -168,27 +117,6 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
           )}
         </View>
       </ScrollView>
-      {/* 保存用の描画領域（画面には表示しない） */}
-      <View style={styles.hiddenRenderer} pointerEvents="none">
-        <ViewShot ref={viewShotRef} options={{ format: "jpg", quality: 0.9 }} style={styles.exportContainer}>
-          <View style={styles.exportContent} collapsable={false}>
-            <Text style={styles.exportTitle}>{displayDate}</Text>
-            {latestPhotoPath ? <Image source={{ uri: latestPhotoPath }} style={styles.exportPhoto} resizeMode="cover" /> : null}
-            <View style={styles.exportList}>
-              {topTitles.map((item) => (
-                <View key={item.id} style={styles.exportListItem}>
-                  <Text style={styles.exportListText} numberOfLines={2}>
-                    ・{item.title || "(タイトルなし)"}
-                  </Text>
-                </View>
-              ))}
-              {topTitles.length === 0 ? (
-                <Text style={styles.exportEmpty}>まだ記録がありません</Text>
-              ) : null}
-            </View>
-          </View>
-        </ViewShot>
-      </View>
       <TouchableOpacity
         style={styles.fab}
         accessibilityRole="button"
@@ -232,10 +160,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#2E2A27",
   },
-  exportActionRow: {
-    marginTop: 6,
-    alignSelf: "flex-start",
-  },
   section: {
     paddingVertical: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -272,49 +196,6 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     marginTop: 12,
-  },
-  hiddenRenderer: {
-    position: "absolute",
-    left: -9999,
-    top: -9999,
-  },
-  exportContainer: {
-    width: 720,
-    backgroundColor: "#FFFDF9",
-    padding: 24,
-    borderRadius: 16,
-  },
-  exportContent: {
-    gap: 12,
-  },
-  exportTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#2E2A27",
-  },
-  exportPhoto: {
-    width: "100%",
-    height: 360,
-    borderRadius: 14,
-    backgroundColor: "#F1EEE8",
-  },
-  exportList: {
-    gap: 6,
-  },
-  exportListItem: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#E5E1DA",
-    padding: 10,
-  },
-  exportListText: {
-    fontSize: 16,
-    color: "#2E2A27",
-  },
-  exportEmpty: {
-    fontSize: 15,
-    color: "#6B665E",
   },
   fab: {
     position: "absolute",
