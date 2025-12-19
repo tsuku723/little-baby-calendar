@@ -38,7 +38,11 @@ const saveJson = async (key: string, value: unknown): Promise<void> => {
   }
 };
 
-export const normalizeDateKey = (isoString: string): string =>
+const saveAchievements = async (store: AchievementStore): Promise<void> => {
+  await saveJson(STORAGE_KEYS.achievementStore, store);
+};
+
+const normalizeDateKey = (isoString: string): string =>
   toIsoDateString(normalizeToUtcDate(isoString));
 
 const normalizeDateKeySafe = (isoString: string): string | null => {
@@ -116,68 +120,8 @@ export const loadUserSettings = async (): Promise<UserSettings & { birthDate?: s
   return { ...DEFAULT_SETTINGS, ...parsed };
 };
 
-export const saveUserSettings = async (settings: UserSettings): Promise<void> => {
-  await saveJson(STORAGE_KEYS.userSettings, settings);
-};
-
 export const loadAchievements = async (): Promise<AchievementStore> => {
   const raw = await AsyncStorage.getItem(STORAGE_KEYS.achievementStore);
   const parsed = safeParse<unknown>(raw, DEFAULT_ACHIEVEMENTS);
   return migrateToMap(parsed);
-};
-
-export const saveAchievements = async (store: AchievementStore): Promise<void> => {
-  await saveJson(STORAGE_KEYS.achievementStore, store);
-};
-
-export const upsertAchievement = async (record: Achievement): Promise<Achievement> => {
-  const now = new Date().toISOString();
-  const normalized = ensureTimestamps(record, now);
-  try {
-    const key = normalizeDateKey(normalized.date);
-    const current = await loadAchievements();
-    const list = current[key] ? [...current[key]] : [];
-    const index = list.findIndex((a) => a.id === normalized.id);
-
-    if (index >= 0) {
-      const existing = list[index];
-      list.splice(index, 1, { ...existing, ...normalized, createdAt: existing.createdAt, updatedAt: now });
-    } else {
-      list.push({ ...normalized, createdAt: now, updatedAt: now });
-    }
-
-    const nextStore: AchievementStore = { ...current, [key]: list };
-    await saveAchievements(nextStore);
-    return { ...normalized, date: key };
-  } catch (error) {
-    console.error("upsertAchievement failed; record not persisted", error);
-    return normalized;
-  }
-};
-
-export const deleteAchievement = async (id: string, isoDate: string): Promise<void> => {
-  const key = normalizeDateKeySafe(isoDate);
-  if (!key) {
-    console.error("deleteAchievement skipped due to invalid date", isoDate);
-    return;
-  }
-  const current = await loadAchievements();
-  const list = current[key];
-  if (!list) return;
-
-  const nextList = list.filter((a) => a.id !== id);
-  const nextStore: AchievementStore = { ...current };
-  if (nextList.length > 0) {
-    nextStore[key] = nextList;
-  } else {
-    delete nextStore[key];
-  }
-  await saveAchievements(nextStore);
-};
-
-export const listAchievementsByDate = async (isoDate: string): Promise<Achievement[]> => {
-  const key = normalizeDateKeySafe(isoDate);
-  if (!key) return [];
-  const current = await loadAchievements();
-  return current[key] ?? [];
 };

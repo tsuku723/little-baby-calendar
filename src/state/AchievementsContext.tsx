@@ -7,11 +7,13 @@ import React, {
   useState,
 } from "react";
 
-import * as FileSystem from "expo-file-system";
-
 import { v4 as uuid } from "uuid";
 
 import { Achievement, AchievementType, AchievementStore } from "@/models/dataModels";
+import {
+  cleanupReplacedPhotoAsync,
+  removeAchievementPhotoAsync,
+} from "@/services/achievementService";
 import { useActiveUser, useAppState } from "@/state/AppStateContext";
 import { isIsoDateString, normalizeToUtcDate, toIsoDateString, todayIsoDate } from "@/utils/dateUtils";
 
@@ -153,8 +155,6 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setLoading(true);
       try {
         const exists = Boolean(existing);
-        // 既存 photoPath と違う場合は後で削除を試みる
-        const shouldDeletePreviousPhoto = Boolean(previousPhotoPath && previousPhotoPath !== nextPhotoPath);
 
         if (exists) {
           // 既存実績の更新。profileId ごとのストアを保つため updateAchievement を使用する。
@@ -164,16 +164,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
           await addAchievement(state.activeUserId, appStateRecord as any);
         }
 
-        if (shouldDeletePreviousPhoto) {
-          try {
-            const info = await FileSystem.getInfoAsync(previousPhotoPath as string);
-            if (info.exists) {
-              await FileSystem.deleteAsync(previousPhotoPath as string, { idempotent: true });
-            }
-          } catch (cleanupError) {
-            console.warn("Failed to delete old photo", cleanupError);
-          }
-        }
+        await cleanupReplacedPhotoAsync(previousPhotoPath, payload.photoPath);
       } catch (err) {
         console.error("upsert failed:", err);
       } finally {
@@ -196,14 +187,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
         await deleteAchievement(state.activeUserId, id);
 
         if (record?.photoPath) {
-          try {
-            const info = await FileSystem.getInfoAsync(record.photoPath);
-            if (info.exists) {
-              await FileSystem.deleteAsync(record.photoPath, { idempotent: true });
-            }
-          } catch (err) {
-            console.warn("Failed to delete photo with record", err);
-          }
+          await removeAchievementPhotoAsync(record.photoPath);
         }
       } catch (err) {
         console.error("remove failed:", err);
