@@ -20,7 +20,6 @@ export type RootStackParamList = {
 export type TodayStackParamList = {
   Today: { selectedDay?: string; isoDay?: string } | undefined;
   ProfileManager: undefined;
-  Setup: undefined;
 };
 
 export type CalendarStackParamList = {

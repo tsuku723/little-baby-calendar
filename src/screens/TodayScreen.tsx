@@ -111,7 +111,10 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
           <Text style={styles.title}>プロフィールを作成してください</Text>
           <Text style={styles.subtitle}>最初にプロフィール設定から始めましょう</Text>
           <View style={styles.buttonRow}>
-            <Button title="セットアップへ" onPress={() => stackNavigation.navigate("ProfileManager")} />
+            <Button
+              title="セットアップへ"
+              onPress={() => rootNavigation.navigate("SettingsStack", { screen: "ProfileManager" })}
+            />
           </View>
         </View>
       </SafeAreaView>
@@ -124,7 +127,10 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
         <View style={styles.container}>
           <Text style={styles.title}>{user.name}</Text>
           <Text style={styles.subtitle}>生年月日が未設定です</Text>
-          <Button title="プロフィールを編集" onPress={() => stackNavigation.navigate("ProfileManager")} />
+          <Button
+            title="プロフィールを編集"
+            onPress={() => rootNavigation.navigate("SettingsStack", { screen: "ProfileManager" })}
+          />
         </View>
       </SafeAreaView>
     );
