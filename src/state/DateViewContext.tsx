@@ -1,5 +1,7 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 
+import { toUtcDateOnly } from "@/utils/dateUtils";
+
 // DateViewContext is responsible for providing a shared "selectedDate" across
 // date-centric views (Today / Calendar / record-related screens). It deliberately
 // exposes a focused API to avoid leaking state management details and to allow
@@ -14,11 +16,9 @@ type DateViewContextValue = {
 const DateViewContext = createContext<DateViewContextValue | undefined>(undefined);
 
 const normalizeToStartOfDay = (date: Date): Date => {
-  // Normalize to the start of the day (00:00) to avoid time component drift when
+  // Normalize to the start of the day (00:00 UTC) to avoid time component drift when
   // comparing or highlighting dates (e.g., "today" checks in Calendar cells).
-  const normalized = new Date(date);
-  normalized.setHours(0, 0, 0, 0);
-  return normalized;
+  return toUtcDateOnly(date);
 };
 
 export const DateViewProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -31,7 +31,7 @@ export const DateViewProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const selectDateFromCalendar = useCallback((date: Date) => {
     // Calendar is the single source of date selection; wrap the setter to keep
     // the public API intentional and narrow.
-    setSelectedDate(new Date(date));
+    setSelectedDate(normalizeToStartOfDay(date));
   }, []);
 
   const resetToToday = useCallback(() => {

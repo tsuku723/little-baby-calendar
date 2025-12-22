@@ -9,7 +9,8 @@ import MonthHeader from "@/components/MonthHeader";
 import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useActiveUser, useAppState } from "@/state/AppStateContext";
-import { buildCalendarMonthView, monthKey, toUtcDateOnly } from "@/utils/dateUtils";
+import { useDateViewContext } from "@/state/DateViewContext";
+import { buildCalendarMonthView, monthKey, normalizeToUtcDate, toUtcDateOnly } from "@/utils/dateUtils";
 
 type Props = NativeStackScreenProps<CalendarStackParamList, "Calendar">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
@@ -20,26 +21,25 @@ const CalendarScreen: React.FC<Props> = ({ route }) => {
   const rootNavigation = useNavigation<RootNavigation>();
   const user = useActiveUser();
   const { updateUser } = useAppState();
-  const { monthCounts, loadMonth, setSelectedDate } = useAchievements();
+  const { monthCounts, loadMonth } = useAchievements();
+  const { selectDateFromCalendar } = useDateViewContext();
   const [anchorDate, setAnchorDate] = useState<Date>(() => {
     const initialDay = route.params?.initialSelectedDay;
     if (initialDay) {
-      const [y, m] = initialDay.split("-").map(Number);
-      return new Date(Date.UTC(y, m - 1, 1));
+      const normalized = normalizeToUtcDate(initialDay);
+      if (!Number.isNaN(normalized.getTime())) {
+        return new Date(Date.UTC(normalized.getUTCFullYear(), normalized.getUTCMonth(), 1));
+      }
     }
     if (user?.settings.lastViewedMonth) {
-      const [y, m] = user.settings.lastViewedMonth.split("-").map(Number);
-      return new Date(Date.UTC(y, m - 1, 1));
+      const normalized = normalizeToUtcDate(user.settings.lastViewedMonth);
+      if (!Number.isNaN(normalized.getTime())) {
+        return new Date(Date.UTC(normalized.getUTCFullYear(), normalized.getUTCMonth(), 1));
+      }
     }
     return toUtcDateOnly(new Date());
   });
   const monthKeyValue = monthKey(anchorDate);
-
-  useEffect(() => {
-    if (route.params?.initialSelectedDay) {
-      setSelectedDate(route.params.initialSelectedDay);
-    }
-  }, [route.params?.initialSelectedDay, setSelectedDate]);
 
   useEffect(() => {
     void loadMonth(monthKeyValue);
@@ -84,8 +84,11 @@ const CalendarScreen: React.FC<Props> = ({ route }) => {
   const monthLabel = `${anchorDate.getUTCFullYear()}/${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}`;
 
   const handlePressDay = (iso: string) => {
-    setSelectedDate(iso);
-    rootNavigation.navigate("TodayStack", { screen: "Today", params: { selectedDay: iso } });
+    const normalized = normalizeToUtcDate(iso);
+    if (Number.isNaN(normalized.getTime())) return;
+
+    selectDateFromCalendar(normalized);
+    rootNavigation.navigate("TodayStack", { screen: "Today" });
   };
 
   return (

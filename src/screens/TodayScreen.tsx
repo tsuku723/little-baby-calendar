@@ -13,29 +13,23 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList, TabParamList, TodayStackParamList } from "@/navigation";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
+import { useDateViewContext } from "@/state/DateViewContext";
 import { calculateAgeInfo, toIsoDateString } from "@/utils/dateUtils";
 import { ensureFileExistsAsync } from "@/utils/photo";
 
 type Props = NativeStackScreenProps<TodayStackParamList, "Today">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
-const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) => {
+const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
   const rootNavigation = useNavigation<RootNavigation>();
   // Hooks should remain at top level (no conditional hooks)
   const user = useActiveUser();
-  const { byDay, loading: achievementsLoading, selectedDate, setSelectedDate } = useAchievements();
+  const { byDay, loading: achievementsLoading } = useAchievements();
+  const { selectedDate } = useDateViewContext();
   const viewShotRef = useRef<ViewShot | null>(null);
   const [latestPhotoPath, setLatestPhotoPath] = useState<string | null>(null);
 
-  // 表示対象日付、Navigator側互換のため selectedDay / isoDay 両方を見る
-  const isoDay = useMemo(() => {
-    const incoming = route.params?.isoDay ?? route.params?.selectedDay;
-    if (incoming) {
-      setSelectedDate(incoming);
-      return incoming;
-    }
-    return selectedDate || toIsoDateString(new Date());
-  }, [route.params?.isoDay, route.params?.selectedDay, selectedDate, setSelectedDate]);
+  const isoDay = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
 
   const ageInfo = useMemo(() => {
     if (!user || !user.birthDate) return null;

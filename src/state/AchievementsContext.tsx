@@ -15,7 +15,7 @@ import {
   removeAchievementPhotoAsync,
 } from "@/services/achievementService";
 import { useActiveUser, useAppState } from "@/state/AppStateContext";
-import { isIsoDateString, normalizeToUtcDate, toIsoDateString, todayIsoDate } from "@/utils/dateUtils";
+import { isIsoDateString, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 
 // AchievementsContext は AppStateContext の activeUserId を唯一の正とする。
 // プロフィールごとに実績を分離するため、storage.ts を直接参照せず AppStateContext 経由で読書きする。
@@ -25,8 +25,6 @@ interface AchievementsState {
   store: AchievementStore;
   byDay: Record<string, Achievement[]>;
   monthCounts: Record<string, Record<string, number>>;
-  selectedDate: string;
-  setSelectedDate: (isoDate: string) => void;
 
   loadDay: (isoDay: string) => Promise<void>;
   loadMonth: (yyyymm: string) => Promise<void>;
@@ -54,7 +52,6 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { state, addAchievement, updateAchievement, deleteAchievement } = useAppState();
   const user = useActiveUser();
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedDate, setSelectedDateState] = useState<string>(() => todayIsoDate());
 
   // activeUserId ごとの実績だけを参照する。ほかのプロフィールのデータにはアクセスしない。
   const activeAchievements = useMemo(() => {
@@ -96,19 +93,6 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     });
     return result;
   }, [store]);
-
-  const setSelectedDate = useCallback((isoDate: string) => {
-    if (!isIsoDateString(isoDate)) {
-      console.warn("setSelectedDate: invalid isoDate", isoDate);
-      return;
-    }
-    const normalizedDate = normalizeToUtcDate(isoDate);
-    if (Number.isNaN(normalizedDate.getTime())) {
-      console.warn("setSelectedDate: invalid date value", isoDate);
-      return;
-    }
-    setSelectedDateState(toIsoDateString(normalizedDate));
-  }, []);
 
   const loadDay = useCallback(async (_isoDay: string) => {
     // AppStateContext が単一の真実のソースなので再読込は不要（profileId ごとに分離済み）。
@@ -204,14 +188,12 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       store,
       byDay,
       monthCounts,
-      selectedDate,
-      setSelectedDate,
       loadDay,
       loadMonth,
       upsert,
       remove,
     }),
-    [loading, store, byDay, monthCounts, selectedDate, setSelectedDate, loadDay, loadMonth, upsert, remove]
+    [loading, store, byDay, monthCounts, loadDay, loadMonth, upsert, remove]
   );
 
   return <AchievementsContext.Provider value={value}>{children}</AchievementsContext.Provider>;

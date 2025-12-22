@@ -7,8 +7,9 @@ import { RootStackParamList } from "@/navigation";
 import { AchievementType } from "@/models/dataModels";
 import { useActiveUser } from "@/state/AppStateContext";
 import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
+import { useDateViewContext } from "@/state/DateViewContext";
 import { clampComment, remainingChars } from "@/utils/text";
-import { normalizeToUtcDate, toIsoDateString, todayIsoDate } from "@/utils/dateUtils";
+import { normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync } from "@/utils/photo";
 import { RECORD_TITLE_CANDIDATES, RecordType } from "./recordTitleCandidates";
 
@@ -25,6 +26,7 @@ const toAchievementType = (t: RecordType): AchievementType => (t === "effort" ? 
 const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const user = useActiveUser();
   const { store, upsert, remove } = useAchievements();
+  const { selectedDate, today } = useDateViewContext();
 
   const recordId = route.params?.recordId;
   const preferredDate = route.params?.isoDate;
@@ -39,7 +41,9 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     return all.find((item) => item.id === recordId) ?? null;
   }, [preferredDate, recordId, store]);
 
-  const [dateInput, setDateInput] = useState<string>(preferredDate ?? todayIsoDate());
+  const selectedDateIso = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
+  const todayIso = useMemo(() => toIsoDateString(today), [today]);
+  const [dateInput, setDateInput] = useState<string>(preferredDate ?? selectedDateIso);
   const [recordType, setRecordType] = useState<RecordType>(() =>
     editingRecord ? toRecordType(editingRecord.type) : "growth"
   );
@@ -67,8 +71,10 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       setContent("");
       setPhotoPath(null);
       setHasRemovedPhoto(false);
+    } else {
+      setDateInput(selectedDateIso);
     }
-  }, [editingRecord, preferredDate]);
+  }, [editingRecord, preferredDate, selectedDateIso]);
 
   // 編集対象の photoPath が実ファイルとして存在するかを確認する
   useEffect(() => {
@@ -257,7 +263,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
               keyboardType="numbers-and-punctuation"
               maxLength={10}
             />
-            <TouchableOpacity style={styles.todayButton} onPress={() => setDateInput(todayIsoDate())}>
+            <TouchableOpacity style={styles.todayButton} onPress={() => setDateInput(todayIso)}>
               <Text style={styles.todayText}>今日</Text>
             </TouchableOpacity>
           </View>
