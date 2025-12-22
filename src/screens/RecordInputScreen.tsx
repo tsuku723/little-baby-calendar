@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Image, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { RootStackParamList } from "@/navigation";
@@ -44,6 +46,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const selectedDateIso = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
   const todayIso = useMemo(() => toIsoDateString(today), [today]);
   const [dateInput, setDateInput] = useState<string>(preferredDate ?? selectedDateIso);
+  const [isDatePickerVisible, setDatePickerVisible] = useState<boolean>(false);
   const [recordType, setRecordType] = useState<RecordType>(() =>
     editingRecord ? toRecordType(editingRecord.type) : "growth"
   );
@@ -98,6 +101,27 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const closeTitleSheet = () => setTitleSheetVisible(false);
+
+  const handleOpenDatePicker = () => setDatePickerVisible(true);
+
+  const currentDateForPicker = useMemo(() => {
+    const normalized = normalizeToUtcDate(dateInput);
+    if (Number.isNaN(normalized.getTime())) {
+      return selectedDate;
+    }
+    return normalized;
+  }, [dateInput, selectedDate]);
+
+  const handleDateChange = (event: DateTimePickerEvent, pickedDate?: Date) => {
+    if (event.type === "dismissed") {
+      setDatePickerVisible(false);
+      return;
+    }
+    if (pickedDate) {
+      setDateInput(toIsoDateString(pickedDate));
+    }
+    setDatePickerVisible(false);
+  };
 
   // 候補選択時のハンドリング（種別の自動切り替えは growth → effort のみ）
   const handleSelectCandidate = (candidate: string, candidateType: RecordType) => {
@@ -252,22 +276,21 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
         <View style={styles.field}>
           <Text style={styles.label}>日付</Text>
-          {/* 外部ライブラリを増やさず、ISO 文字列入力で簡易 DatePicker としている */}
           <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.flex1]}
-              value={dateInput}
-              onChangeText={(text) => setDateInput(text.trim().slice(0, 10))}
-              placeholder="YYYY-MM-DD"
-              accessibilityLabel="日付"
-              keyboardType="numbers-and-punctuation"
-              maxLength={10}
-            />
+            <Pressable
+              style={[styles.input, styles.flex1, styles.dateInputButton]}
+              onPress={handleOpenDatePicker}
+              accessibilityRole="button"
+              accessibilityLabel="日付を選択"
+            >
+              <Text style={styles.dateInputText}>{dateInput}</Text>
+              <Text style={styles.dateInputHint}>タップして日付を選択</Text>
+            </Pressable>
             <TouchableOpacity style={styles.todayButton} onPress={() => setDateInput(todayIso)}>
               <Text style={styles.todayText}>今日</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.helper}>YYYY-MM-DD 形式で入力してください。</Text>
+          <Text style={styles.helper}>DatePicker で日付を選択してください。</Text>
         </View>
 
         <View style={styles.field}>
@@ -337,6 +360,16 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         ) : null}
       </ScrollView>
+
+      {isDatePickerVisible ? (
+        <DateTimePicker
+          value={currentDateForPicker}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={handleDateChange}
+          maximumDate={today}
+        />
+      ) : null}
 
       <Modal
         animationType="slide"
@@ -478,6 +511,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     fontSize: 16,
     color: "#2E2A27",
+  },
+  dateInputButton: {
+    gap: 4,
+  },
+  dateInputText: {
+    fontSize: 16,
+    color: "#2E2A27",
+    fontWeight: "700",
+  },
+  dateInputHint: {
+    fontSize: 12,
+    color: "#6B665E",
   },
   textarea: {
     minHeight: 140,
