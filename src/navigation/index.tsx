@@ -2,6 +2,7 @@ import React from "react";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 
 import RootNavigator from "./RootNavigator";
+import { DateViewProvider } from "@/state/DateViewContext";
 
 const navTheme = {
   ...DefaultTheme,
@@ -16,7 +17,9 @@ const navTheme = {
 const Navigator: React.FC = () => {
   return (
     <NavigationContainer theme={navTheme}>
-      <RootNavigator />
+      <DateViewProvider>
+        <RootNavigator />
+      </DateViewProvider>
     </NavigationContainer>
   );
 };
