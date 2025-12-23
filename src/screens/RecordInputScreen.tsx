@@ -25,6 +25,7 @@ const TYPE_OPTIONS: { value: RecordType; label: string; description: string }[] 
 const toRecordType = (t: AchievementType): RecordType => (t === "tried" ? "effort" : "growth");
 const toAchievementType = (t: RecordType): AchievementType => (t === "effort" ? "tried" : "did");
 
+
 const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const user = useActiveUser();
   const { store, upsert, remove } = useAchievements();
@@ -58,6 +59,8 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const [titleCandidateTab, setTitleCandidateTab] = useState<RecordType>(() =>
     editingRecord ? toRecordType(editingRecord.type) : "growth"
   );
+
+
 
   // 編集対象が変わったらフォームを最新の値に合わせる
   useEffect(() => {
@@ -112,16 +115,11 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     return normalized;
   }, [dateInput, selectedDate]);
 
-  const handleDateChange = (event: DateTimePickerEvent, pickedDate?: Date) => {
-    if (event.type === "dismissed") {
-      setDatePickerVisible(false);
-      return;
-    }
-    if (pickedDate) {
-      setDateInput(toIsoDateString(pickedDate));
-    }
-    setDatePickerVisible(false);
-  };
+    const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
+  if (!pickedDate) return;
+  setDateInput(toIsoDateString(pickedDate));
+};
+
 
   // 候補選択時のハンドリング（種別の自動切り替えは growth → effort のみ）
   const handleSelectCandidate = (candidate: string, candidateType: RecordType) => {
@@ -291,6 +289,35 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
           <Text style={styles.helper}>DatePicker で日付を選択してください。</Text>
+          {isDatePickerVisible && (
+  <Modal transparent animationType="slide">
+    <View style={styles.pickerOverlay}>
+      <View style={styles.pickerContainer}>
+        {/* ヘッダー */}
+        <View style={styles.pickerHeader}>
+          <TouchableOpacity onPress={() => setDatePickerVisible(false)}>
+            <Text style={styles.pickerCancel}>キャンセル</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setDatePickerVisible(false)}>
+            <Text style={styles.pickerDone}>完了</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* iOS inline DatePicker */}
+        <DateTimePicker
+          value={currentDateForPicker}
+          mode="date"
+          display="inline"
+          locale="ja-JP"
+          maximumDate={today}
+          onChange={handleDateChange}
+          style={{ height: 320 }}
+        />
+      </View>
+    </View>
+  </Modal>
+)}
+
         </View>
 
         <View style={styles.field}>
@@ -361,15 +388,16 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
       </ScrollView>
 
-      {isDatePickerVisible ? (
-        <DateTimePicker
-          value={currentDateForPicker}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={handleDateChange}
-          maximumDate={today}
-        />
-      ) : null}
+  <Pressable
+  style={[styles.input, styles.flex1, styles.dateInputButton]}
+  onPress={() => setDatePickerVisible(true)}
+  accessibilityRole="button"
+>
+  <Text style={styles.dateInputText}>{dateInput}</Text>
+  <Text style={styles.dateInputHint}>タップして日付を選択</Text>
+</Pressable>
+
+
 
       <Modal
         animationType="slide"
@@ -653,6 +681,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#2E2A27",
   },
+  pickerOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.3)",
+  justifyContent: "flex-end",
+},
+pickerContainer: {
+  backgroundColor: "#fff",
+  borderTopLeftRadius: 16,
+  borderTopRightRadius: 16,
+  paddingBottom: 24,
+},
+pickerHeader: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  padding: 16,
+},
+pickerCancel: {
+  fontSize: 16,
+  color: "#6B665E",
+},
+pickerDone: {
+  fontSize: 16,
+  fontWeight: "700",
+  color: "#3A86FF",
+},
+
+  
 });
 
 export default RecordInputScreen;

@@ -160,10 +160,15 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
             <Text style={styles.empty}>まだ記録はありません</Text>
           ) : (
             todaysAchievements.map((item) => (
-              <View key={item.id} style={styles.card}>
+              <TouchableOpacity
+                key={item.id}
+                style={styles.card}
+                onPress={() => rootNavigation.navigate("RecordDetail", { recordId: item.id })}
+                accessibilityRole="button"
+              >
                 <Text style={styles.cardTitle}>{item.title || "(タイトルなし)"}</Text>
                 <Text style={styles.cardMeta}>{item.date}</Text>
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </View>

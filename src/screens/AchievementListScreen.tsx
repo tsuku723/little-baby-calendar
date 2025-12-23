@@ -21,7 +21,7 @@ const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
 
 const AchievementListScreen: React.FC<Props> = () => {
   const rootNavigation = useNavigation<RootNavigation>();
-  const { loading, store, setSelectedDate } = useAchievements();
+  const { loading, store } = useAchievements();
   const [filter, setFilter] = useState<Filter>("all");
   const [searchText, setSearchText] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
@@ -65,8 +65,7 @@ const AchievementListScreen: React.FC<Props> = () => {
     <TouchableOpacity
       style={styles.row}
       onPress={() => {
-        setSelectedDate(item.date);
-        rootNavigation.navigate("RecordDetail", { recordId: item.id, isoDate: item.date });
+        rootNavigation.navigate("RecordDetail", { recordId: item.id });
       }}
       accessibilityRole="button"
     >
