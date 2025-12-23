@@ -13,35 +13,29 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList, TabParamList, TodayStackParamList } from "@/navigation";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
+import { useDateViewContext } from "@/state/DateViewContext";
 import { calculateAgeInfo, toIsoDateString } from "@/utils/dateUtils";
 import { ensureFileExistsAsync } from "@/utils/photo";
 
 type Props = NativeStackScreenProps<TodayStackParamList, "Today">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
-const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) => {
+const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
   const rootNavigation = useNavigation<RootNavigation>();
   // Hooks should remain at top level (no conditional hooks)
   const user = useActiveUser();
-  const { byDay, loading: achievementsLoading, selectedDate, setSelectedDate } = useAchievements();
+  const { byDay, loading: achievementsLoading } = useAchievements();
+  const { selectedDate } = useDateViewContext();
   const viewShotRef = useRef<ViewShot | null>(null);
   const [latestPhotoPath, setLatestPhotoPath] = useState<string | null>(null);
 
-  // 表示対象日付、Navigator側互換のため selectedDay / isoDay 両方を見る
-  const isoDay = useMemo(() => {
-    const incoming = route.params?.isoDay ?? route.params?.selectedDay;
-    if (incoming) {
-      setSelectedDate(incoming);
-      return incoming;
-    }
-    return selectedDate || toIsoDateString(new Date());
-  }, [route.params?.isoDay, route.params?.selectedDay, selectedDate, setSelectedDate]);
+  const selectedDateIso = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
 
   const ageInfo = useMemo(() => {
     if (!user || !user.birthDate) return null;
     try {
       return calculateAgeInfo({
-        targetDate: isoDay,
+        targetDate: selectedDateIso,
         birthDate: user.birthDate,
         dueDate: user.dueDate,
         showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
@@ -52,21 +46,21 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
     }
   }, [
     user,
-    isoDay,
+    selectedDateIso,
     user?.birthDate,
     user?.dueDate,
     user?.settings.showCorrectedUntilMonths,
     user?.settings.ageFormat,
   ]);
 
-  const todaysAchievements = useMemo(() => byDay[isoDay] ?? [], [byDay, isoDay]);
+  const todaysAchievements = useMemo(() => byDay[selectedDateIso] ?? [], [byDay, selectedDateIso]);
   const sortedAchievements = useMemo(
     () => todaysAchievements.slice().sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)),
     [todaysAchievements]
   );
   const topTitles = useMemo(() => sortedAchievements.slice(0, 10), [sortedAchievements]);
 
-  const displayDate = isoDay.replace(/-/g, "/");
+  const displayDate = selectedDateIso.replace(/-/g, "/");
 
   useEffect(() => {
     let mounted = true;
@@ -166,10 +160,15 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
             <Text style={styles.empty}>まだ記録はありません</Text>
           ) : (
             todaysAchievements.map((item) => (
-              <View key={item.id} style={styles.card}>
+              <TouchableOpacity
+                key={item.id}
+                style={styles.card}
+                onPress={() => rootNavigation.navigate("RecordDetail", { recordId: item.id })}
+                accessibilityRole="button"
+              >
                 <Text style={styles.cardTitle}>{item.title || "(タイトルなし)"}</Text>
                 <Text style={styles.cardMeta}>{item.date}</Text>
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </View>

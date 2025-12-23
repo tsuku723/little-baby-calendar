@@ -13,7 +13,7 @@ const typeLabel = (type: "did" | "tried"): string => (type === "did" ? "成長" 
 
 const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { recordId, isoDate } = route.params ?? {};
-  const { store, setSelectedDate } = useAchievements();
+  const { store } = useAchievements();
   const [photoPath, setPhotoPath] = useState<string | null>(null);
 
   const record = useMemo(() => {
@@ -30,10 +30,8 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   useEffect(() => {
     if (!record) {
       navigation.goBack();
-    } else {
-      setSelectedDate(record.date);
     }
-  }, [navigation, record, setSelectedDate]);
+  }, [navigation, record]);
 
   useEffect(() => {
     let mounted = true;
