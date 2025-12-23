@@ -77,6 +77,10 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
     };
   }, [sortedAchievements]);
 
+  const handleOpenCalendar = () => {
+    rootNavigation.navigate("CalendarStack", { screen: "Calendar" });
+  };
+
   const handleSaveImage = async () => {
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
@@ -135,6 +139,9 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>{user.name}</Text>
         <Text style={styles.date}>{displayDate}</Text>
+        <View style={styles.actionRow}>
+          <Button title="カレンダー" color="#3A86FF" onPress={handleOpenCalendar} />
+        </View>
 
         <View style={styles.exportActionRow}>
           <Button title="画像として保存" color="#3A86FF" onPress={handleSaveImage} />
@@ -236,6 +243,9 @@ const styles = StyleSheet.create({
   ageText: {
     fontSize: 16,
     color: "#2E2A27",
+  },
+  actionRow: {
+    alignSelf: "flex-start",
   },
   exportActionRow: {
     marginTop: 6,
