@@ -18,12 +18,12 @@ export type RootStackParamList = {
 };
 
 export type TodayStackParamList = {
-  Today: { selectedDay?: string; isoDay?: string } | undefined;
+  Today: undefined;
   ProfileManager: undefined;
 };
 
 export type CalendarStackParamList = {
-  Calendar: { initialSelectedDay?: string } | undefined;
+  Calendar: undefined;
 };
 
 export type RecordListStackParamList = {

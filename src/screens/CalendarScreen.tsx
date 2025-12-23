@@ -17,20 +17,13 @@ type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
 const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
-const CalendarScreen: React.FC<Props> = ({ route }) => {
+const CalendarScreen: React.FC<Props> = () => {
   const rootNavigation = useNavigation<RootNavigation>();
   const user = useActiveUser();
   const { updateUser } = useAppState();
   const { monthCounts, loadMonth } = useAchievements();
   const { selectDateFromCalendar } = useDateViewContext();
   const [anchorDate, setAnchorDate] = useState<Date>(() => {
-    const initialDay = route.params?.initialSelectedDay;
-    if (initialDay) {
-      const normalized = normalizeToUtcDate(initialDay);
-      if (!Number.isNaN(normalized.getTime())) {
-        return new Date(Date.UTC(normalized.getUTCFullYear(), normalized.getUTCMonth(), 1));
-      }
-    }
     if (user?.settings.lastViewedMonth) {
       const normalized = normalizeToUtcDate(user.settings.lastViewedMonth);
       if (!Number.isNaN(normalized.getTime())) {

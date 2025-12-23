@@ -29,13 +29,13 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
   const viewShotRef = useRef<ViewShot | null>(null);
   const [latestPhotoPath, setLatestPhotoPath] = useState<string | null>(null);
 
-  const isoDay = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
+  const selectedDateIso = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
 
   const ageInfo = useMemo(() => {
     if (!user || !user.birthDate) return null;
     try {
       return calculateAgeInfo({
-        targetDate: isoDay,
+        targetDate: selectedDateIso,
         birthDate: user.birthDate,
         dueDate: user.dueDate,
         showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
@@ -46,21 +46,21 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
     }
   }, [
     user,
-    isoDay,
+    selectedDateIso,
     user?.birthDate,
     user?.dueDate,
     user?.settings.showCorrectedUntilMonths,
     user?.settings.ageFormat,
   ]);
 
-  const todaysAchievements = useMemo(() => byDay[isoDay] ?? [], [byDay, isoDay]);
+  const todaysAchievements = useMemo(() => byDay[selectedDateIso] ?? [], [byDay, selectedDateIso]);
   const sortedAchievements = useMemo(
     () => todaysAchievements.slice().sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)),
     [todaysAchievements]
   );
   const topTitles = useMemo(() => sortedAchievements.slice(0, 10), [sortedAchievements]);
 
-  const displayDate = isoDay.replace(/-/g, "/");
+  const displayDate = selectedDateIso.replace(/-/g, "/");
 
   useEffect(() => {
     let mounted = true;
