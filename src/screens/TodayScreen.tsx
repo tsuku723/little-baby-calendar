@@ -1,7 +1,7 @@
 // TODO: This screen functions as a day-based view.
 // Renaming to DayScreen is deferred for future refactor.
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Alert, Button, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import * as MediaLibrary from "expo-media-library";
@@ -28,6 +28,8 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
   const { selectedDate } = useDateViewContext();
   const viewShotRef = useRef<ViewShot | null>(null);
   const [latestPhotoPath, setLatestPhotoPath] = useState<string | null>(null);
+
+  const shouldHideTabBar = !user || !user.birthDate;
 
   const selectedDateIso = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
 
@@ -61,6 +63,18 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
   const topTitles = useMemo(() => sortedAchievements.slice(0, 10), [sortedAchievements]);
 
   const displayDate = selectedDateIso.replace(/-/g, "/");
+
+  useLayoutEffect(() => {
+    const parent = _stackNavigation.getParent();
+    if (!parent) return;
+    if (shouldHideTabBar) {
+      parent.setOptions({ tabBarStyle: { display: "none" } });
+      return () => {
+        parent.setOptions({ tabBarStyle: { display: "flex" } });
+      };
+    }
+    parent.setOptions({ tabBarStyle: { display: "flex" } });
+  }, [_stackNavigation, shouldHideTabBar]);
 
   useEffect(() => {
     let mounted = true;

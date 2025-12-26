@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -11,6 +11,14 @@ type Props = NativeStackScreenProps<SettingsStackParamList, "ProfileManager">;
 const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
   const { state } = useAppState();
   const { users } = state;
+
+  useLayoutEffect(() => {
+    const parent = navigation.getParent();
+    parent?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => {
+      parent?.setOptions({ tabBarStyle: { display: "flex" } });
+    };
+  }, [navigation]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
