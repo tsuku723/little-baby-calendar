@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -15,6 +15,7 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { recordId, isoDate } = route.params ?? {};
   const { store } = useAchievements();
   const [photoPath, setPhotoPath] = useState<string | null>(null);
+  const hadRecordRef = useRef(false);
 
   const record = useMemo(() => {
     const scoped = isoDate ? store[isoDate] ?? [] : [];
@@ -26,9 +27,15 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     return all.find((item) => item.id === recordId) ?? null;
   }, [isoDate, recordId, store]);
 
-  // 記録が見つからない場合は自動で戻る（削除後の戻り先を考慮）
   useEffect(() => {
-    if (!record) {
+    if (record) {
+      hadRecordRef.current = true;
+    }
+  }, [record]);
+
+  // 初期表示で記録が見つからない場合のみ戻る
+  useEffect(() => {
+    if (!record && !hadRecordRef.current) {
       navigation.goBack();
     }
   }, [navigation, record]);
@@ -47,7 +54,15 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [record?.photoPath]);
 
   if (!record) {
-    return null;
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <Text style={styles.title}>記録が見つかりません</Text>
+          <Text style={styles.note}>この記録は削除された可能性があります。</Text>
+          <Button title="戻る" color="#6B665E" onPress={() => navigation.goBack()} />
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -128,6 +143,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     justifyContent: "space-between",
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    padding: 24,
+  },
+  note: {
+    fontSize: 14,
+    color: "#6B665E",
+    textAlign: "center",
   },
   photo: {
     width: "100%",
