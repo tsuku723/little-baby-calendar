@@ -81,7 +81,7 @@ const CalendarScreen: React.FC<Props> = () => {
     if (Number.isNaN(normalized.getTime())) return;
 
     selectDateFromCalendar(normalized);
-    rootNavigation.navigate("TodayStack", { screen: "Today" });
+    rootNavigation.goBack();
   };
 
   return (
@@ -94,8 +94,8 @@ const CalendarScreen: React.FC<Props> = () => {
             onNext={handleNext}
             onToday={handleToday}
             // Settings は「戻る」前提のスタック画面なので navigate で積む（replace は使用しない）
-            onOpenSettings={() => rootNavigation.navigate("SettingsStack")}
-            onOpenList={() => rootNavigation.navigate("RecordListStack")}
+            onOpenSettings={() => rootNavigation.goBack()}
+            onOpenList={() => rootNavigation.goBack()}
           />
           <View style={styles.weekRow}>
             {WEEK_LABELS.map((label) => (
