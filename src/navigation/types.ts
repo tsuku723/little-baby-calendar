@@ -3,6 +3,7 @@ import { NavigatorScreenParams } from "@react-navigation/native";
 // Navigation 構成の型定義。Phase 1 ベースを維持しつつ段階的に拡張する。
 export type RootStackParamList = {
   MainTabs: undefined;
+  CalendarStack: NavigatorScreenParams<CalendarStackParamList>;
   RecordInput:
     | {
         recordId?: string; // 編集時のみ使用
@@ -42,7 +43,6 @@ export type SettingsStackParamList = {
 
 export type TabParamList = {
   TodayStack: NavigatorScreenParams<TodayStackParamList>;
-  CalendarStack: NavigatorScreenParams<CalendarStackParamList>;
   RecordListStack: NavigatorScreenParams<RecordListStackParamList>;
   SettingsStack: NavigatorScreenParams<SettingsStackParamList>;
 };
