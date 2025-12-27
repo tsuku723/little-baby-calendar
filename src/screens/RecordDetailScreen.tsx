@@ -9,8 +9,6 @@ import { ensureFileExistsAsync } from "@/utils/photo";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RecordDetail">;
 
-const typeLabel = (type: "did" | "tried"): string => (type === "did" ? "成長" : "頑張った");
-
 const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const { recordId, isoDate, from } = route.params ?? {};
   const { store } = useAchievements();
@@ -62,11 +60,6 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.field}>
           <Text style={styles.label}>日付</Text>
           <Text style={styles.value}>{record.date.replace(/-/g, "/")}</Text>
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>種別</Text>
-          <Text style={styles.value}>{typeLabel(record.type)}</Text>
         </View>
 
         <View style={styles.field}>

@@ -31,9 +31,11 @@ export type UserProfile = {
 export type Achievement = {
   id: string;
   date: string;
-  tag: "growth" | "effort";
   title: string;
   memo?: string;
+  photoPath?: string;
+  category?: string; // 現在未使用。将来のタグ機能用予約フィールド（growth/effort などの値を保持する場合あり）
+  tag?: string; // legacy 互換（category と同じ値を保持する）
   createdAt: string;
   updatedAt?: string;
 };
@@ -86,6 +88,15 @@ const persistState = async (nextState: AppState) => {
   }
 };
 
+const normalizeAchievement = (input: Achievement): Achievement => {
+  const category = input.category ?? (input as any).tag;
+  return {
+    ...input,
+    category,
+    tag: category ?? input.tag,
+  };
+};
+
 const ensureStateIntegrity = (state: AppState): AppState => {
   const nextState: AppState = {
     users: state.users ?? [],
@@ -104,6 +115,7 @@ const ensureStateIntegrity = (state: AppState): AppState => {
     if (!nextState.achievements[user.id]) {
       nextState.achievements[user.id] = [];
     }
+    nextState.achievements[user.id] = nextState.achievements[user.id].map(normalizeAchievement);
   });
 
   return nextState;
@@ -144,9 +156,11 @@ const migrateLegacyState = async (): Promise<AppState | null> => {
       migratedAchievements.push({
         id: (item as any).id ?? uuid(),
         date: (item as any).date ?? "",
-        tag,
         title: (item as any).title ?? "",
         memo: (item as any).memo,
+        photoPath: (item as any).photoPath,
+        category: tag,
+        tag,
         createdAt: (item as any).createdAt ?? now,
         updatedAt: (item as any).updatedAt,
       });

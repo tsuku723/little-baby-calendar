@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
-import { Button, FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-import { Achievement, AchievementType } from "@/models/dataModels";
+import { Achievement } from "@/models/dataModels";
 import { RecordListStackParamList, RootStackParamList, TabParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
 import { isIsoDateString } from "@/utils/dateUtils";
@@ -13,16 +13,11 @@ import { normalizeSearchText } from "@/utils/text";
 type Props = NativeStackScreenProps<RecordListStackParamList, "AchievementList">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
-type Filter = "all" | AchievementType;
-
-const typeLabel = (t: AchievementType): string => (t === "did" ? "できた" : "頑張った");
-
 const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
 
 const AchievementListScreen: React.FC<Props> = () => {
   const rootNavigation = useNavigation<RootNavigation>();
   const { loading, store } = useAchievements();
-  const [filter, setFilter] = useState<Filter>("all");
   const [searchText, setSearchText] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
@@ -31,19 +26,16 @@ const AchievementListScreen: React.FC<Props> = () => {
     // AchievementStore = { "2025-02-05": [A], "2025-02-06": [B, C], ... }
     const allList: Achievement[] = Object.values(store).flat();
 
-    // 1) type フィルタ
-    const filteredByType = filter === "all" ? allList : allList.filter((a) => a.type === filter);
-
-    // 2) フリーワード検索（title / memo 部分一致）
+    // 1) フリーワード検索（title / memo 部分一致）
     const normalizedQuery = normalizeSearchText(searchText);
     const filteredBySearch = normalizedQuery
-      ? filteredByType.filter((item) => {
+      ? allList.filter((item) => {
           const normalizedTarget = normalizeSearchText(`${item.title} ${item.memo ?? ""}`);
           return normalizedTarget.includes(normalizedQuery);
         })
-      : filteredByType;
+      : allList;
 
-    // 3) 期間フィルタ（日付は ISO 文字列比較で OK）
+    // 2) 期間フィルタ（日付は ISO 文字列比較で OK）
     const validFrom = isIsoDateString(fromDate) ? fromDate : null;
     const validTo = isIsoDateString(toDate) ? toDate : null;
     const filteredByRange = filteredBySearch.filter((item) => {
@@ -52,7 +44,7 @@ const AchievementListScreen: React.FC<Props> = () => {
       return true;
     });
 
-    // 4) ソート: date desc, createdAt desc
+    // 3) ソート: date desc, createdAt desc
     return filteredByRange
       .slice()
       .sort((a, b) => {
@@ -72,7 +64,6 @@ const AchievementListScreen: React.FC<Props> = () => {
       {/* 行タップでカレンダー画面の該当日を開く */}
       <View style={styles.rowHeader}>
         <Text style={styles.date}>{dateLabel(item.date)}</Text>
-        <Text style={styles.type}>{typeLabel(item.type)}</Text>
       </View>
       <Text style={styles.title} numberOfLines={2}>
         {item.title}
@@ -91,7 +82,7 @@ const AchievementListScreen: React.FC<Props> = () => {
         <TouchableOpacity onPress={() => rootNavigation.navigate("TodayStack")} accessibilityRole="button">
           <Text style={styles.back}>← 戻る</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>できた・頑張った一覧</Text>
+        <Text style={styles.title}>記録一覧</Text>
       </View>
       <View style={styles.searchArea}>
         <TextInput
@@ -128,15 +119,6 @@ const AchievementListScreen: React.FC<Props> = () => {
           </View>
         </View>
         <Text style={styles.searchHint}>※ 英字小文字化 / 全角英数の半角化 / 空白整理のみ正規化します。</Text>
-      </View>
-      <View style={styles.filters}>
-        <Button title="すべて" onPress={() => setFilter("all")} color={filter === "all" ? "#3A86FF" : "#BABABA"} />
-        <Button title="できた" onPress={() => setFilter("did")} color={filter === "did" ? "#3A86FF" : "#BABABA"} />
-        <Button
-          title="頑張った"
-          onPress={() => setFilter("tried")}
-          color={filter === "tried" ? "#3A86FF" : "#BABABA"}
-        />
       </View>
       <FlatList
         data={items}
@@ -220,12 +202,6 @@ const styles = StyleSheet.create({
     color: "#2E2A27",
     fontWeight: "600",
   },
-  filters: {
-    flexDirection: "row",
-    gap: 8,
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
   list: {
     gap: 12,
     paddingBottom: 16,
@@ -246,11 +222,6 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     color: "#6B665E",
-  },
-  type: {
-    fontSize: 14,
-    color: "#3A86FF",
-    fontWeight: "600",
   },
   memo: {
     fontSize: 14,

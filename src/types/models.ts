@@ -2,7 +2,6 @@ export {
   AgeFormat,
   Achievement,
   AchievementStore,
-  AchievementType,
   AgeInfo,
   CalendarDay,
   CalendarMonthView,
