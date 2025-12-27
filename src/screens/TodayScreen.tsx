@@ -184,7 +184,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
               <TouchableOpacity
                 key={item.id}
                 style={styles.card}
-                onPress={() => rootNavigation.navigate("RecordDetail", { recordId: item.id })}
+                onPress={() => rootNavigation.navigate("RecordDetail", { recordId: item.id, from: "today" })}
                 accessibilityRole="button"
               >
                 <Text style={styles.cardTitle}>{item.title || "(タイトルなし)"}</Text>

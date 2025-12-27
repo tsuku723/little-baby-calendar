@@ -33,6 +33,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const recordId = route.params?.recordId;
   const preferredDate = route.params?.isoDate;
+  const from = route.params?.from;
 
   // 編集対象のレコードを store から検索（isoDate があれば優先して絞り込む）
   const editingRecord = useMemo(() => {
@@ -211,14 +212,12 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     if (Platform.OS === "web") {
       const ok = window.confirm("この記録を削除します。よろしいですか？");
       if (!ok) return;
-      remove(editingRecord.id, editingRecord.date)
-        .then(() => {
-          navigation.goBack();
-        })
-        .catch((error) => {
-          console.error("Failed to delete record", error);
-          window.alert("削除に失敗しました。時間をおいて再度お試しください。");
-        });
+      const targetStack = from === "list" ? "RecordListStack" : "TodayStack";
+      navigation.replace("MainTabs", { screen: targetStack });
+      remove(editingRecord.id, editingRecord.date).catch((error) => {
+        console.error("Failed to delete record", error);
+        window.alert("削除に失敗しました。時間をおいて再度お試しください。");
+      });
       return;
     }
 
@@ -228,9 +227,10 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         text: "削除",
         style: "destructive",
         onPress: async () => {
+          const targetStack = from === "list" ? "RecordListStack" : "TodayStack";
+          navigation.replace("MainTabs", { screen: targetStack });
           try {
             await remove(editingRecord.id, editingRecord.date);
-            navigation.goBack();
           } catch (error) {
             console.error("Failed to delete record", error);
             Alert.alert("削除に失敗しました", "時間をおいて再度お試しください。");

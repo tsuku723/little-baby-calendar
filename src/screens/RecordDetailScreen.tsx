@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button, Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -12,10 +12,9 @@ type Props = NativeStackScreenProps<RootStackParamList, "RecordDetail">;
 const typeLabel = (type: "did" | "tried"): string => (type === "did" ? "成長" : "頑張った");
 
 const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { recordId, isoDate } = route.params ?? {};
+  const { recordId, isoDate, from } = route.params ?? {};
   const { store } = useAchievements();
   const [photoPath, setPhotoPath] = useState<string | null>(null);
-  const hadRecordRef = useRef(false);
 
   const record = useMemo(() => {
     const scoped = isoDate ? store[isoDate] ?? [] : [];
@@ -26,19 +25,6 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     const all = Object.values(store).flat();
     return all.find((item) => item.id === recordId) ?? null;
   }, [isoDate, recordId, store]);
-
-  useEffect(() => {
-    if (record) {
-      hadRecordRef.current = true;
-    }
-  }, [record]);
-
-  // 初期表示で記録が見つからない場合のみ戻る
-  useEffect(() => {
-    if (!record && !hadRecordRef.current) {
-      navigation.goBack();
-    }
-  }, [navigation, record]);
 
   useEffect(() => {
     let mounted = true;
@@ -54,12 +40,15 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [record?.photoPath]);
 
   if (!record) {
+    const targetStack = from === "list" ? "RecordListStack" : "TodayStack";
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
           <Text style={styles.title}>記録が見つかりません</Text>
-          <Text style={styles.note}>この記録は削除された可能性があります。</Text>
-          <Button title="戻る" color="#6B665E" onPress={() => navigation.goBack()} />
+          <Button
+            title={from === "list" ? "記録一覧に戻る" : "Todayに戻る"}
+            onPress={() => navigation.replace("MainTabs", { screen: targetStack })}
+          />
         </View>
       </SafeAreaView>
     );
@@ -104,7 +93,9 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <Button
             title="編集する"
             color="#3A86FF"
-            onPress={() => navigation.navigate("RecordInput", { recordId: record.id, isoDate: record.date })}
+            onPress={() =>
+              navigation.navigate("RecordInput", { recordId: record.id, isoDate: record.date, from })
+            }
           />
         </View>
       </View>
@@ -150,11 +141,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 12,
     padding: 24,
-  },
-  note: {
-    fontSize: 14,
-    color: "#6B665E",
-    textAlign: "center",
   },
   photo: {
     width: "100%",

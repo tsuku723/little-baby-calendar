@@ -1,19 +1,21 @@
 import { NavigatorScreenParams } from "@react-navigation/native";
 
-// Navigation 構成の型定義。Phase 1 ベースを維持しつつ段階的に拡張する。
+// Navigation type definitions. Keep RootStack in sync with flow requirements.
 export type RootStackParamList = {
   MainTabs: undefined;
   CalendarStack: NavigatorScreenParams<CalendarStackParamList>;
   RecordInput:
     | {
-        recordId?: string; // 編集時のみ使用
-        isoDate?: string; // 新規時の初期日付
+        recordId?: string; // edit-only
+        isoDate?: string; // initial date for new record
+        from?: "today" | "list";
       }
     | undefined;
   RecordDetail:
     | {
         recordId: string;
         isoDate?: string;
+        from: "today" | "list";
       }
     | undefined;
 };
