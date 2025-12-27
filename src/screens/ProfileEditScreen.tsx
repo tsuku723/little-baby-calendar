@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -60,6 +60,14 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
       lastViewedMonth: null,
     };
   });
+
+  useLayoutEffect(() => {
+    const parent = navigation.getParent();
+    parent?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => {
+      parent?.setOptions({ tabBarStyle: { display: "flex" } });
+    };
+  }, [navigation]);
 
   useEffect(() => {
     if (existing) {

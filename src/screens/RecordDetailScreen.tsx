@@ -12,7 +12,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "RecordDetail">;
 const typeLabel = (type: "did" | "tried"): string => (type === "did" ? "成長" : "頑張った");
 
 const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { recordId, isoDate } = route.params ?? {};
+  const { recordId, isoDate, from } = route.params ?? {};
   const { store } = useAchievements();
   const [photoPath, setPhotoPath] = useState<string | null>(null);
 
@@ -25,13 +25,6 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     const all = Object.values(store).flat();
     return all.find((item) => item.id === recordId) ?? null;
   }, [isoDate, recordId, store]);
-
-  // 記録が見つからない場合は自動で戻る（削除後の戻り先を考慮）
-  useEffect(() => {
-    if (!record) {
-      navigation.goBack();
-    }
-  }, [navigation, record]);
 
   useEffect(() => {
     let mounted = true;
@@ -47,7 +40,18 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [record?.photoPath]);
 
   if (!record) {
-    return null;
+    const targetStack = from === "list" ? "RecordListStack" : "TodayStack";
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <Text style={styles.title}>記録が見つかりません</Text>
+          <Button
+            title={from === "list" ? "記録一覧に戻る" : "Todayに戻る"}
+            onPress={() => navigation.replace("MainTabs", { screen: targetStack })}
+          />
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -89,7 +93,9 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <Button
             title="編集する"
             color="#3A86FF"
-            onPress={() => navigation.navigate("RecordInput", { recordId: record.id, isoDate: record.date })}
+            onPress={() =>
+              navigation.navigate("RecordInput", { recordId: record.id, isoDate: record.date, from })
+            }
           />
         </View>
       </View>
@@ -128,6 +134,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     justifyContent: "space-between",
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    padding: 24,
   },
   photo: {
     width: "100%",

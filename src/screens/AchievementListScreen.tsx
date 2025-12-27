@@ -65,7 +65,7 @@ const AchievementListScreen: React.FC<Props> = () => {
     <TouchableOpacity
       style={styles.row}
       onPress={() => {
-        rootNavigation.navigate("RecordDetail", { recordId: item.id });
+        rootNavigation.navigate("RecordDetail", { recordId: item.id, from: "list" });
       }}
       accessibilityRole="button"
     >
