@@ -9,7 +9,7 @@ import React, {
 
 import { v4 as uuid } from "uuid";
 
-import { Achievement, AchievementType, AchievementStore } from "@/models/dataModels";
+import { Achievement, AchievementStore } from "@/models/dataModels";
 import {
   cleanupReplacedPhotoAsync,
   removeAchievementPhotoAsync,
@@ -38,15 +38,10 @@ const AchievementsContext = createContext<AchievementsState | undefined>(undefin
 export type SaveAchievementPayload = {
   id?: string;
   date: string;
-  type: AchievementType;
   title: string;
   memo?: string;
   photoPath?: string | null; // null は「写真を外す」
 };
-
-// tag 変換: AppStateContext は growth/effort、Achievement UI は did/tried を使用するため相互変換する。
-const toAppStateTag = (type: AchievementType): "growth" | "effort" => (type === "did" ? "growth" : "effort");
-const fromAppStateTag = (tag: "growth" | "effort"): AchievementType => (tag === "growth" ? "did" : "tried");
 
 export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { state, addAchievement, updateAchievement, deleteAchievement } = useAppState();
@@ -67,7 +62,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const converted: Achievement = {
         id: item.id,
         date: dateKey,
-        type: fromAppStateTag(item.tag as "growth" | "effort"),
+        category: (item as any).category ?? (item as any).tag,
         title: item.title,
         memo: item.memo,
         photoPath: item.photoPath ?? undefined,
@@ -119,6 +114,7 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const recordId = payload.id ?? uuid();
       const existing = activeAchievements.find((item) => item.id === recordId);
       const previousPhotoPath = existing?.photoPath ?? undefined;
+      const preservedCategory = (existing as any)?.category ?? (existing as any)?.tag;
 
       // photoPath: undefined=変更なし、string=更新、null=削除
       const nextPhotoPath = payload.photoPath === null
@@ -128,10 +124,11 @@ export const AchievementsProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const appStateRecord = {
         id: recordId,
         date: normalizedDate,
-        tag: toAppStateTag(payload.type),
         title: payload.title,
         memo: payload.memo,
         photoPath: nextPhotoPath,
+        category: preservedCategory,
+        tag: preservedCategory,
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       };

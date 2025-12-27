@@ -9,16 +9,11 @@ interface Props {
   onDelete: (item: Achievement) => void;
 }
 
-const typeLabel = (type: Achievement["type"]): string => (type === "did" ? "できた" : "頑張った");
-
 const AchievementItem: React.FC<Props> = ({ item, onEdit, onDelete }) => (
   <TouchableOpacity style={styles.container} onPress={() => onEdit(item)}>
-    <View style={styles.header}>
-      <Text style={styles.type}>{typeLabel(item.type)}</Text>
-      <TouchableOpacity onPress={() => onDelete(item)} accessibilityRole="button">
-        <Text style={styles.delete}>削除</Text>
-      </TouchableOpacity>
-    </View>
+    <TouchableOpacity onPress={() => onDelete(item)} accessibilityRole="button" style={styles.deleteButton}>
+      <Text style={styles.delete}>削除</Text>
+    </TouchableOpacity>
     <Text style={styles.title} numberOfLines={2}>
       {item.title}
     </Text>
@@ -39,14 +34,8 @@ const styles = StyleSheet.create({
     borderColor: "#E6E2DA",
     borderWidth: 1,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  type: {
-    fontSize: 16,
-    color: "#3A86FF",
-    fontWeight: "600",
+  deleteButton: {
+    alignSelf: "flex-end",
   },
   delete: {
     fontSize: 14,
