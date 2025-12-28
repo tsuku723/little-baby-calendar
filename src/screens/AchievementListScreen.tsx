@@ -51,7 +51,7 @@ const AchievementListScreen: React.FC<Props> = () => {
         if (a.date === b.date) return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
         return b.date.localeCompare(a.date);
       });
-  }, [filter, fromDate, searchText, store, toDate]);
+  }, [fromDate, searchText, store, toDate]);
 
   const renderItem = ({ item }: { item: Achievement }) => (
     <TouchableOpacity
@@ -79,9 +79,9 @@ const AchievementListScreen: React.FC<Props> = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => rootNavigation.navigate("TodayStack")} accessibilityRole="button">
+        {/* <TouchableOpacity onPress={() => rootNavigation.navigate("TodayStack")} accessibilityRole="button">
           <Text style={styles.back}>← 戻る</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <Text style={styles.title}>記録一覧</Text>
       </View>
       <View style={styles.searchArea}>
