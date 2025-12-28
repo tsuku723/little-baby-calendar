@@ -17,12 +17,10 @@ export type UserSettings = {
 // Achievement（実績）
 // ---------------------------------------
 
-export type AchievementType = "did" | "tried";
-
 export type Achievement = {
   id: string;
   date: string;        // normalized ISO "YYYY-MM-DD"
-  type: AchievementType;
+  category?: string;   // 現在未使用。将来のタグ機能用予約フィールド。
   title: string;
   memo?: string;
   photoPath?: string;  // アプリ内に保存した JPEG のファイルパス
@@ -103,7 +101,5 @@ export type AchievementListItem = {
   id: string;
   date: string;      // YYYY-MM-DD
   dateLabel: string;
-  type: AchievementType;
-  typeLabel: string;
   title: string;
 };

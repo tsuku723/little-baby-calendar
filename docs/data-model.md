@@ -70,22 +70,21 @@ type UserSettings = {
 ## 1.4 Achievement（記録データ：名称統一後）
 
 ```ts
-type RecordTag = "growth" | "effort"   // 「成長」「頑張った」に対応
-
 type Achievement = {
   id: string
   date: string          // ISODateString（UTC丸めされた日付）
-  tag: RecordTag        // フィルタ・グラフ用の分類
+  category?: string     // 現在未使用。将来のタグ機能用予約フィールド（growth/effort などのレガシー値を保持する場合あり）
   title: string         // 記録タイトル（短文）
   memo?: string         // 任意メモ
+  photoPath?: string    // 画像パス（任意）
   createdAt: string     // ISODateTime
   updatedAt?: string
 }
 ```
 
 ### 更新点
-- `type: "did" | "tried"` を **tag: "growth" | "effort"** に変更（UI文言と整合）
-- 将来のタグ追加（睡眠/食事など）にも耐えられる構造
+- カテゴリ（成長/頑張った）を UI から廃止し、`category` フィールドは予約領域として保持するだけに変更
+- 既存データの `growth` / `effort` などは `category` に温存し、ロジックでは参照しない
 
 ---
 
@@ -122,7 +121,7 @@ Record<string, Achievement[]>
       {
         "id": "a001",
         "date": "2026-04-10",
-        "tag": "growth",
+        "category": "growth",
         "title": "つかまり立ち",
         "memo": "ソファにつかまって数秒立てた",
         "createdAt": "2026-04-10T09:12:00Z"
@@ -192,8 +191,6 @@ type AchievementListItem = {
   id: string
   date: string
   dateLabel: string
-  tag: RecordTag
-  tagLabel: string
   title: string
 }
 ```
@@ -254,7 +251,7 @@ const STORAGE_KEYS = {
 # 7. まとめ（今回の更新点）
 
 - **複数プロフィール対応のため AppState を新設**
-- 記録分類を **tag に統一**（growth / effort）
+- 記録分類は UI から撤廃し、`category` を予約フィールドとして温存
 - UserSettings を **ユーザー単位へ移動**
 - Today Screen 用の **TodayView** を新規追加
 - 保存キーを **appState 1本化** に変更

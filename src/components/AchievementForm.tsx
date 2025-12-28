@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Button, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
-import { Achievement, AchievementType } from "@/models/dataModels";
+import { Achievement } from "@/models/dataModels";
 import { clampComment, remainingChars } from "@/utils/text";
 
 interface Props {
@@ -11,20 +11,13 @@ interface Props {
   onClose: () => void;
 }
 
-const TYPES: { value: AchievementType; label: string }[] = [
-  { value: "did", label: "できた" },
-  { value: "tried", label: "頑張った" },
-];
-
 const AchievementForm: React.FC<Props> = ({ isoDay, draft, onClose }) => {
   const { upsert, remove } = useAchievements();
-  const [type, setType] = useState<AchievementType>(draft?.type ?? "did");
   const [title, setTitle] = useState<string>(draft?.title ?? "");
   const [memo, setMemo] = useState<string>(draft?.memo ?? "");
 
   useEffect(() => {
     // 編集対象が変わったらフォーム初期化
-    setType(draft?.type ?? "did");
     setTitle(draft?.title ?? "");
     setMemo(draft?.memo ?? "");
   }, [draft]);
@@ -35,7 +28,6 @@ const AchievementForm: React.FC<Props> = ({ isoDay, draft, onClose }) => {
     const payload: SaveAchievementPayload = {
       id: draft?.id,
       date: isoDay,
-      type,
       title: title.trim(),
       memo,
     };
@@ -58,11 +50,6 @@ const AchievementForm: React.FC<Props> = ({ isoDay, draft, onClose }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.segmented}>
-        {TYPES.map(({ value, label }) => (
-          <Button key={value} title={label} color={type === value ? "#3A86FF" : "#BABABA"} onPress={() => setType(value)} />
-        ))}
-      </View>
       <View style={styles.field}>
         <Text style={styles.label}>タイトル</Text>
         <TextInput
@@ -99,11 +86,6 @@ const AchievementForm: React.FC<Props> = ({ isoDay, draft, onClose }) => {
 const styles = StyleSheet.create({
   container: {
     gap: 16,
-  },
-  segmented: {
-    flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
   },
   field: {
     gap: 8,

@@ -6,25 +6,15 @@ import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/dat
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { RootStackParamList } from "@/navigation";
-import { AchievementType } from "@/models/dataModels";
 import { useActiveUser } from "@/state/AppStateContext";
 import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
 import { useDateViewContext } from "@/state/DateViewContext";
 import { clampComment, remainingChars } from "@/utils/text";
 import { normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync } from "@/utils/photo";
-import { RECORD_TITLE_CANDIDATES, RecordType } from "./recordTitleCandidates";
+import { RECORD_TITLE_CANDIDATES } from "./recordTitleCandidates";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RecordInput">;
-
-const TYPE_OPTIONS: { value: RecordType; label: string; description: string }[] = [
-  { value: "growth", label: "成長", description: "できた・成長記録" },
-  { value: "effort", label: "頑張った", description: "頑張った記録" },
-];
-
-const toRecordType = (t: AchievementType): RecordType => (t === "tried" ? "effort" : "growth");
-const toAchievementType = (t: RecordType): AchievementType => (t === "effort" ? "tried" : "did");
-
 
 const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const user = useActiveUser();
@@ -49,17 +39,11 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const todayIso = useMemo(() => toIsoDateString(today), [today]);
   const [dateInput, setDateInput] = useState<string>(preferredDate ?? selectedDateIso);
   const [isDatePickerVisible, setDatePickerVisible] = useState<boolean>(false);
-  const [recordType, setRecordType] = useState<RecordType>(() =>
-    editingRecord ? toRecordType(editingRecord.type) : "growth"
-  );
   const [title, setTitle] = useState<string>(editingRecord?.title ?? "");
   const [content, setContent] = useState<string>(editingRecord?.memo ?? "");
   const [photoPath, setPhotoPath] = useState<string | null>(editingRecord?.photoPath ?? null);
   const [hasRemovedPhoto, setHasRemovedPhoto] = useState<boolean>(false);
   const [isTitleSheetVisible, setTitleSheetVisible] = useState(false);
-  const [titleCandidateTab, setTitleCandidateTab] = useState<RecordType>(() =>
-    editingRecord ? toRecordType(editingRecord.type) : "growth"
-  );
 
 
 
@@ -67,7 +51,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   useEffect(() => {
     if (editingRecord) {
       setDateInput(editingRecord.date);
-      setRecordType(toRecordType(editingRecord.type));
       setTitle(editingRecord.title ?? "");
       setContent(editingRecord.memo ?? "");
       setPhotoPath(editingRecord.photoPath ?? null);
@@ -98,9 +81,8 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     };
   }, [editingRecord?.photoPath]);
 
-  // ボトムシートを開くタイミングで、現在の種別に合わせてタブを初期化する
+  // ボトムシートを開くタイミングでフラグを立てる
   const openTitleSheet = () => {
-    setTitleCandidateTab(recordType);
     setTitleSheetVisible(true);
   };
 
@@ -122,12 +104,9 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 };
 
 
-  // 候補選択時のハンドリング（種別の自動切り替えは growth → effort のみ）
-  const handleSelectCandidate = (candidate: string, candidateType: RecordType) => {
+  // 候補選択時のハンドリング
+  const handleSelectCandidate = (candidate: string) => {
     setTitle(candidate);
-    if (recordType === "growth" && candidateType === "effort") {
-      setRecordType("effort");
-    }
     setTitleSheetVisible(false);
   };
 
@@ -179,7 +158,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     }
     const isoDate = toIsoDateString(normalizedDate);
 
-    const achievementType = toAchievementType(recordType);
     const titleValue = title.trim() || content.trim();
     const photoPayload: string | null | undefined = (() => {
       if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存写真の削除
@@ -190,7 +168,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     const payload: SaveAchievementPayload = {
       id: editingRecord?.id,
       date: isoDate,
-      type: achievementType,
       title: titleValue,
       memo: content,
       photoPath: photoPayload,
@@ -321,25 +298,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>種別</Text>
-          <View style={styles.typeRow}>
-            {TYPE_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[styles.typeChip, recordType === option.value && styles.typeChipActive]}
-                onPress={() => setRecordType(option.value)}
-                accessibilityRole="button"
-              >
-                <Text style={[styles.typeLabel, recordType === option.value && styles.typeLabelActive]}>{option.label}</Text>
-                <Text style={[styles.typeDescription, recordType === option.value && styles.typeLabelActive]}>
-                  {option.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.field}>
           <Text style={styles.label}>内容</Text>
           <TextInput
             style={[styles.input, styles.textarea]}
@@ -410,28 +368,13 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.sheetContainer}>
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>タイトル候補</Text>
-          <View style={styles.sheetTabs}>
-            {TYPE_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option.value}
-                style={[styles.sheetTab, titleCandidateTab === option.value && styles.sheetTabActive]}
-                onPress={() => setTitleCandidateTab(option.value)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: titleCandidateTab === option.value }}
-              >
-                <Text style={[styles.sheetTabLabel, titleCandidateTab === option.value && styles.sheetTabLabelActive]}>
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
 
           <ScrollView contentContainerStyle={styles.sheetList} keyboardShouldPersistTaps="handled">
-            {RECORD_TITLE_CANDIDATES[titleCandidateTab].map((candidate) => (
+            {RECORD_TITLE_CANDIDATES.map((candidate) => (
               <TouchableOpacity
                 key={candidate}
                 style={styles.candidateItem}
-                onPress={() => handleSelectCandidate(candidate, titleCandidateTab)}
+                onPress={() => handleSelectCandidate(candidate)}
                 accessibilityRole="button"
               >
                 <Text style={styles.candidateText}>{candidate}</Text>
@@ -573,35 +516,6 @@ const styles = StyleSheet.create({
     color: "#3A86FF",
     fontWeight: "700",
   },
-  typeRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  typeChip: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#D7D3CC",
-    backgroundColor: "#FFFFFF",
-    gap: 4,
-  },
-  typeChipActive: {
-    borderColor: "#3A86FF",
-    backgroundColor: "#E9F2FF",
-  },
-  typeLabel: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#2E2A27",
-  },
-  typeLabelActive: {
-    color: "#1D5BBF",
-  },
-  typeDescription: {
-    fontSize: 12,
-    color: "#6B665E",
-  },
   actions: {
     flexDirection: "row",
     gap: 12,
@@ -638,32 +552,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#2E2A27",
     marginBottom: 12,
-  },
-  sheetTabs: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 12,
-  },
-  sheetTab: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#D7D3CC",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-  },
-  sheetTabActive: {
-    borderColor: "#3A86FF",
-    backgroundColor: "#E9F2FF",
-  },
-  sheetTabLabel: {
-    fontSize: 14,
-    color: "#2E2A27",
-    fontWeight: "600",
-  },
-  sheetTabLabelActive: {
-    color: "#1D5BBF",
   },
   sheetList: {
     paddingBottom: 12,
