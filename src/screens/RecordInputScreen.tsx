@@ -189,7 +189,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     if (Platform.OS === "web") {
       const ok = window.confirm("この記録を削除します。よろしいですか？");
       if (!ok) return;
-      const targetStack = from === "list" ? "RecordListStack" : "TodayStack";
+      const targetStack = from === "list" ? "RecordListStack" : "CalendarStack";
       navigation.replace("MainTabs", { screen: targetStack });
       remove(editingRecord.id, editingRecord.date).catch((error) => {
         console.error("Failed to delete record", error);
@@ -204,7 +204,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         text: "削除",
         style: "destructive",
         onPress: async () => {
-          const targetStack = from === "list" ? "RecordListStack" : "TodayStack";
+          const targetStack = from === "list" ? "RecordListStack" : "CalendarStack";
           navigation.replace("MainTabs", { screen: targetStack });
           try {
             await remove(editingRecord.id, editingRecord.date);

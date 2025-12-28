@@ -3,7 +3,6 @@ import { NavigatorScreenParams } from "@react-navigation/native";
 // Navigation type definitions. Keep RootStack in sync with flow requirements.
 export type RootStackParamList = {
   MainTabs: undefined;
-  CalendarStack: NavigatorScreenParams<CalendarStackParamList>;
   RecordInput:
     | {
         recordId?: string; // edit-only
@@ -20,13 +19,11 @@ export type RootStackParamList = {
     | undefined;
 };
 
-export type TodayStackParamList = {
-  Today: undefined;
-  ProfileManager: undefined;
-};
-
 export type CalendarStackParamList = {
   Calendar: undefined;
+  Today: {
+    isoDate: string;
+  };
 };
 
 export type RecordListStackParamList = {
@@ -44,7 +41,7 @@ export type SettingsStackParamList = {
 };
 
 export type TabParamList = {
-  TodayStack: NavigatorScreenParams<TodayStackParamList>;
+  CalendarStack: NavigatorScreenParams<CalendarStackParamList>;
   RecordListStack: NavigatorScreenParams<RecordListStackParamList>;
   SettingsStack: NavigatorScreenParams<SettingsStackParamList>;
 };
