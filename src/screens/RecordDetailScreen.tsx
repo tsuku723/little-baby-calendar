@@ -38,7 +38,7 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [record?.photoPath]);
 
   if (!record) {
-    const targetStack = from === "list" ? "RecordListStack" : "TodayStack";
+    const targetStack = from === "list" ? "RecordListStack" : "CalendarStack";
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
