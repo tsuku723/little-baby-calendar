@@ -10,14 +10,20 @@ import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navi
 import { useAchievements } from "@/state/AchievementsContext";
 import { useActiveUser, useAppState } from "@/state/AppStateContext";
 import { useDateViewContext } from "@/state/DateViewContext";
-import { buildCalendarMonthView, monthKey, normalizeToUtcDate, toUtcDateOnly } from "@/utils/dateUtils";
+import {
+  buildCalendarMonthView,
+  monthKey,
+  normalizeToUtcDate,
+  toIsoDateString,
+  toUtcDateOnly,
+} from "@/utils/dateUtils";
 
 type Props = NativeStackScreenProps<CalendarStackParamList, "Calendar">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
 const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
-const CalendarScreen: React.FC<Props> = () => {
+const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   const rootNavigation = useNavigation<RootNavigation>();
   const user = useActiveUser();
   const { updateUser } = useAppState();
@@ -81,7 +87,8 @@ const CalendarScreen: React.FC<Props> = () => {
     if (Number.isNaN(normalized.getTime())) return;
 
     selectDateFromCalendar(normalized);
-    rootNavigation.goBack();
+    const normalizedIso = toIsoDateString(normalized);
+    navigation.push("Today", { isoDate: normalizedIso });
   };
 
   return (
@@ -94,8 +101,8 @@ const CalendarScreen: React.FC<Props> = () => {
             onNext={handleNext}
             onToday={handleToday}
             // Settings は「戻る」前提のスタック画面なので navigate で積む（replace は使用しない）
-            onOpenSettings={() => rootNavigation.goBack()}
-            onOpenList={() => rootNavigation.goBack()}
+            onOpenSettings={() => rootNavigation.navigate("SettingsStack", { screen: "Settings" })}
+            onOpenList={() => rootNavigation.navigate("RecordListStack", { screen: "AchievementList" })}
           />
           <View style={styles.weekRow}>
             {WEEK_LABELS.map((label) => (

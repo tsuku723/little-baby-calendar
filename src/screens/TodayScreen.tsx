@@ -10,28 +10,40 @@ import ViewShot from "react-native-view-shot";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-import { RootStackParamList, TabParamList, TodayStackParamList } from "@/navigation";
+import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navigation";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useDateViewContext } from "@/state/DateViewContext";
-import { calculateAgeInfo, toIsoDateString } from "@/utils/dateUtils";
+import { calculateAgeInfo, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 import { ensureFileExistsAsync } from "@/utils/photo";
 
-type Props = NativeStackScreenProps<TodayStackParamList, "Today">;
+type Props = NativeStackScreenProps<CalendarStackParamList, "Today">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
-const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
+const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) => {
   const rootNavigation = useNavigation<RootNavigation>();
   // Hooks should remain at top level (no conditional hooks)
   const user = useActiveUser();
   const { byDay, loading: achievementsLoading } = useAchievements();
-  const { selectedDate } = useDateViewContext();
+  const { selectedDate, selectDateFromCalendar } = useDateViewContext();
   const viewShotRef = useRef<ViewShot | null>(null);
   const [latestPhotoPath, setLatestPhotoPath] = useState<string | null>(null);
 
   const shouldHideTabBar = !user || !user.birthDate;
 
-  const selectedDateIso = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
+  const normalizedRouteDate = useMemo(() => normalizeToUtcDate(route.params.isoDate), [route.params.isoDate]);
+
+  useEffect(() => {
+    if (Number.isNaN(normalizedRouteDate.getTime())) return;
+    selectDateFromCalendar(normalizedRouteDate);
+  }, [normalizedRouteDate, selectDateFromCalendar]);
+
+  const activeDate = useMemo(
+    () => (!Number.isNaN(normalizedRouteDate.getTime()) ? normalizedRouteDate : selectedDate),
+    [normalizedRouteDate, selectedDate]
+  );
+
+  const selectedDateIso = useMemo(() => toIsoDateString(activeDate), [activeDate]);
 
   const ageInfo = useMemo(() => {
     if (!user || !user.birthDate) return null;
@@ -65,7 +77,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
   const displayDate = selectedDateIso.replace(/-/g, "/");
 
   useLayoutEffect(() => {
-    const parent = _stackNavigation.getParent();
+    const parent = stackNavigation.getParent();
     if (!parent) return;
     if (shouldHideTabBar) {
       parent.setOptions({ tabBarStyle: { display: "none" } });
@@ -74,7 +86,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
       };
     }
     parent.setOptions({ tabBarStyle: { display: "flex" } });
-  }, [_stackNavigation, shouldHideTabBar]);
+  }, [stackNavigation, shouldHideTabBar]);
 
   useEffect(() => {
     let mounted = true;
@@ -92,7 +104,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: _stackNavigation }) => {
   }, [sortedAchievements]);
 
   const handleOpenCalendar = () => {
-    rootNavigation.navigate("CalendarStack", { screen: "Calendar" });
+    stackNavigation.popToTop();
   };
 
   const handleSaveImage = async () => {
