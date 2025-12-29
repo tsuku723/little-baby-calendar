@@ -12,6 +12,8 @@ import { useActiveUser, useAppState } from "@/state/AppStateContext";
 import { useDateViewContext } from "@/state/DateViewContext";
 import {
   buildCalendarMonthView,
+  calculateAgeInfo,
+  formatCalendarAgeLabel,
   monthKey,
   normalizeToUtcDate,
   toIsoDateString,
@@ -91,8 +93,49 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     navigation.push("Today", { isoDate: normalizedIso });
   };
 
+  const todayDate = useMemo(() => toUtcDateOnly(new Date()), []);
+  const todayIso = useMemo(() => toIsoDateString(todayDate), [todayDate]);
+  const todayDisplay = useMemo(() => todayIso.replace(/-/g, "/"), [todayIso]);
+  const ageFormat = user?.settings.ageFormat ?? "md";
+
+  const todayAgeInfo = useMemo(() => {
+    if (!user?.birthDate) return null;
+    try {
+      return calculateAgeInfo({
+        targetDate: todayIso,
+        birthDate: user.birthDate,
+        dueDate: user.dueDate,
+        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+        ageFormat,
+      });
+    } catch {
+      return null;
+    }
+  }, [ageFormat, todayIso, user?.birthDate, user?.dueDate, user?.settings.showCorrectedUntilMonths]);
+
+  const correctedTodayLabel =
+    todayAgeInfo?.corrected.visible && todayAgeInfo.corrected.formatted
+      ? formatCalendarAgeLabel(todayAgeInfo.corrected, ageFormat, true)
+      : null;
+  const chronologicalTodayLabel = todayAgeInfo
+    ? formatCalendarAgeLabel(todayAgeInfo.chronological, ageFormat, false)
+    : null;
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.fixedHeader}>
+        <Text style={styles.headerName}>{user?.name ?? "プロフィール未設定"}</Text>
+        <Text style={styles.headerDate}>{todayDisplay}</Text>
+        {todayAgeInfo ? (
+          <View style={styles.headerAgeBlock}>
+            {correctedTodayLabel ? <Text style={styles.headerCorrected}>{correctedTodayLabel}</Text> : null}
+            {chronologicalTodayLabel ? <Text style={styles.headerChronological}>{chronologicalTodayLabel}</Text> : null}
+            <Text style={styles.headerDays}>生後日数: {todayAgeInfo.daysSinceBirth}日目</Text>
+          </View>
+        ) : (
+          <Text style={styles.headerPlaceholder}>年齢情報は設定済みのプロフィールで表示されます</Text>
+        )}
+      </View>
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           <MonthHeader
@@ -132,6 +175,42 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#FFFDF9",
+  },
+  fixedHeader: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E6E2DA",
+    gap: 4,
+  },
+  headerName: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#2E2A27",
+  },
+  headerDate: {
+    fontSize: 14,
+    color: "#6B665E",
+  },
+  headerAgeBlock: {
+    gap: 2,
+  },
+  headerCorrected: {
+    fontSize: 14,
+    color: "#3A86FF",
+  },
+  headerChronological: {
+    fontSize: 14,
+    color: "#3A3A3A",
+  },
+  headerDays: {
+    fontSize: 12,
+    color: "#6B665E",
+  },
+  headerPlaceholder: {
+    fontSize: 12,
+    color: "#9C968C",
   },
   scrollContainer: {
     flexGrow: 1,

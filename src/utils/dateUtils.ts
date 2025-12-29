@@ -122,7 +122,7 @@ const agesEqual = (a: AgeParts, b: AgeParts): boolean =>
 const totalMonths = (parts: { years: number; months: number }): number =>
   parts.years * 12 + parts.months;
 
-const formatCalendarAgeLabel = (
+export const formatCalendarAgeLabel = (
   parts: { years: number; months: number },
   ageFormat: AgeFormat,
   isCorrected: boolean
@@ -130,10 +130,10 @@ const formatCalendarAgeLabel = (
   const labelPrefix = isCorrected ? "修正" : "";
 
   if (ageFormat === "md") {
-    return `${labelPrefix}${totalMonths(parts)}カ月`;
+    return `${labelPrefix}${totalMonths(parts)}ヵ月`;
   }
 
-  return `${labelPrefix}${parts.years}歳${parts.months}か月`;
+  return `${labelPrefix}${parts.years}歳${parts.months}ヵ月`;
 };
 
 const isWithinCorrectedLimit = (
