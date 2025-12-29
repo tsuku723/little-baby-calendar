@@ -80,6 +80,10 @@ export type CalendarDay = {
   isCurrentMonth: boolean;
   isToday: boolean;
   ageInfo: AgeInfo | null;
+  calendarAgeLabel: {
+    chronological?: string;
+    corrected?: string;
+  } | null;
 
   achievementCount: number;
 

@@ -119,6 +119,23 @@ const formatAge = (parts: AgeParts, ageFormat: AgeFormat): string => {
 const agesEqual = (a: AgeParts, b: AgeParts): boolean =>
   a.years === b.years && a.months === b.months && a.days === b.days;
 
+const totalMonths = (parts: { years: number; months: number }): number =>
+  parts.years * 12 + parts.months;
+
+export const formatCalendarAgeLabel = (
+  parts: { years: number; months: number },
+  ageFormat: AgeFormat,
+  isCorrected: boolean
+): string => {
+  const labelPrefix = isCorrected ? "修正" : "";
+
+  if (ageFormat === "md") {
+    return `${labelPrefix}${totalMonths(parts)}ヵ月`;
+  }
+
+  return `${labelPrefix}${parts.years}歳${parts.months}ヵ月`;
+};
+
 const isWithinCorrectedLimit = (
   parts: AgeParts,
   limitMonths: number | null
@@ -215,6 +232,7 @@ export const buildCalendarMonthView = ({
   const days: CalendarDay[] = [];
   const hasValidBirthDate = Boolean(birthDate) && isIsoDateString(birthDate);
   const normalizedDueDate = dueDate && isIsoDateString(dueDate) ? dueDate : null;
+  let previousAgeInfo: AgeInfo | null = null;
 
   for (let offset = 0; offset < 42; offset += 1) {
     const date = new Date(startDate);
@@ -235,13 +253,43 @@ export const buildCalendarMonthView = ({
           })
         : null;
 
+    const chronologicalChanged =
+      ageInfo &&
+      previousAgeInfo &&
+      totalMonths(ageInfo.chronological) === totalMonths(previousAgeInfo.chronological) + 1;
+
+    const correctedVisible = Boolean(ageInfo?.corrected.visible && ageInfo.corrected.formatted);
+    const previousCorrectedVisible = Boolean(
+      previousAgeInfo?.corrected.visible && previousAgeInfo.corrected.formatted
+    );
+    const correctedChanged =
+      correctedVisible &&
+      previousCorrectedVisible &&
+      totalMonths(ageInfo.corrected) === totalMonths(previousAgeInfo!.corrected) + 1;
+
+    const calendarAgeLabel =
+      ageInfo && (chronologicalChanged || correctedChanged)
+        ? {
+            chronological: chronologicalChanged
+              ? formatCalendarAgeLabel(ageInfo.chronological, settings.ageFormat, false)
+              : undefined,
+            corrected: correctedChanged
+              ? formatCalendarAgeLabel(ageInfo.corrected, settings.ageFormat, true)
+              : undefined,
+          }
+        : null;
+
     days.push({
       date: iso,
       isCurrentMonth,
       isToday: iso === todayIso,
       ageInfo,
+      calendarAgeLabel,
       achievementCount: achievementCountsByDay?.[iso] ?? 0,
+      hasAchievements: (achievementCountsByDay?.[iso] ?? 0) > 0,
     });
+
+    previousAgeInfo = ageInfo;
   }
 
   return {

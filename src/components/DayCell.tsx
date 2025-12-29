@@ -12,12 +12,24 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const isDimmed = !day.isCurrentMonth;
   const dateNumber = parseInt(day.date.slice(-2), 10);
 
-  const chronological = day.ageInfo?.chronological.formatted ?? "";
-  const correctedVisible =
-    day.ageInfo?.corrected.visible && day.ageInfo?.corrected.formatted;
-  const corrected = correctedVisible ? `修: ${day.ageInfo?.corrected.formatted}` : "";
+  const correctedLabel = day.calendarAgeLabel?.corrected ?? null;
+  const chronologicalLabel = day.calendarAgeLabel?.chronological ?? null;
+  const hasBothLabels = Boolean(correctedLabel && chronologicalLabel);
+
+  const topLabel = correctedLabel ?? chronologicalLabel;
+  const topStyle = topLabel ? (correctedLabel ? styles.corrected : styles.age) : styles.hidden;
+  const bottomLabel = hasBothLabels ? chronologicalLabel : null;
 
   const hasAchievements = day.achievementCount > 0;
+
+  const renderAgeLine = (text: string | null, baseStyle: object) => {
+    const shouldDim = Boolean(text) && baseStyle !== styles.hidden;
+    return (
+      <Text style={[baseStyle, shouldDim && isDimmed && styles.ageDimmed]}>
+        {text ?? " "}
+      </Text>
+    );
+  };
 
   return (
     <TouchableOpacity
@@ -33,17 +45,8 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
         {dateNumber}
       </Text>
 
-      <Text style={[styles.age, isDimmed && styles.ageDimmed]}>
-        {chronological}
-      </Text>
-
-      {correctedVisible ? (
-        <Text style={[styles.corrected, isDimmed && styles.ageDimmed]}>
-          {corrected}
-        </Text>
-      ) : (
-        <Text style={styles.hidden}> </Text>
-      )}
+      {renderAgeLine(topLabel, topStyle)}
+      {renderAgeLine(bottomLabel, hasBothLabels ? styles.ageWeak : styles.hidden)}
 
       {hasAchievements && <View style={styles.dot} />}
     </TouchableOpacity>
@@ -93,6 +96,11 @@ const styles = StyleSheet.create({
   corrected: {
     fontSize: 12,
     color: "#3A86FF",
+  },
+
+  ageWeak: {
+    fontSize: 12,
+    color: "#6B665E",
   },
 
   ageDimmed: {
