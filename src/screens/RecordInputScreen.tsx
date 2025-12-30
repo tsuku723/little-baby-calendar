@@ -38,7 +38,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const selectedDateIso = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
   const todayIso = useMemo(() => toIsoDateString(today), [today]);
   const [dateInput, setDateInput] = useState<string>(preferredDate ?? selectedDateIso);
-  const [isDatePickerVisible, setDatePickerVisible] = useState<boolean>(false);
+  const [showPicker, setShowPicker] = useState<boolean>(false);
   const [title, setTitle] = useState<string>(editingRecord?.title ?? "");
   const [content, setContent] = useState<string>(editingRecord?.memo ?? "");
   const [photoPath, setPhotoPath] = useState<string | null>(editingRecord?.photoPath ?? null);
@@ -88,8 +88,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const closeTitleSheet = () => setTitleSheetVisible(false);
 
-  const handleOpenDatePicker = () => setDatePickerVisible(true);
-
   const currentDateForPicker = useMemo(() => {
     const normalized = normalizeToUtcDate(dateInput);
     if (Number.isNaN(normalized.getTime())) {
@@ -98,10 +96,11 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     return normalized;
   }, [dateInput, selectedDate]);
 
-    const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
-  if (!pickedDate) return;
-  setDateInput(toIsoDateString(pickedDate));
-};
+  const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
+    if (!pickedDate) return;
+    setDateInput(toIsoDateString(pickedDate));
+    setShowPicker(false);
+  };
 
 
   // 候補選択時のハンドリング
@@ -250,51 +249,36 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>日付</Text>
-          <View style={styles.row}>
-            <Pressable
-              style={[styles.input, styles.flex1, styles.dateInputButton]}
-              onPress={handleOpenDatePicker}
-              accessibilityRole="button"
-              accessibilityLabel="日付を選択"
-            >
-              <Text style={styles.dateInputText}>{dateInput}</Text>
-              <Text style={styles.dateInputHint}>タップして日付を選択</Text>
-            </Pressable>
-            <TouchableOpacity style={styles.todayButton} onPress={() => setDateInput(todayIso)}>
-              <Text style={styles.todayText}>今日</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.helper}>DatePicker で日付を選択してください。</Text>
-          {isDatePickerVisible && (
-  <Modal transparent animationType="slide">
-    <View style={styles.pickerOverlay}>
-      <View style={styles.pickerContainer}>
-        {/* ヘッダー */}
-        <View style={styles.pickerHeader}>
-          <TouchableOpacity onPress={() => setDatePickerVisible(false)}>
-            <Text style={styles.pickerCancel}>キャンセル</Text>
+          <TouchableOpacity
+            style={styles.dateRow}
+            onPress={() => setShowPicker((prev) => !prev)}
+            accessibilityRole="button"
+            accessibilityLabel="日付を選択"
+          >
+            <Text style={styles.dateRowLabel}>日付</Text>
+            <Text style={styles.dateRowValue}>{dateInput} ▼</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setDatePickerVisible(false)}>
-            <Text style={styles.pickerDone}>完了</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* iOS inline DatePicker */}
-        <DateTimePicker
-          value={currentDateForPicker}
-          mode="date"
-          display="inline"
-          locale="ja-JP"
-          maximumDate={today}
-          onChange={handleDateChange}
-          style={{ height: 320 }}
-        />
-      </View>
-    </View>
-  </Modal>
-)}
-
+          {showPicker ? (
+            <View style={styles.datePickerArea}>
+              <TouchableOpacity
+                style={styles.todayResetButton}
+                onPress={() => {
+                  setDateInput(todayIso);
+                  setShowPicker(false);
+                }}
+              >
+                <Text style={styles.todayResetText}>今日に戻す</Text>
+              </TouchableOpacity>
+              <DateTimePicker
+                value={currentDateForPicker}
+                mode="date"
+                display="inline"
+                locale="ja-JP"
+                maximumDate={today}
+                onChange={handleDateChange}
+              />
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.field}>
@@ -345,18 +329,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         ) : null}
       </ScrollView>
-
-  <Pressable
-  style={[styles.input, styles.flex1, styles.dateInputButton]}
-  onPress={() => setDatePickerVisible(true)}
-  accessibilityRole="button"
->
-  <Text style={styles.dateInputText}>{dateInput}</Text>
-  <Text style={styles.dateInputHint}>タップして日付を選択</Text>
-</Pressable>
-
-
-
       <Modal
         animationType="slide"
         transparent
@@ -483,36 +455,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#2E2A27",
   },
-  dateInputButton: {
-    gap: 4,
+  dateRow: {
+    height: 52,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#D7D3CC",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  dateInputText: {
+  dateRowLabel: {
+    fontSize: 16,
+    color: "#2E2A27",
+    fontWeight: "600",
+  },
+  dateRowValue: {
     fontSize: 16,
     color: "#2E2A27",
     fontWeight: "700",
   },
-  dateInputHint: {
-    fontSize: 12,
-    color: "#6B665E",
+  datePickerArea: {
+    gap: 8,
   },
   textarea: {
     minHeight: 140,
   },
-  row: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-  },
-  flex1: {
-    flex: 1,
-  },
-  todayButton: {
+  todayResetButton: {
+    alignSelf: "flex-start",
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderRadius: 12,
     backgroundColor: "#E9F2FF",
   },
-  todayText: {
+  todayResetText: {
     color: "#3A86FF",
     fontWeight: "700",
   },
@@ -569,33 +546,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#2E2A27",
   },
-  pickerOverlay: {
-  flex: 1,
-  backgroundColor: "rgba(0,0,0,0.3)",
-  justifyContent: "flex-end",
-},
-pickerContainer: {
-  backgroundColor: "#fff",
-  borderTopLeftRadius: 16,
-  borderTopRightRadius: 16,
-  paddingBottom: 24,
-},
-pickerHeader: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  padding: 16,
-},
-pickerCancel: {
-  fontSize: 16,
-  color: "#6B665E",
-},
-pickerDone: {
-  fontSize: 16,
-  fontWeight: "700",
-  color: "#3A86FF",
-},
-
-  
 });
 
 export default RecordInputScreen;
