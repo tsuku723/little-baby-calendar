@@ -9,15 +9,18 @@ import {
   Switch,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
+
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { UserSettings } from "@/models/dataModels";
 import { SettingsStackParamList } from "@/navigation";
 import { useAppState } from "@/state/AppStateContext";
-import { toIsoDateString } from "@/utils/dateUtils";
+import { normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "ProfileEdit">;
 
@@ -60,6 +63,10 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
       lastViewedMonth: null,
     };
   });
+
+  const today = useMemo(() => new Date(), []);
+  const [showBirthDatePicker, setShowBirthDatePicker] = useState(false);
+  const [showDueDatePicker, setShowDueDatePicker] = useState(false);
 
   useLayoutEffect(() => {
     const parent = navigation.getParent();
@@ -117,6 +124,30 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     navigation.goBack();
   };
 
+  const birthDateForPicker = useMemo(() => {
+    const normalized = normalizeToUtcDate(formState.birthDate);
+    if (Number.isNaN(normalized.getTime())) return today;
+    return normalized;
+  }, [formState.birthDate, today]);
+
+  const dueDateForPicker = useMemo(() => {
+    const normalized = normalizeToUtcDate(formState.dueDate);
+    if (Number.isNaN(normalized.getTime())) return today;
+    return normalized;
+  }, [formState.dueDate, today]);
+
+  const handleBirthDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
+    if (!pickedDate) return;
+    setFormState((prev) => ({ ...prev, birthDate: toIsoDateString(pickedDate) }));
+    setShowBirthDatePicker(false);
+  };
+
+  const handleDueDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
+    if (!pickedDate) return;
+    setFormState((prev) => ({ ...prev, dueDate: toIsoDateString(pickedDate) }));
+    setShowDueDatePicker(false);
+  };
+
   const handleDelete = async () => {
     if (!existing) return;
     if (users.length <= 1) {
@@ -154,25 +185,57 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>生年月日 (YYYY-MM-DD)</Text>
-          <TextInput
-            value={formState.birthDate}
-            onChangeText={(text) => setFormState((prev) => ({ ...prev, birthDate: text }))}
-            style={styles.input}
-            placeholder="2023-01-01"
-            keyboardType="numbers-and-punctuation"
-          />
+          <TouchableOpacity
+            style={styles.dateRow}
+            onPress={() => {
+              setShowBirthDatePicker((prev) => !prev);
+              setShowDueDatePicker(false);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="出生日を選択"
+          >
+            <Text style={styles.dateRowLabel}>出生日</Text>
+            <Text style={styles.dateRowValue}>{formState.birthDate} ▼</Text>
+          </TouchableOpacity>
+          {showBirthDatePicker ? (
+            <View style={styles.datePickerArea}>
+              <DateTimePicker
+                value={birthDateForPicker}
+                mode="date"
+                display="inline"
+                locale="ja-JP"
+                maximumDate={today}
+                onChange={handleBirthDateChange}
+              />
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>予定日 (任意)</Text>
-          <TextInput
-            value={formState.dueDate}
-            onChangeText={(text) => setFormState((prev) => ({ ...prev, dueDate: text }))}
-            style={styles.input}
-            placeholder="未設定なら空のまま"
-            keyboardType="numbers-and-punctuation"
-          />
+          <TouchableOpacity
+            style={styles.dateRow}
+            onPress={() => {
+              setShowDueDatePicker((prev) => !prev);
+              setShowBirthDatePicker(false);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="出産予定日を選択"
+          >
+            <Text style={styles.dateRowLabel}>出産予定日</Text>
+            <Text style={styles.dateRowValue}>{formState.dueDate} ▼</Text>
+          </TouchableOpacity>
+          {showDueDatePicker ? (
+            <View style={styles.datePickerArea}>
+              <DateTimePicker
+                value={dueDateForPicker}
+                mode="date"
+                display="inline"
+                locale="ja-JP"
+                maximumDate={today}
+                onChange={handleDueDateChange}
+              />
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -285,6 +348,30 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     fontSize: 16,
     color: "#2E2A27",
+  },
+  dateRow: {
+    height: 52,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#D7D3CC",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  dateRowLabel: {
+    fontSize: 16,
+    color: "#2E2A27",
+    fontWeight: "600",
+  },
+  dateRowValue: {
+    fontSize: 16,
+    color: "#2E2A27",
+    fontWeight: "700",
+  },
+  datePickerArea: {
+    gap: 8,
   },
   section: {
     gap: 12,
