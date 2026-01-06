@@ -5,6 +5,7 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import CalendarGrid from "@/components/CalendarGrid";
+import CalendarDecorations from "@/components/CalendarDecorations";
 import MonthHeader from "@/components/MonthHeader";
 import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
@@ -19,6 +20,7 @@ import {
   toIsoDateString,
   toUtcDateOnly,
 } from "@/utils/dateUtils";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<CalendarStackParamList, "Calendar">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
@@ -123,6 +125,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <CalendarDecorations />
       <View style={styles.fixedHeader}>
         <Text style={styles.headerName}>{user?.name ?? "プロフィール未設定"}</Text>
         <Text style={styles.headerDate}>{todayDisplay}</Text>
@@ -136,7 +139,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.headerPlaceholder}>年齢情報は設定済みのプロフィールで表示されます</Text>
         )}
       </View>
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+      <ScrollView keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           <MonthHeader
             monthLabel={monthLabel}
@@ -148,8 +151,16 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             onOpenList={() => rootNavigation.navigate("RecordListStack", { screen: "AchievementList" })}
           />
           <View style={styles.weekRow}>
-            {WEEK_LABELS.map((label) => (
-              <Text key={label} style={styles.weekLabel}>
+            {WEEK_LABELS.map((label, idx) => (
+              <Text
+                key={label}
+                style={[
+                  styles.weekLabel,
+                  idx === 0 && { color: COLORS.sunday },
+                  idx === 6 && { color: COLORS.saturday },
+                  idx !== 0 && idx !== 6 && { color: COLORS.weekday },
+                ]}
+              >
                 {label}
               </Text>
             ))}
@@ -174,46 +185,43 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
   },
   fixedHeader: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#E6E2DA",
+    borderBottomColor: COLORS.border,
     gap: 4,
   },
   headerName: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   headerDate: {
     fontSize: 14,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   headerAgeBlock: {
     gap: 2,
   },
   headerCorrected: {
     fontSize: 14,
-    color: "#3A86FF",
+    color: COLORS.accentMain,
   },
   headerChronological: {
     fontSize: 14,
-    color: "#3A3A3A",
+    color: COLORS.textPrimary,
   },
   headerDays: {
     fontSize: 12,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   headerPlaceholder: {
     fontSize: 12,
-    color: "#9C968C",
-  },
-  scrollContainer: {
-    flexGrow: 1,
+    color: COLORS.textSecondary,
   },
   container: {
     flex: 1,
@@ -221,36 +229,37 @@ const styles = StyleSheet.create({
   },
   weekRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     paddingHorizontal: 12,
   },
   weekLabel: {
     flex: 1,
     textAlign: "center",
-    fontSize: 14,
-    color: "#6B665E",
+    fontSize: 12,
+    fontWeight: "500",
+    color: COLORS.textSecondary,
   },
   footer: {
     textAlign: "center",
-    color: "#6B665E",
+    color: COLORS.textSecondary,
     fontSize: 12,
   },
   fab: {
     position: "absolute",
     right: 20,
     bottom: 24,
-    backgroundColor: "#3A86FF",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 32,
+    backgroundColor: COLORS.accentSub,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 28,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
   },
   fabText: {
-    color: "#FFFFFF",
-    fontSize: 16,
+    color: COLORS.surface,
+    fontSize: 14,
     fontWeight: "700",
   },
 });

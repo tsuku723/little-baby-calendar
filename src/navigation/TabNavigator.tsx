@@ -3,6 +3,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
+import { COLORS } from "@/constants/colors";
 import AchievementListScreen from "@/screens/AchievementListScreen";
 import ProfileEditScreen from "@/screens/ProfileEditScreen";
 import ProfileManagerScreen from "@/screens/ProfileManagerScreen";
@@ -45,7 +46,19 @@ const SettingsStackNavigator: React.FC = () => (
 const TabNavigator: React.FC = () => {
   return (
     // タブは全画面共通。Phase 1 では仮のラベルのみで機能は画面切替だけ。
-    <Tab.Navigator initialRouteName="CalendarStack" screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      initialRouteName="CalendarStack"
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: COLORS.background,
+          borderTopColor: "transparent",
+        },
+        tabBarActiveTintColor: COLORS.accentMain,
+        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarLabelStyle: { fontSize: 12 },
+      }}
+    >
       <Tab.Screen name="CalendarStack" component={CalendarStackNavigator} options={{ tabBarLabel: "カレンダー" }} />
       <Tab.Screen
         name="RecordListStack"

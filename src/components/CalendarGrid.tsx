@@ -19,9 +19,9 @@ const CalendarGrid: React.FC<Props> = ({ days, onPressDay }) => {
   }, [days]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { flex: 1 }]}>
       {rows.map((row, idx) => (
-        <View key={idx} style={styles.row}>
+        <View key={idx} style={{ flexDirection: "row", flex: 1 }}>
           {row.map((day) => (
             <DayCell key={day.date} day={day} onPress={onPressDay} />
           ))}
@@ -33,15 +33,8 @@ const CalendarGrid: React.FC<Props> = ({ days, onPressDay }) => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingHorizontal: 0,
-  },
-  row: {
-    flexDirection: "row",
-    paddingHorizontal: 0,
-  },
-    cellWrapper: {
-    flex: 1,              
-    maxWidth: `${100 / 7}%`,
   },
 });
 
