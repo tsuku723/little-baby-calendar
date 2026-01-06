@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
@@ -131,8 +131,16 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.headerDate}>{todayDisplay}</Text>
         {todayAgeInfo ? (
           <View style={styles.headerAgeBlock}>
-            {correctedTodayLabel ? <Text style={styles.headerCorrected}>{correctedTodayLabel}</Text> : null}
-            {chronologicalTodayLabel ? <Text style={styles.headerChronological}>{chronologicalTodayLabel}</Text> : null}
+            {correctedTodayLabel && chronologicalTodayLabel ? (
+              <Text style={styles.headerCorrected}>
+                {correctedTodayLabel}
+                <Text style={styles.headerChronological}>（{chronologicalTodayLabel}）</Text>
+              </Text>
+            ) : correctedTodayLabel ? (
+              <Text style={styles.headerCorrected}>{correctedTodayLabel}</Text>
+            ) : chronologicalTodayLabel ? (
+              <Text style={styles.headerChronological}>{chronologicalTodayLabel}</Text>
+            ) : null}
             <Text style={styles.headerDays}>生後日数: {todayAgeInfo.daysSinceBirth}日目</Text>
           </View>
         ) : (
@@ -146,7 +154,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             onPrev={handlePrev}
             onNext={handleNext}
             onToday={handleToday}
-            // Settings は「戻る」前提のスタック画面なので navigate で積む（replace は使用しない）
+            // Settings は「戻る」前提のスタック画面なので navigate で積み重ね replace は使用しない
             onOpenSettings={() => rootNavigation.navigate("SettingsStack", { screen: "Settings" })}
             onOpenList={() => rootNavigation.navigate("RecordListStack", { screen: "AchievementList" })}
           />
@@ -167,16 +175,16 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
           </View>
           <CalendarGrid days={monthView.days} onPressDay={handlePressDay} />
           <Text style={styles.footer}>修正月齢の表記は目安です。医療的判断は主治医にご相談ください。</Text>
-          <Text style={styles.footer}>データは端末内のみで保存します。</Text>
+          <Text style={styles.footer}>データは端末内で保存します。</Text>
         </View>
       </ScrollView>
       <TouchableOpacity
         style={styles.fab}
         accessibilityRole="button"
-        // Phase 1: FAB は記録入力画面への入口だけを担う
+        // Phase 1: FAB は記録入力画面への入口だけを保持
         onPress={() => rootNavigation.navigate("RecordInput")}
       >
-        <Text style={styles.fabText}>＋ 記録</Text>
+        <Text style={styles.fabText}>＋記録</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -187,6 +195,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fixedHeader: {
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: COLORS.headerBackground,
@@ -198,32 +207,39 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: COLORS.textPrimary,
+    textAlign: "center",
     fontFamily: "ZenMaruGothic-Medium",
   },
   headerDate: {
     fontSize: 14,
     color: COLORS.textSecondary,
+    textAlign: "center",
   },
   headerAgeBlock: {
+    alignItems: "center",
     gap: 2,
   },
   headerCorrected: {
     fontSize: 14,
     color: COLORS.accentMain,
     fontFamily: "ZenMaruGothic-Regular",
+    textAlign: "center",
   },
   headerChronological: {
     fontSize: 14,
     color: COLORS.textPrimary,
     fontFamily: "ZenMaruGothic-Regular",
+    textAlign: "center",
   },
   headerDays: {
     fontSize: 12,
     color: COLORS.textSecondary,
+    textAlign: "center",
   },
   headerPlaceholder: {
     fontSize: 12,
     color: COLORS.textSecondary,
+    textAlign: "center",
   },
   container: {
     flex: 1,
