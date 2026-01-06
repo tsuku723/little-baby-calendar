@@ -21,6 +21,7 @@ import { UserSettings } from "@/models/dataModels";
 import { SettingsStackParamList } from "@/navigation";
 import { useAppState } from "@/state/AppStateContext";
 import { normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "ProfileEdit">;
 
@@ -101,7 +102,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     const dueDate = formState.dueDate.trim() || null;
 
     if (!name || !birthDate) {
-      Alert.alert("入力エラー", "名前と生年月日は必須です。");
+      Alert.alert("入力エラー", "名前と生年月日は忁E��です、E);
       return;
     }
 
@@ -151,10 +152,10 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   const handleDelete = async () => {
     if (!existing) return;
     if (users.length <= 1) {
-      Alert.alert("削除できません", "プロフィールは1件以上必要です。");
+      Alert.alert("削除できません", "プロフィールは1件以上忁E��です、E);
       return;
     }
-    Alert.alert("削除しますか？", "このプロフィールと記録を削除します。", [
+    Alert.alert("削除しますか�E�E, "こ�Eプロフィールと記録を削除します、E, [
       { text: "キャンセル", style: "cancel" },
       {
         text: "削除",
@@ -167,7 +168,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     ]);
   };
 
-  const title = existing ? "プロフィールを編集" : "新しいこどもを追加";
+  const title = existing ? "プロフィールを編雁E : "新しいこどもを追加";
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -180,7 +181,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
             value={formState.name}
             onChangeText={(text) => setFormState((prev) => ({ ...prev, name: text }))}
             style={styles.input}
-            placeholder="お名前"
+            placeholder="お名剁E
           />
         </View>
 
@@ -192,7 +193,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
               setShowDueDatePicker(false);
             }}
             accessibilityRole="button"
-            accessibilityLabel="出生日を選択"
+            accessibilityLabel="出生日を選抁E
           >
             <Text style={styles.dateRowLabel}>出生日</Text>
             <Text style={styles.dateRowValue}>{formState.birthDate} ▼</Text>
@@ -219,7 +220,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
               setShowBirthDatePicker(false);
             }}
             accessibilityRole="button"
-            accessibilityLabel="出産予定日を選択"
+            accessibilityLabel="出産予定日を選抁E
           >
             <Text style={styles.dateRowLabel}>出産予定日</Text>
             <Text style={styles.dateRowValue}>{formState.dueDate} ▼</Text>
@@ -239,8 +240,8 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>この子の表示設定</Text>
-          <Text style={styles.description}>ここで変更した設定は、「保存」を押すまで反映されません。</Text>
+          <Text style={styles.sectionTitle}>こ�E子�E表示設宁E/Text>
+          <Text style={styles.description}>ここで変更した設定�E、「保存」を押すまで反映されません、E/Text>
 
           <View style={styles.field}>
             <Text style={styles.label}>修正月齢の表示上限</Text>
@@ -248,7 +249,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
               {[
                 { label: "24か月", value: 24 },
                 { label: "36か月", value: 36 },
-                { label: "制限なし", value: null },
+                { label: "制限なぁE, value: null },
               ].map((option) => (
                 <Pressable
                   key={option.label}
@@ -274,7 +275,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>月齢表示形式</Text>
+            <Text style={styles.label}>月齢表示形弁E/Text>
             <View style={styles.optionRow}>
               {[
                 { label: "2M4D", value: "md" },
@@ -309,10 +310,14 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
 
         <View style={styles.actions}>
           {existing ? (
-            <Button title="削除" onPress={handleDelete} color={users.length <= 1 ? "#A9A29A" : "#D90429"} />
+            <Button
+              title="削除"
+              onPress={handleDelete}
+              color={users.length <= 1 ? COLORS.textSecondary : COLORS.sunday}
+            />
           ) : null}
-          <Button title="保存" onPress={handleSave} color="#3A86FF" />
-          <Button title="キャンセル" onPress={() => navigation.goBack()} color="#6B665E" />
+          <Button title="保孁E onPress={handleSave} color={COLORS.accentMain} />
+          <Button title="キャンセル" onPress={() => navigation.goBack()} color={COLORS.textSecondary} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -322,7 +327,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
   },
   container: {
     padding: 20,
@@ -331,43 +336,43 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   field: {
     gap: 8,
   },
   label: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     borderRadius: 8,
     padding: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   dateRow: {
     height: 52,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   dateRowLabel: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   dateRowValue: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "700",
   },
   datePickerArea: {
@@ -377,18 +382,18 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#E7E2D9",
+    borderColor: COLORS.border,
     borderRadius: 12,
-    backgroundColor: "#FFFEFB",
+    backgroundColor: COLORS.surface,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   description: {
     fontSize: 14,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   optionRow: {
     flexDirection: "row",
@@ -400,19 +405,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#D7D3CC",
-    backgroundColor: "#FFFFFF",
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
   optionButtonSelected: {
-    borderColor: "#3A86FF",
-    backgroundColor: "#E8F1FF",
+    borderColor: COLORS.accentMain,
+    backgroundColor: COLORS.highlightToday,
   },
   optionLabel: {
     fontSize: 14,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   optionLabelSelected: {
-    color: "#1A5FB4",
+    color: COLORS.saturday,
     fontWeight: "700",
   },
   switchRow: {
@@ -427,3 +432,5 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileEditScreen;
+
+

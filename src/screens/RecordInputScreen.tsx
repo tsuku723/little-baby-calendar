@@ -13,6 +13,7 @@ import { clampComment, remainingChars } from "@/utils/text";
 import { normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync } from "@/utils/photo";
 import { RECORD_TITLE_CANDIDATES } from "./recordTitleCandidates";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RecordInput">;
 
@@ -25,8 +26,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const preferredDate = route.params?.isoDate;
   const from = route.params?.from;
 
-  // 編集対象のレコードを store から検索（isoDate があれば優先して絞り込む）
-  const editingRecord = useMemo(() => {
+  // 編雁E��象のレコードを store から検索�E�EsoDate があれ�E優先して絞り込む�E�E  const editingRecord = useMemo(() => {
     if (!recordId) return null;
     if (preferredDate && store[preferredDate]) {
       return store[preferredDate].find((item) => item.id === recordId) ?? null;
@@ -47,7 +47,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
 
 
-  // 編集対象が変わったらフォームを最新の値に合わせる
+  // 編雁E��象が変わったらフォームを最新の値に合わせる
   useEffect(() => {
     if (editingRecord) {
       setDateInput(editingRecord.date);
@@ -66,8 +66,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   }, [editingRecord, preferredDate, selectedDateIso]);
 
-  // 編集対象の photoPath が実ファイルとして存在するかを確認する
-  useEffect(() => {
+  // 編雁E��象の photoPath が実ファイルとして存在するかを確認すめE  useEffect(() => {
     let mounted = true;
     const verifyPhoto = async () => {
       const ensured = await ensureFileExistsAsync(editingRecord?.photoPath ?? null);
@@ -81,8 +80,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     };
   }, [editingRecord?.photoPath]);
 
-  // ボトムシートを開くタイミングでフラグを立てる
-  const openTitleSheet = () => {
+  // ボトムシートを開くタイミングでフラグを立てめE  const openTitleSheet = () => {
     setTitleSheetVisible(true);
   };
 
@@ -116,7 +114,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       if (!next) return;
 
       if (previousTempPhoto && previousTempPhoto !== next) {
-        // 編集画面で選び直した未保存の写真は不要になるためクリーンアップする
+        // 編雁E��面で選び直した未保存�E写真は不要になるためクリーンアチE�Eする
         await deleteIfExistsAsync(previousTempPhoto);
       }
 
@@ -124,15 +122,14 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       setHasRemovedPhoto(false);
     } catch (error) {
       console.error("Failed to pick photo", error);
-      Alert.alert("写真の追加に失敗しました", "再度お試しください。");
+      Alert.alert("写真の追加に失敗しました", "再度お試しください、E);
     }
   };
 
   const handleRemovePhoto = async () => {
     try {
       if (photoPath && photoPath !== editingRecord?.photoPath) {
-        // 保存前に追加した写真はここで破棄する
-        await deleteIfExistsAsync(photoPath);
+        // 保存前に追加した写真はここで破棁E��めE        await deleteIfExistsAsync(photoPath);
       }
     } catch (error) {
       console.warn("Failed to delete temp photo", error);
@@ -145,25 +142,22 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handleSave = async () => {
     if (!user) {
-      Alert.alert("プロフィール未設定", "プロフィールを作成してから記録してください。");
+      Alert.alert("プロフィール未設宁E, "プロフィールを作�Eしてから記録してください、E);
       return;
     }
 
-    // 日付は ISO 文字列で受け取り、必ず UTC 正規化して保存する
-    const normalizedDate = normalizeToUtcDate(dateInput);
+    // 日付�E ISO 斁E���Eで受け取り、忁E�� UTC 正規化して保存すめE    const normalizedDate = normalizeToUtcDate(dateInput);
     if (Number.isNaN(normalizedDate.getTime())) {
-      Alert.alert("日付を確認してください", "YYYY-MM-DD 形式で入力してください。");
+      Alert.alert("日付を確認してください", "YYYY-MM-DD 形式で入力してください、E);
       return;
     }
     const isoDate = toIsoDateString(normalizedDate);
 
     const titleValue = title.trim() || content.trim();
     const photoPayload: string | null | undefined = (() => {
-      if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存写真の削除
-      if (photoPath && photoPath !== editingRecord?.photoPath) return photoPath; // 新規・差し替え
-      if (!editingRecord && photoPath) return photoPath; // 新規レコードで写真あり
-      return undefined; // 変更なし
-    })();
+      if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存�E真�E削除
+      if (photoPath && photoPath !== editingRecord?.photoPath) return photoPath; // 新規�E差し替ぁE      if (!editingRecord && photoPath) return photoPath; // 新規レコードで写真あり
+      return undefined; // 変更なぁE    })();
     const payload: SaveAchievementPayload = {
       id: editingRecord?.id,
       date: isoDate,
@@ -177,27 +171,26 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       navigation.goBack();
     } catch (error) {
       console.error("Failed to save record", error);
-      Alert.alert("保存に失敗しました", "時間をおいて再度お試しください。");
+      Alert.alert("保存に失敗しました", "時間をおぁE��再度お試しください、E);
     }
   };
 
-  // 削除確認ダイアログを表示する（Web は window.confirm を使用）
-  const confirmDelete = () => {
+  // 削除確認ダイアログを表示する�E�Eeb は window.confirm を使用�E�E  const confirmDelete = () => {
     if (!editingRecord) return;
 
     if (Platform.OS === "web") {
-      const ok = window.confirm("この記録を削除します。よろしいですか？");
+      const ok = window.confirm("こ�E記録を削除します。よろしぁE��すか�E�E);
       if (!ok) return;
       const targetStack = from === "list" ? "RecordListStack" : "CalendarStack";
       navigation.replace("MainTabs", { screen: targetStack });
       remove(editingRecord.id, editingRecord.date).catch((error) => {
         console.error("Failed to delete record", error);
-        window.alert("削除に失敗しました。時間をおいて再度お試しください。");
+        window.alert("削除に失敗しました。時間をおいて再度お試しください、E);
       });
       return;
     }
 
-    Alert.alert("削除しますか？", "この記録を削除します。よろしいですか？", [
+    Alert.alert("削除しますか�E�E, "こ�E記録を削除します。よろしぁE��すか�E�E, [
       { text: "キャンセル", style: "cancel" },
       {
         text: "削除",
@@ -209,7 +202,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             await remove(editingRecord.id, editingRecord.date);
           } catch (error) {
             console.error("Failed to delete record", error);
-            Alert.alert("削除に失敗しました", "時間をおいて再度お試しください。");
+            Alert.alert("削除に失敗しました", "時間をおぁE��再度お試しください、E);
           }
         },
       },
@@ -217,13 +210,12 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   if (!user) {
-    // プロフィールが無い場合は案内のみ表示して戻る
-    return (
+    // プロフィールが無ぁE��合�E案�Eのみ表示して戻めE    return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
-          <Text style={styles.title}>プロフィールを作成してください</Text>
-          <Text style={styles.note}>記録を保存するにはプロフィールが必要です。</Text>
-          <Button title="戻る" onPress={() => navigation.goBack()} />
+          <Text style={styles.title}>プロフィールを作�Eしてください</Text>
+          <Text style={styles.note}>記録を保存するにはプロフィールが忁E��です、E/Text>
+          <Button title="戻めE onPress={() => navigation.goBack()} />
         </View>
       </SafeAreaView>
     );
@@ -232,7 +224,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{editingRecord ? "記録を編集" : "記録入力"}</Text>
+        <Text style={styles.title}>{editingRecord ? "記録を編雁E : "記録入劁E}</Text>
 
         <View style={styles.field}>
           <Text style={styles.label}>タイトル</Text>
@@ -240,11 +232,11 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             style={styles.input}
             value={title}
             onChangeText={(text) => setTitle(text.slice(0, 80))}
-            placeholder="短いタイトル（任意）"
+            placeholder="短ぁE��イトル�E�任意！E
             accessibilityLabel="タイトル"
           />
           <TouchableOpacity style={styles.titleSuggestionButton} onPress={openTitleSheet} accessibilityRole="button">
-            <Text style={styles.titleSuggestionText}>候補から選ぶ（任意）</Text>
+            <Text style={styles.titleSuggestionText}>候補から選ぶ�E�任意！E/Text>
           </TouchableOpacity>
         </View>
 
@@ -253,9 +245,9 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             style={styles.dateRow}
             onPress={() => setShowPicker((prev) => !prev)}
             accessibilityRole="button"
-            accessibilityLabel="日付を選択"
+            accessibilityLabel="日付を選抁E
           >
-            <Text style={styles.dateRowLabel}>日付</Text>
+            <Text style={styles.dateRowLabel}>日仁E/Text>
             <Text style={styles.dateRowValue}>{dateInput} ▼</Text>
           </TouchableOpacity>
           {showPicker ? (
@@ -267,7 +259,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
                   setShowPicker(false);
                 }}
               >
-                <Text style={styles.todayResetText}>今日に戻す</Text>
+                <Text style={styles.todayResetText}>今日に戻ぁE/Text>
               </TouchableOpacity>
               <DateTimePicker
                 value={currentDateForPicker}
@@ -282,13 +274,13 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>内容</Text>
+          <Text style={styles.label}>冁E��</Text>
           <TextInput
             style={[styles.input, styles.textarea]}
             value={content}
             onChangeText={(text) => setContent(clampComment(text))}
-            placeholder="今日の成長や頑張りを書き残しましょう（最大500文字）"
-            accessibilityLabel="内容"
+            placeholder="今日の成長めE��張りを書き残しましょぁE��最大500斁E��！E
+            accessibilityLabel="冁E��"
             multiline
             numberOfLines={6}
             textAlignVertical="top"
@@ -297,7 +289,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>写真（任意）</Text>
+          <Text style={styles.label}>写真�E�任意！E/Text>
           <View style={styles.photoActions}>
             <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto} accessibilityRole="button">
               <Text style={styles.photoButtonText}>{photoPath ? "写真を差し替える" : "写真を追加"}</Text>
@@ -311,21 +303,21 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           {photoPath ? (
             <View style={styles.photoPreviewWrapper}>
               <Image source={{ uri: photoPath }} style={styles.photoPreview} resizeMode="cover" />
-              <Text style={styles.helper}>保存時にこの写真を記録へ紐付けます。</Text>
+              <Text style={styles.helper}>保存時にこ�E写真を記録へ紐付けます、E/Text>
             </View>
           ) : (
-            <Text style={styles.helper}>写真はアプリ内に JPEG 形式で保存されます。</Text>
+            <Text style={styles.helper}>写真はアプリ冁E�� JPEG 形式で保存されます、E/Text>
           )}
         </View>
 
         <View style={styles.actions}>
-          <Button title="キャンセル" color="#6B665E" onPress={() => navigation.goBack()} />
-          <Button title="保存" color="#3A86FF" onPress={handleSave} />
+          <Button title="キャンセル" color=COLORS.textSecondary onPress={() => navigation.goBack()} />
+          <Button title="保孁E color=COLORS.accentMain onPress={handleSave} />
         </View>
 
       {editingRecord ? (
           <View style={styles.deleteArea}>
-            <Button title="この記録を削除" color="#D9534F" onPress={confirmDelete} />
+            <Button title="こ�E記録を削除" color=COLORS.sunday onPress={confirmDelete} />
           </View>
         ) : null}
       </ScrollView>
@@ -339,7 +331,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         <Pressable style={styles.sheetOverlay} onPress={closeTitleSheet} accessibilityRole="button" />
         <View style={styles.sheetContainer}>
           <View style={styles.sheetHandle} />
-          <Text style={styles.sheetTitle}>タイトル候補</Text>
+          <Text style={styles.sheetTitle}>タイトル候裁E/Text>
 
           <ScrollView contentContainerStyle={styles.sheetList} keyboardShouldPersistTaps="handled">
             {RECORD_TITLE_CANDIDATES.map((candidate) => (
@@ -362,7 +354,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
   },
   container: {
     flexGrow: 1,
@@ -379,11 +371,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   note: {
     fontSize: 14,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
     textAlign: "center",
   },
   field: {
@@ -391,12 +383,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   helper: {
     fontSize: 12,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   photoActions: {
     flexDirection: "row",
@@ -407,12 +399,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: "#E9F2FF",
+    backgroundColor: COLORS.highlightToday,
     borderWidth: 1,
-    borderColor: "#B8D0FF",
+    borderColor: COLORS.border,
   },
   photoButtonText: {
-    color: "#1D5BBF",
+    color: COLORS.saturday,
     fontWeight: "700",
   },
   photoRemoveButton: {
@@ -420,11 +412,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E5E1DA",
-    backgroundColor: "#FAF8F4",
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
   photoRemoveText: {
-    color: "#8A8277",
+    color: COLORS.textSecondary,
     fontWeight: "600",
   },
   photoPreviewWrapper: {
@@ -435,7 +427,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 220,
     borderRadius: 12,
-    backgroundColor: "#F1EEE8",
+    backgroundColor: COLORS.cellDimmed,
   },
   titleSuggestionButton: {
     alignSelf: "flex-start",
@@ -443,37 +435,37 @@ const styles = StyleSheet.create({
   },
   titleSuggestionText: {
     fontSize: 13,
-    color: "#3A86FF",
+    color: COLORS.accentMain,
     textDecorationLine: "underline",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     borderRadius: 12,
     padding: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   dateRow: {
     height: 52,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   dateRowLabel: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   dateRowValue: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "700",
   },
   datePickerArea: {
@@ -487,10 +479,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: "#E9F2FF",
+    backgroundColor: COLORS.highlightToday,
   },
   todayResetText: {
-    color: "#3A86FF",
+    color: COLORS.accentMain,
     fontWeight: "700",
   },
   actions: {
@@ -510,7 +502,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 16,
@@ -521,13 +513,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#E5E1DA",
+    backgroundColor: COLORS.border,
     marginBottom: 12,
   },
   sheetTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     marginBottom: 12,
   },
   sheetList: {
@@ -539,13 +531,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E5E1DA",
-    backgroundColor: "#FAF8F4",
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
   candidateText: {
     fontSize: 15,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
 });
 
 export default RecordInputScreen;
+

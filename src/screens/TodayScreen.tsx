@@ -16,6 +16,7 @@ import { useAchievements } from "@/state/AchievementsContext";
 import { useDateViewContext } from "@/state/DateViewContext";
 import { calculateAgeInfo, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 import { ensureFileExistsAsync } from "@/utils/photo";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<CalendarStackParamList, "Today">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
@@ -111,7 +112,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert("権限を確認してください", "写真へのアクセスを許可すると画像を保存できます。");
+        Alert.alert("権限を確認してください", "写真へのアクセスを許可すると画像を保存できます、E);
         return;
       }
 
@@ -121,10 +122,10 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
       }
 
       await MediaLibrary.saveToLibraryAsync(uri);
-      Alert.alert("保存しました", "写真アプリに画像を保存しました。");
+      Alert.alert("保存しました", "写真アプリに画像を保存しました、E);
     } catch (error) {
       console.error("Failed to save day image", error);
-      Alert.alert("保存に失敗しました", "時間をおいて再度お試しください。");
+      Alert.alert("保存に失敗しました", "時間をおぁE��再度お試しください、E);
     }
   };
 
@@ -132,11 +133,11 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          <Text style={styles.title}>プロフィールを作成してください</Text>
-          <Text style={styles.subtitle}>最初にプロフィール設定から始めましょう</Text>
+          <Text style={styles.title}>プロフィールを作�Eしてください</Text>
+          <Text style={styles.subtitle}>最初にプロフィール設定から始めましょぁE/Text>
           <View style={styles.buttonRow}>
             <Button
-              title="セットアップへ"
+              title="セチE��アチE�Eへ"
               onPress={() => rootNavigation.navigate("SettingsStack", { screen: "ProfileManager" })}
             />
           </View>
@@ -150,9 +151,9 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <Text style={styles.title}>{user.name}</Text>
-          <Text style={styles.subtitle}>生年月日が未設定です</Text>
+          <Text style={styles.subtitle}>生年月日が未設定でぁE/Text>
           <Button
-            title="プロフィールを編集"
+            title="プロフィールを編雁E
             onPress={() => rootNavigation.navigate("SettingsStack", { screen: "ProfileManager" })}
           />
         </View>
@@ -166,11 +167,11 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
         <Text style={styles.title}>{user.name}</Text>
         <Text style={styles.date}>{displayDate}</Text>
         <View style={styles.actionRow}>
-          <Button title="カレンダー" color="#3A86FF" onPress={handleOpenCalendar} />
+          <Button title="カレンダー" color=COLORS.accentMain onPress={handleOpenCalendar} />
         </View>
 
         <View style={styles.exportActionRow}>
-          <Button title="画像として保存" color="#3A86FF" onPress={handleSaveImage} />
+          <Button title="画像として保孁E color=COLORS.accentMain onPress={handleSaveImage} />
         </View>
 
         {ageInfo ? (
@@ -199,14 +200,14 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
                 onPress={() => rootNavigation.navigate("RecordDetail", { recordId: item.id, from: "today" })}
                 accessibilityRole="button"
               >
-                <Text style={styles.cardTitle}>{item.title || "(タイトルなし)"}</Text>
+                <Text style={styles.cardTitle}>{item.title || "(タイトルなぁE"}</Text>
                 <Text style={styles.cardMeta}>{item.date}</Text>
               </TouchableOpacity>
             ))
           )}
         </View>
       </ScrollView>
-      {/* 保存用の描画領域（画面には表示しない） */}
+      {/* 保存用の描画領域�E�画面には表示しなぁE��E*/}
       <View style={styles.hiddenRenderer} pointerEvents="none">
         <ViewShot ref={viewShotRef} options={{ format: "jpg", quality: 0.9 }} style={styles.exportContainer}>
           <View style={styles.exportContent} collapsable={false}>
@@ -216,7 +217,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
               {topTitles.map((item) => (
                 <View key={item.id} style={styles.exportListItem}>
                   <Text style={styles.exportListText} numberOfLines={2}>
-                    ・{item.title || "(タイトルなし)"}
+                    ・{item.title || "(タイトルなぁE"}
                   </Text>
                 </View>
               ))}
@@ -230,10 +231,10 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
       <TouchableOpacity
         style={styles.fab}
         accessibilityRole="button"
-        // Phase 1: FAB は記録入力画面への入口だけを担う
+        // Phase 1: FAB は記録入力画面への入口だけを拁E��
         onPress={() => rootNavigation.navigate("RecordInput")}
       >
-        <Text style={styles.fabText}>＋ 記録</Text>
+        <Text style={styles.fabText}>�E�E記録</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -242,33 +243,32 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
   },
   container: {
     flexGrow: 1,
     padding: 24,
-    paddingBottom: 140, // FAB に重ならない余白を確保
-    gap: 16,
+    paddingBottom: 140, // FAB に重ならなぁE��白を確俁E    gap: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   subtitle: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   date: {
     fontSize: 18,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   ageBlock: {
     gap: 4,
   },
   ageText: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   actionRow: {
     alignSelf: "flex-start",
@@ -281,35 +281,35 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   empty: {
     fontSize: 16,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#E5E1DA",
+    borderColor: COLORS.border,
     gap: 6,
     marginBottom: 8,
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   cardMeta: {
     fontSize: 14,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   buttonRow: {
     marginTop: 12,
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   },
   exportContainer: {
     width: 720,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
     padding: 24,
     borderRadius: 16,
   },
@@ -331,50 +331,51 @@ const styles = StyleSheet.create({
   exportTitle: {
     fontSize: 22,
     fontWeight: "800",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   exportPhoto: {
     width: "100%",
     height: 360,
     borderRadius: 14,
-    backgroundColor: "#F1EEE8",
+    backgroundColor: COLORS.cellDimmed,
   },
   exportList: {
     gap: 6,
   },
   exportListItem: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#E5E1DA",
+    borderColor: COLORS.border,
     padding: 10,
   },
   exportListText: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   exportEmpty: {
     fontSize: 15,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   fab: {
     position: "absolute",
     right: 20,
     bottom: 24,
-    backgroundColor: "#3A86FF",
+    backgroundColor: COLORS.accentMain,
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 32,
-    shadowColor: "#000",
+    shadowColor: COLORS.textPrimary,
     shadowOpacity: 0.2,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
   fabText: {
-    color: "#FFFFFF",
+    color: COLORS.surface,
     fontSize: 16,
     fontWeight: "700",
   },
 });
 
 export default TodayScreen;
+

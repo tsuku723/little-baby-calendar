@@ -38,11 +38,8 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
       onPress={() => onPress(day.date)}
       style={[
         styles.container,
-        {
-          backgroundColor: isDimmed ? COLORS.cellDimmed : COLORS.cellCurrent,
-          borderWidth: day.isToday ? 2 : 0,
-          borderColor: day.isToday ? COLORS.highlightToday : "transparent",
-        },
+        isDimmed && styles.containerDimmed,
+        day.isToday && styles.today,
       ]}
     >
       <Text style={[styles.dateLabel, isDimmed && styles.dateDimmed]}>
@@ -74,10 +71,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginHorizontal: 4,
     marginVertical: 6,
+    backgroundColor: COLORS.cellCurrent,
 
     flexDirection: "column",
     justifyContent: "flex-start",
     gap: 2,
+  },
+  containerDimmed: {
+    backgroundColor: COLORS.cellDimmed,
+  },
+  today: {
+    borderWidth: 2,
+    borderColor: COLORS.highlightToday,
   },
 
   dateLabel: {

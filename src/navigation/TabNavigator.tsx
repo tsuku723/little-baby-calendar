@@ -52,7 +52,7 @@ const TabNavigator: React.FC = () => {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: COLORS.background,
-          borderTopColor: "transparent",
+          borderTopColor: COLORS.background,
         },
         tabBarActiveTintColor: COLORS.accentMain,
         tabBarInactiveTintColor: COLORS.textSecondary,

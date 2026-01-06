@@ -6,6 +6,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
 import { ensureFileExistsAsync } from "@/utils/photo";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RecordDetail">;
 
@@ -44,7 +45,7 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.centered}>
           <Text style={styles.title}>記録が見つかりません</Text>
           <Button
-            title={from === "list" ? "記録一覧に戻る" : "Todayに戻る"}
+            title={from === "list" ? "記録一覧に戻めE : "Todayに戻めE}
             onPress={() => navigation.replace("MainTabs", { screen: targetStack })}
           />
         </View>
@@ -58,13 +59,13 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         <Text style={styles.title}>記録詳細</Text>
 
         <View style={styles.field}>
-          <Text style={styles.label}>日付</Text>
+          <Text style={styles.label}>日仁E/Text>
           <Text style={styles.value}>{record.date.replace(/-/g, "/")}</Text>
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>内容</Text>
-          <Text style={styles.value}>{record.title || "(内容未入力)"}</Text>
+          <Text style={styles.label}>冁E��</Text>
+          <Text style={styles.value}>{record.title || "(冁E��未入劁E"}</Text>
         </View>
 
         {record.memo ? (
@@ -82,10 +83,10 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
 
         <View style={styles.actions}>
-          <Button title="戻る" color="#6B665E" onPress={() => navigation.goBack()} />
+          <Button title="戻めE color=COLORS.textSecondary onPress={() => navigation.goBack()} />
           <Button
-            title="編集する"
-            color="#3A86FF"
+            title="編雁E��めE
+            color=COLORS.accentMain
             onPress={() =>
               navigation.navigate("RecordInput", { recordId: record.id, isoDate: record.date, from })
             }
@@ -99,7 +100,7 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
@@ -109,18 +110,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   field: {
     gap: 6,
   },
   label: {
     fontSize: 14,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   value: {
     fontSize: 17,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   actions: {
     marginTop: 12,
@@ -139,8 +140,9 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 240,
     borderRadius: 12,
-    backgroundColor: "#F1EEE8",
+    backgroundColor: COLORS.cellDimmed,
   },
 });
 
 export default RecordDetailScreen;
+

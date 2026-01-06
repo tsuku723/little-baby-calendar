@@ -9,6 +9,7 @@ import { RecordListStackParamList, RootStackParamList, TabParamList } from "@/na
 import { useAchievements } from "@/state/AchievementsContext";
 import { isIsoDateString } from "@/utils/dateUtils";
 import { normalizeSearchText } from "@/utils/text";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<RecordListStackParamList, "AchievementList">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
@@ -26,8 +27,7 @@ const AchievementListScreen: React.FC<Props> = () => {
     // AchievementStore = { "2025-02-05": [A], "2025-02-06": [B, C], ... }
     const allList: Achievement[] = Object.values(store).flat();
 
-    // 1) フリーワード検索（title / memo 部分一致）
-    const normalizedQuery = normalizeSearchText(searchText);
+    // 1) フリーワード検索�E�Eitle / memo 部刁E��致�E�E    const normalizedQuery = normalizeSearchText(searchText);
     const filteredBySearch = normalizedQuery
       ? allList.filter((item) => {
           const normalizedTarget = normalizeSearchText(`${item.title} ${item.memo ?? ""}`);
@@ -35,8 +35,7 @@ const AchievementListScreen: React.FC<Props> = () => {
         })
       : allList;
 
-    // 2) 期間フィルタ（日付は ISO 文字列比較で OK）
-    const validFrom = isIsoDateString(fromDate) ? fromDate : null;
+    // 2) 期間フィルタ�E�日付�E ISO 斁E���E比輁E�� OK�E�E    const validFrom = isIsoDateString(fromDate) ? fromDate : null;
     const validTo = isIsoDateString(toDate) ? toDate : null;
     const filteredByRange = filteredBySearch.filter((item) => {
       if (validFrom && item.date < validFrom) return false;
@@ -44,7 +43,7 @@ const AchievementListScreen: React.FC<Props> = () => {
       return true;
     });
 
-    // 3) ソート: date desc, createdAt desc
+    // 3) ソーチE date desc, createdAt desc
     return filteredByRange
       .slice()
       .sort((a, b) => {
@@ -61,7 +60,7 @@ const AchievementListScreen: React.FC<Props> = () => {
       }}
       accessibilityRole="button"
     >
-      {/* 行タップでカレンダー画面の該当日を開く */}
+      {/* 行タチE�Eでカレンダー画面の該当日を開ぁE*/}
       <View style={styles.rowHeader}>
         <Text style={styles.date}>{dateLabel(item.date)}</Text>
       </View>
@@ -80,7 +79,7 @@ const AchievementListScreen: React.FC<Props> = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         {/* <TouchableOpacity onPress={() => rootNavigation.navigate("TodayStack")} accessibilityRole="button">
-          <Text style={styles.back}>← 戻る</Text>
+          <Text style={styles.back}>ↁE戻めE/Text>
         </TouchableOpacity> */}
         <Text style={styles.title}>記録一覧</Text>
       </View>
@@ -114,11 +113,11 @@ const AchievementListScreen: React.FC<Props> = () => {
               onChangeText={(text) => setToDate(text.trim().slice(0, 10))}
               keyboardType="numbers-and-punctuation"
               maxLength={10}
-              accessibilityLabel="終了日"
+              accessibilityLabel="終亁E��"
             />
           </View>
         </View>
-        <Text style={styles.searchHint}>※ 英字小文字化 / 全角英数の半角化 / 空白整理のみ正規化します。</Text>
+        <Text style={styles.searchHint}>※ 英字小文字化 / 全角英数の半角化 / 空白整琁E�Eみ正規化します、E/Text>
       </View>
       <FlatList
         data={items}
@@ -130,10 +129,10 @@ const AchievementListScreen: React.FC<Props> = () => {
       <TouchableOpacity
         style={styles.fab}
         accessibilityRole="button"
-        // Phase 1: FAB は記録入力画面への入口だけを担う
+        // Phase 1: FAB は記録入力画面への入口だけを拁E��
         onPress={() => rootNavigation.navigate("RecordInput")}
       >
-        <Text style={styles.fabText}>＋ 記録</Text>
+        <Text style={styles.fabText}>�E�E記録</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -142,7 +141,7 @@ const AchievementListScreen: React.FC<Props> = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
     padding: 16,
     gap: 12,
   },
@@ -154,19 +153,19 @@ const styles = StyleSheet.create({
   },
   searchArea: {
     gap: 10,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E6E2DA",
+    borderColor: COLORS.border,
     padding: 12,
   },
   searchInput: {
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     borderRadius: 10,
     padding: 10,
     fontSize: 15,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   dateRangeRow: {
     flexDirection: "row",
@@ -178,28 +177,28 @@ const styles = StyleSheet.create({
   },
   rangeLabel: {
     fontSize: 13,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
     fontWeight: "600",
   },
   dateInput: {
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     borderRadius: 10,
     padding: 10,
     fontSize: 14,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   searchHint: {
     fontSize: 12,
-    color: "#8A8277",
+    color: COLORS.textSecondary,
   },
   back: {
     fontSize: 16,
-    color: "#3A86FF",
+    color: COLORS.accentMain,
   },
   title: {
     fontSize: 18,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   list: {
@@ -207,10 +206,10 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   row: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E6E2DA",
+    borderColor: COLORS.border,
     padding: 12,
     gap: 6,
   },
@@ -221,35 +220,36 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 14,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   memo: {
     fontSize: 14,
-    color: "#4A453D",
+    color: COLORS.textPrimary,
   },
   empty: {
     textAlign: "center",
-    color: "#6B665E",
+    color: COLORS.textSecondary,
     paddingTop: 40,
   },
   fab: {
     position: "absolute",
     right: 20,
     bottom: 24,
-    backgroundColor: "#3A86FF",
+    backgroundColor: COLORS.accentMain,
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 32,
-    shadowColor: "#000",
+    shadowColor: COLORS.textPrimary,
     shadowOpacity: 0.2,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
   fabText: {
-    color: "#FFFFFF",
+    color: COLORS.surface,
     fontSize: 16,
     fontWeight: "700",
   },
 });
 
 export default AchievementListScreen;
+

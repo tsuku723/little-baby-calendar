@@ -5,6 +5,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { SettingsStackParamList } from "@/navigation";
 import { useAppState } from "@/state/AppStateContext";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "ProfileManager">;
 
@@ -41,13 +42,17 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.cardMeta}>誕生日: {user.birthDate}</Text>
                 <Text style={styles.cardMeta}>予定日: {user.dueDate ?? "なし"}</Text>
               </View>
-              <Button title="編集" onPress={() => navigation.navigate("ProfileEdit", { profileId: user.id })} color="#3A86FF" />
+              <Button
+                title="編集"
+                onPress={() => navigation.navigate("ProfileEdit", { profileId: user.id })}
+                color={COLORS.accentMain}
+              />
             </View>
           </TouchableOpacity>
         ))}
 
         <View style={styles.footer}>
-          <Button title="＋ 新しいこどもを追加" onPress={() => navigation.navigate("ProfileEdit")} color="#3A86FF" />
+          <Button title="＋ 新しいこどもを追加" onPress={() => navigation.navigate("ProfileEdit")} color={COLORS.accentMain} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -57,7 +62,7 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
   },
   container: {
     padding: 16,
@@ -70,16 +75,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   subtitle: {
     fontSize: 14,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: "#E5E1DA",
+    borderColor: COLORS.border,
     borderRadius: 8,
     padding: 12,
   },
@@ -96,11 +101,11 @@ const styles = StyleSheet.create({
   cardName: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   cardMeta: {
     fontSize: 14,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   footer: {
     marginTop: 12,

@@ -124,7 +124,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     : null;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
       <CalendarDecorations />
       <View style={styles.fixedHeader}>
         <Text style={styles.headerName}>{user?.name ?? "プロフィール未設定"}</Text>
@@ -185,7 +185,6 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   fixedHeader: {
     paddingHorizontal: 16,
@@ -252,7 +251,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderRadius: 28,
-    shadowColor: "#000",
+    shadowColor: COLORS.textPrimary,
     shadowOpacity: 0.1,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },

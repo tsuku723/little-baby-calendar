@@ -3,14 +3,15 @@ import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 
 import RootNavigator from "./RootNavigator";
 import { DateViewProvider } from "@/state/DateViewContext";
+import { COLORS } from "@/constants/colors";
 
 const navTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: "#FFFDF9",
-    text: "#2E2A27",
-    card: "#FFFDF9",
+    background: COLORS.background,
+    text: COLORS.textPrimary,
+    card: COLORS.background,
   },
 };
 
