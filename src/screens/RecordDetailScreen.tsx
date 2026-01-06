@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { Button, Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -45,7 +45,7 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.centered}>
           <Text style={styles.title}>記録が見つかりません</Text>
           <Button
-            title={from === "list" ? "記録一覧に戻めE : "Todayに戻めE}
+            title={from === "list" ? "記録一覧に戻る" : "今日に戻る"}
             onPress={() => navigation.replace("MainTabs", { screen: targetStack })}
           />
         </View>
@@ -59,13 +59,13 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         <Text style={styles.title}>記録詳細</Text>
 
         <View style={styles.field}>
-          <Text style={styles.label}>日仁E/Text>
+          <Text style={styles.label}>日付</Text>
           <Text style={styles.value}>{record.date.replace(/-/g, "/")}</Text>
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>冁E��</Text>
-          <Text style={styles.value}>{record.title || "(冁E��未入劁E"}</Text>
+          <Text style={styles.label}>タイトル</Text>
+          <Text style={styles.value}>{record.title || "(タイトル未入力)"}</Text>
         </View>
 
         {record.memo ? (
@@ -83,10 +83,10 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
 
         <View style={styles.actions}>
-          <Button title="戻めE color=COLORS.textSecondary onPress={() => navigation.goBack()} />
+          <Button title="戻る" color={COLORS.textSecondary} onPress={() => navigation.goBack()} />
           <Button
-            title="編雁E��めE
-            color=COLORS.accentMain
+            title="編集する"
+            color={COLORS.accentMain}
             onPress={() =>
               navigation.navigate("RecordInput", { recordId: record.id, isoDate: record.date, from })
             }
@@ -145,4 +145,3 @@ const styles = StyleSheet.create({
 });
 
 export default RecordDetailScreen;
-

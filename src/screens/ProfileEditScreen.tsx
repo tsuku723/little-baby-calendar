@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -102,7 +102,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     const dueDate = formState.dueDate.trim() || null;
 
     if (!name || !birthDate) {
-      Alert.alert("入力エラー", "名前と生年月日は忁E��です、E);
+      Alert.alert("入力エラー", "名前と生年月日は必須です。");
       return;
     }
 
@@ -152,10 +152,10 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   const handleDelete = async () => {
     if (!existing) return;
     if (users.length <= 1) {
-      Alert.alert("削除できません", "プロフィールは1件以上忁E��です、E);
+      Alert.alert("削除できません", "プロフィールは1件以上必要です。");
       return;
     }
-    Alert.alert("削除しますか�E�E, "こ�Eプロフィールと記録を削除します、E, [
+    Alert.alert("削除しますか？", "このプロフィールと記録を削除します。", [
       { text: "キャンセル", style: "cancel" },
       {
         text: "削除",
@@ -168,7 +168,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     ]);
   };
 
-  const title = existing ? "プロフィールを編雁E : "新しいこどもを追加";
+  const title = existing ? "プロフィールを編集" : "新しいこどもを追加";
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -181,7 +181,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
             value={formState.name}
             onChangeText={(text) => setFormState((prev) => ({ ...prev, name: text }))}
             style={styles.input}
-            placeholder="お名剁E
+            placeholder="お名前"
           />
         </View>
 
@@ -193,7 +193,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
               setShowDueDatePicker(false);
             }}
             accessibilityRole="button"
-            accessibilityLabel="出生日を選抁E
+            accessibilityLabel="出生日を選択"
           >
             <Text style={styles.dateRowLabel}>出生日</Text>
             <Text style={styles.dateRowValue}>{formState.birthDate} ▼</Text>
@@ -220,7 +220,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
               setShowBirthDatePicker(false);
             }}
             accessibilityRole="button"
-            accessibilityLabel="出産予定日を選抁E
+            accessibilityLabel="出産予定日を選択"
           >
             <Text style={styles.dateRowLabel}>出産予定日</Text>
             <Text style={styles.dateRowValue}>{formState.dueDate} ▼</Text>
@@ -240,8 +240,8 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>こ�E子�E表示設宁E/Text>
-          <Text style={styles.description}>ここで変更した設定�E、「保存」を押すまで反映されません、E/Text>
+          <Text style={styles.sectionTitle}>こども表示設定</Text>
+          <Text style={styles.description}>ここで変更した設定は、「保存」を押すまで反映されません。</Text>
 
           <View style={styles.field}>
             <Text style={styles.label}>修正月齢の表示上限</Text>
@@ -249,7 +249,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
               {[
                 { label: "24か月", value: 24 },
                 { label: "36か月", value: 36 },
-                { label: "制限なぁE, value: null },
+                { label: "制限なし", value: null },
               ].map((option) => (
                 <Pressable
                   key={option.label}
@@ -275,7 +275,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>月齢表示形弁E/Text>
+            <Text style={styles.label}>月齢表示形式</Text>
             <View style={styles.optionRow}>
               {[
                 { label: "2M4D", value: "md" },
@@ -316,7 +316,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
               color={users.length <= 1 ? COLORS.textSecondary : COLORS.sunday}
             />
           ) : null}
-          <Button title="保孁E onPress={handleSave} color={COLORS.accentMain} />
+          <Button title="保存" onPress={handleSave} color={COLORS.accentMain} />
           <Button title="キャンセル" onPress={() => navigation.goBack()} color={COLORS.textSecondary} />
         </View>
       </ScrollView>
@@ -432,5 +432,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileEditScreen;
-
-

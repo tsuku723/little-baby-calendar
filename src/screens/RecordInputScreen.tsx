@@ -1,5 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Image, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+﻿import React, { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Button,
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
@@ -26,7 +40,8 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const preferredDate = route.params?.isoDate;
   const from = route.params?.from;
 
-  // 編雁E��象のレコードを store から検索�E�EsoDate があれ�E優先して絞り込む�E�E  const editingRecord = useMemo(() => {
+  // 編集対象のレコードを store から検索（isoDate があれば優先して絞り込む）
+  const editingRecord = useMemo(() => {
     if (!recordId) return null;
     if (preferredDate && store[preferredDate]) {
       return store[preferredDate].find((item) => item.id === recordId) ?? null;
@@ -45,9 +60,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const [hasRemovedPhoto, setHasRemovedPhoto] = useState<boolean>(false);
   const [isTitleSheetVisible, setTitleSheetVisible] = useState(false);
 
-
-
-  // 編雁E��象が変わったらフォームを最新の値に合わせる
+  // 編集対象が変わったらフォームを最新の値に合わせる
   useEffect(() => {
     if (editingRecord) {
       setDateInput(editingRecord.date);
@@ -66,7 +79,8 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   }, [editingRecord, preferredDate, selectedDateIso]);
 
-  // 編雁E��象の photoPath が実ファイルとして存在するかを確認すめE  useEffect(() => {
+  // 編集対象の photoPath が実ファイルとして存在するかを確認する
+  useEffect(() => {
     let mounted = true;
     const verifyPhoto = async () => {
       const ensured = await ensureFileExistsAsync(editingRecord?.photoPath ?? null);
@@ -80,7 +94,8 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     };
   }, [editingRecord?.photoPath]);
 
-  // ボトムシートを開くタイミングでフラグを立てめE  const openTitleSheet = () => {
+  // ボトムシートを開くタイミングでフラグを立てる
+  const openTitleSheet = () => {
     setTitleSheetVisible(true);
   };
 
@@ -100,7 +115,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     setShowPicker(false);
   };
 
-
   // 候補選択時のハンドリング
   const handleSelectCandidate = (candidate: string) => {
     setTitle(candidate);
@@ -114,7 +128,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       if (!next) return;
 
       if (previousTempPhoto && previousTempPhoto !== next) {
-        // 編雁E��面で選び直した未保存�E写真は不要になるためクリーンアチE�Eする
+        // 編集画面で選び直した未保存の写真は不要になるためクリーンアップする
         await deleteIfExistsAsync(previousTempPhoto);
       }
 
@@ -122,14 +136,15 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       setHasRemovedPhoto(false);
     } catch (error) {
       console.error("Failed to pick photo", error);
-      Alert.alert("写真の追加に失敗しました", "再度お試しください、E);
+      Alert.alert("写真の追加に失敗しました", "再度お試しください。");
     }
   };
 
   const handleRemovePhoto = async () => {
     try {
       if (photoPath && photoPath !== editingRecord?.photoPath) {
-        // 保存前に追加した写真はここで破棁E��めE        await deleteIfExistsAsync(photoPath);
+        // 保存前に追加した写真はここで破棄する
+        await deleteIfExistsAsync(photoPath);
       }
     } catch (error) {
       console.warn("Failed to delete temp photo", error);
@@ -142,22 +157,25 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handleSave = async () => {
     if (!user) {
-      Alert.alert("プロフィール未設宁E, "プロフィールを作�Eしてから記録してください、E);
+      Alert.alert("プロフィール未設定", "プロフィールを作成してから記録してください。");
       return;
     }
 
-    // 日付�E ISO 斁E���Eで受け取り、忁E�� UTC 正規化して保存すめE    const normalizedDate = normalizeToUtcDate(dateInput);
+    // 日付は ISO 形式で受け取り、UTC に正規化して保存する
+    const normalizedDate = normalizeToUtcDate(dateInput);
     if (Number.isNaN(normalizedDate.getTime())) {
-      Alert.alert("日付を確認してください", "YYYY-MM-DD 形式で入力してください、E);
+      Alert.alert("日付を確認してください", "YYYY-MM-DD 形式で入力してください。");
       return;
     }
     const isoDate = toIsoDateString(normalizedDate);
 
     const titleValue = title.trim() || content.trim();
     const photoPayload: string | null | undefined = (() => {
-      if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存�E真�E削除
-      if (photoPath && photoPath !== editingRecord?.photoPath) return photoPath; // 新規�E差し替ぁE      if (!editingRecord && photoPath) return photoPath; // 新規レコードで写真あり
-      return undefined; // 変更なぁE    })();
+      if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存の写真を削除
+      if (photoPath && photoPath !== editingRecord?.photoPath) return photoPath; // 新規に差し替え
+      if (!editingRecord && photoPath) return photoPath; // 新規レコードで写真あり
+      return undefined; // 変更なし
+    })();
     const payload: SaveAchievementPayload = {
       id: editingRecord?.id,
       date: isoDate,
@@ -171,26 +189,27 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       navigation.goBack();
     } catch (error) {
       console.error("Failed to save record", error);
-      Alert.alert("保存に失敗しました", "時間をおぁE��再度お試しください、E);
+      Alert.alert("保存に失敗しました", "時間をおいて再度お試しください。");
     }
   };
 
-  // 削除確認ダイアログを表示する�E�Eeb は window.confirm を使用�E�E  const confirmDelete = () => {
+  // 削除確認ダイアログを表示する（Web は window.confirm を使用）
+  const confirmDelete = () => {
     if (!editingRecord) return;
 
     if (Platform.OS === "web") {
-      const ok = window.confirm("こ�E記録を削除します。よろしぁE��すか�E�E);
+      const ok = window.confirm("この記録を削除します。よろしいですか？");
       if (!ok) return;
       const targetStack = from === "list" ? "RecordListStack" : "CalendarStack";
       navigation.replace("MainTabs", { screen: targetStack });
       remove(editingRecord.id, editingRecord.date).catch((error) => {
         console.error("Failed to delete record", error);
-        window.alert("削除に失敗しました。時間をおいて再度お試しください、E);
+        window.alert("削除に失敗しました。時間をおいて再度お試しください。");
       });
       return;
     }
 
-    Alert.alert("削除しますか�E�E, "こ�E記録を削除します。よろしぁE��すか�E�E, [
+    Alert.alert("削除しますか？", "この記録を削除します。よろしいですか？", [
       { text: "キャンセル", style: "cancel" },
       {
         text: "削除",
@@ -202,7 +221,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             await remove(editingRecord.id, editingRecord.date);
           } catch (error) {
             console.error("Failed to delete record", error);
-            Alert.alert("削除に失敗しました", "時間をおぁE��再度お試しください、E);
+            Alert.alert("削除に失敗しました", "時間をおいて再度お試しください。");
           }
         },
       },
@@ -210,12 +229,13 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   if (!user) {
-    // プロフィールが無ぁE��合�E案�Eのみ表示して戻めE    return (
+    // プロフィールが無い場合は案内のみ表示して戻る
+    return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
-          <Text style={styles.title}>プロフィールを作�Eしてください</Text>
-          <Text style={styles.note}>記録を保存するにはプロフィールが忁E��です、E/Text>
-          <Button title="戻めE onPress={() => navigation.goBack()} />
+          <Text style={styles.title}>プロフィールを作成してください</Text>
+          <Text style={styles.note}>記録を保存するにはプロフィールが必要です。</Text>
+          <Button title="戻る" onPress={() => navigation.goBack()} />
         </View>
       </SafeAreaView>
     );
@@ -224,7 +244,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{editingRecord ? "記録を編雁E : "記録入劁E}</Text>
+        <Text style={styles.title}>{editingRecord ? "記録を編集" : "記録入力"}</Text>
 
         <View style={styles.field}>
           <Text style={styles.label}>タイトル</Text>
@@ -232,11 +252,11 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             style={styles.input}
             value={title}
             onChangeText={(text) => setTitle(text.slice(0, 80))}
-            placeholder="短ぁE��イトル�E�任意！E
+            placeholder="短いタイトル（任意）"
             accessibilityLabel="タイトル"
           />
           <TouchableOpacity style={styles.titleSuggestionButton} onPress={openTitleSheet} accessibilityRole="button">
-            <Text style={styles.titleSuggestionText}>候補から選ぶ�E�任意！E/Text>
+            <Text style={styles.titleSuggestionText}>候補から選ぶ（任意）</Text>
           </TouchableOpacity>
         </View>
 
@@ -245,9 +265,9 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             style={styles.dateRow}
             onPress={() => setShowPicker((prev) => !prev)}
             accessibilityRole="button"
-            accessibilityLabel="日付を選抁E
+            accessibilityLabel="日付を選択"
           >
-            <Text style={styles.dateRowLabel}>日仁E/Text>
+            <Text style={styles.dateRowLabel}>日付</Text>
             <Text style={styles.dateRowValue}>{dateInput} ▼</Text>
           </TouchableOpacity>
           {showPicker ? (
@@ -259,7 +279,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
                   setShowPicker(false);
                 }}
               >
-                <Text style={styles.todayResetText}>今日に戻ぁE/Text>
+                <Text style={styles.todayResetText}>今日に戻る</Text>
               </TouchableOpacity>
               <DateTimePicker
                 value={currentDateForPicker}
@@ -274,13 +294,13 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>冁E��</Text>
+          <Text style={styles.label}>メモ</Text>
           <TextInput
             style={[styles.input, styles.textarea]}
             value={content}
             onChangeText={(text) => setContent(clampComment(text))}
-            placeholder="今日の成長めE��張りを書き残しましょぁE��最大500斁E��！E
-            accessibilityLabel="冁E��"
+            placeholder="今日の成長や出来事を書き残しましょう（最大500文字）"
+            accessibilityLabel="メモ"
             multiline
             numberOfLines={6}
             textAlignVertical="top"
@@ -289,7 +309,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>写真�E�任意！E/Text>
+          <Text style={styles.label}>写真（任意）</Text>
           <View style={styles.photoActions}>
             <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto} accessibilityRole="button">
               <Text style={styles.photoButtonText}>{photoPath ? "写真を差し替える" : "写真を追加"}</Text>
@@ -303,21 +323,21 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           {photoPath ? (
             <View style={styles.photoPreviewWrapper}>
               <Image source={{ uri: photoPath }} style={styles.photoPreview} resizeMode="cover" />
-              <Text style={styles.helper}>保存時にこ�E写真を記録へ紐付けます、E/Text>
+              <Text style={styles.helper}>保存時にこの写真を記録へ紐付けます。</Text>
             </View>
           ) : (
-            <Text style={styles.helper}>写真はアプリ冁E�� JPEG 形式で保存されます、E/Text>
+            <Text style={styles.helper}>写真はアプリ内で JPEG 形式で保存されます。</Text>
           )}
         </View>
 
         <View style={styles.actions}>
-          <Button title="キャンセル" color=COLORS.textSecondary onPress={() => navigation.goBack()} />
-          <Button title="保孁E color=COLORS.accentMain onPress={handleSave} />
+          <Button title="キャンセル" color={COLORS.textSecondary} onPress={() => navigation.goBack()} />
+          <Button title="保存" color={COLORS.accentMain} onPress={handleSave} />
         </View>
 
-      {editingRecord ? (
+        {editingRecord ? (
           <View style={styles.deleteArea}>
-            <Button title="こ�E記録を削除" color=COLORS.sunday onPress={confirmDelete} />
+            <Button title="この記録を削除" color={COLORS.sunday} onPress={confirmDelete} />
           </View>
         ) : null}
       </ScrollView>
@@ -331,7 +351,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         <Pressable style={styles.sheetOverlay} onPress={closeTitleSheet} accessibilityRole="button" />
         <View style={styles.sheetContainer}>
           <View style={styles.sheetHandle} />
-          <Text style={styles.sheetTitle}>タイトル候裁E/Text>
+          <Text style={styles.sheetTitle}>タイトル候補</Text>
 
           <ScrollView contentContainerStyle={styles.sheetList} keyboardShouldPersistTaps="handled">
             {RECORD_TITLE_CANDIDATES.map((candidate) => (
@@ -541,4 +561,3 @@ const styles = StyleSheet.create({
 });
 
 export default RecordInputScreen;
-

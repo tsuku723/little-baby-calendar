@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
@@ -27,7 +27,8 @@ const AchievementListScreen: React.FC<Props> = () => {
     // AchievementStore = { "2025-02-05": [A], "2025-02-06": [B, C], ... }
     const allList: Achievement[] = Object.values(store).flat();
 
-    // 1) フリーワード検索�E�Eitle / memo 部刁E��致�E�E    const normalizedQuery = normalizeSearchText(searchText);
+    // 1) フリーワード検索（title / memo 部分一致）
+    const normalizedQuery = normalizeSearchText(searchText);
     const filteredBySearch = normalizedQuery
       ? allList.filter((item) => {
           const normalizedTarget = normalizeSearchText(`${item.title} ${item.memo ?? ""}`);
@@ -35,7 +36,8 @@ const AchievementListScreen: React.FC<Props> = () => {
         })
       : allList;
 
-    // 2) 期間フィルタ�E�日付�E ISO 斁E���E比輁E�� OK�E�E    const validFrom = isIsoDateString(fromDate) ? fromDate : null;
+    // 2) 期間フィルタ（日付は ISO 形式で比較 OK）
+    const validFrom = isIsoDateString(fromDate) ? fromDate : null;
     const validTo = isIsoDateString(toDate) ? toDate : null;
     const filteredByRange = filteredBySearch.filter((item) => {
       if (validFrom && item.date < validFrom) return false;
@@ -43,7 +45,7 @@ const AchievementListScreen: React.FC<Props> = () => {
       return true;
     });
 
-    // 3) ソーチE date desc, createdAt desc
+    // 3) ソート: date desc, createdAt desc
     return filteredByRange
       .slice()
       .sort((a, b) => {
@@ -60,7 +62,7 @@ const AchievementListScreen: React.FC<Props> = () => {
       }}
       accessibilityRole="button"
     >
-      {/* 行タチE�Eでカレンダー画面の該当日を開ぁE*/}
+      {/* 行タップでカレンダー画面の該当日を開く */}
       <View style={styles.rowHeader}>
         <Text style={styles.date}>{dateLabel(item.date)}</Text>
       </View>
@@ -79,7 +81,7 @@ const AchievementListScreen: React.FC<Props> = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         {/* <TouchableOpacity onPress={() => rootNavigation.navigate("TodayStack")} accessibilityRole="button">
-          <Text style={styles.back}>ↁE戻めE/Text>
+          <Text style={styles.back}>← 戻る</Text>
         </TouchableOpacity> */}
         <Text style={styles.title}>記録一覧</Text>
       </View>
@@ -113,11 +115,11 @@ const AchievementListScreen: React.FC<Props> = () => {
               onChangeText={(text) => setToDate(text.trim().slice(0, 10))}
               keyboardType="numbers-and-punctuation"
               maxLength={10}
-              accessibilityLabel="終亁E��"
+              accessibilityLabel="終了日"
             />
           </View>
         </View>
-        <Text style={styles.searchHint}>※ 英字小文字化 / 全角英数の半角化 / 空白整琁E�Eみ正規化します、E/Text>
+        <Text style={styles.searchHint}>※ 英字小文字化 / 全角英数の半角化 / 空白整形済みで正規化します。</Text>
       </View>
       <FlatList
         data={items}
@@ -129,10 +131,10 @@ const AchievementListScreen: React.FC<Props> = () => {
       <TouchableOpacity
         style={styles.fab}
         accessibilityRole="button"
-        // Phase 1: FAB は記録入力画面への入口だけを拁E��
+        // Phase 1: FAB は記録入力画面への入口だけを保持
         onPress={() => rootNavigation.navigate("RecordInput")}
       >
-        <Text style={styles.fabText}>�E�E記録</Text>
+        <Text style={styles.fabText}>＋記録</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -198,12 +200,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
+    fontWeight: "700",
     color: COLORS.textPrimary,
-    fontWeight: "600",
   },
   list: {
     gap: 12,
-    paddingBottom: 16,
+    paddingBottom: 120,
   },
   row: {
     backgroundColor: COLORS.surface,
@@ -215,8 +217,8 @@ const styles = StyleSheet.create({
   },
   rowHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   date: {
     fontSize: 14,
@@ -224,12 +226,14 @@ const styles = StyleSheet.create({
   },
   memo: {
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
   },
   empty: {
-    textAlign: "center",
+    fontSize: 16,
     color: COLORS.textSecondary,
-    paddingTop: 40,
+    textAlign: "center",
+    marginTop: 24,
   },
   fab: {
     position: "absolute",
@@ -252,4 +256,3 @@ const styles = StyleSheet.create({
 });
 
 export default AchievementListScreen;
-

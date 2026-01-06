@@ -1,10 +1,13 @@
-/**
+﻿/**
  * NOTE:
- * チE�Eタエクスポ�Eト機�Eは MVP では一旦見送る、E *
- * 琁E���E�E * - Expo Go�E�EOS�E�では FileSystem / Sharing に制紁E��あり
- * - 実行環墁E��よる挙動差が大きいため
+ * データエクスポート機能は MVP では一旦見送る。
  *
- * 封E���E�E * - Development Build / 製品版アプリでは再検討可能
+ * 理由:
+ * - Expo Go / iOS / Android では FileSystem / Sharing に制約あり
+ * - 実行環境による挙動差が大きいため
+ *
+ * 追記:
+ * - Development Build / 製品版アプリでは再検討可能
  */
 import React, { useCallback } from "react";
 import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -35,12 +38,12 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Button title="ↁE戻めE onPress={handleClose} color=COLORS.accentMain />
-          <Text style={styles.title}>設宁E/Text>
+          <Button title="← 戻る" onPress={handleClose} color={COLORS.accentMain} />
+          <Text style={styles.title}>設定</Text>
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>ベビーを選抁E/Text>
+          <Text style={styles.label}>ベビーを選択</Text>
           <View style={styles.childList}>
             {state.users.map((child) => {
               const isActive = child.id === state.activeUserId;
@@ -53,11 +56,11 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                 >
                   <View style={styles.childInfo}>
                     <Text style={[styles.childName, isActive && styles.childNameActive]}>
-                      {child.name || "名前未設宁E}
+                      {child.name || "名前未設定"}
                     </Text>
-                    <Text style={styles.childMeta}>{child.birthDate ? child.birthDate : "生年月日未設宁E}</Text>
+                    <Text style={styles.childMeta}>{child.birthDate ? child.birthDate : "生年月日未設定"}</Text>
                   </View>
-                  <Text style={[styles.childCheck, isActive && styles.childCheckActive]}>{isActive ? "✁E : ""}</Text>
+                  <Text style={[styles.childCheck, isActive && styles.childCheckActive]}>{isActive ? "✓" : ""}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -67,12 +70,12 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
             onPress={() => navigation.navigate("ProfileManager")}
             accessibilityRole="button"
           >
-            <Text style={styles.addRowText}>�E�E子ども�E追加・編雁E/Text>
+            <Text style={styles.addRowText}>＋ 子どもを追加・編集</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.notice}>※出生情報はプロフィール編雁E��面でのみ入力できます、E/Text>
-        <Text style={styles.notice}>※こ�Eアプリの記録は、この端末の中だけに保存されます、E/Text>
+        <Text style={styles.notice}>※出生情報はプロフィール編集画面でのみ入力できます。</Text>
+        <Text style={styles.notice}>※このアプリの記録は、この端末の中だけに保存されます。</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -170,4 +173,3 @@ const styles = StyleSheet.create({
 });
 
 export default SettingsScreen;
-
