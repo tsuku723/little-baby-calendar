@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   fixedHeader: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.headerBackground,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     gap: 4,
@@ -198,6 +198,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     color: COLORS.textPrimary,
+    fontFamily: "ZenMaruGothic-Medium",
   },
   headerDate: {
     fontSize: 14,
@@ -209,10 +210,12 @@ const styles = StyleSheet.create({
   headerCorrected: {
     fontSize: 14,
     color: COLORS.accentMain,
+    fontFamily: "ZenMaruGothic-Regular",
   },
   headerChronological: {
     fontSize: 14,
     color: COLORS.textPrimary,
+    fontFamily: "ZenMaruGothic-Regular",
   },
   headerDays: {
     fontSize: 12,
