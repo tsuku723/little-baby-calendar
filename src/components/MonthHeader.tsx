@@ -1,6 +1,8 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { COLORS } from "@/constants/colors";
+
 interface Props {
   monthLabel: string;
   onPrev: () => void;
@@ -56,7 +58,7 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 20,
-    color: "#3A86FF",
+    color: COLORS.accentMain,
     fontWeight: "600",
   },
   center: {
@@ -65,12 +67,12 @@ const styles = StyleSheet.create({
   },
   month: {
     fontSize: 20,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   today: {
     fontSize: 14,
-    color: "#3A86FF",
+    color: COLORS.accentMain,
   },
   rightActions: {
     flexDirection: "row",
@@ -79,7 +81,7 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: 16,
-    color: "#3A86FF",
+    color: COLORS.accentMain,
   },
 });
 

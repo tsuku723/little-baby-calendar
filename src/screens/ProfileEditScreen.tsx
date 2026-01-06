@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -21,6 +21,7 @@ import { UserSettings } from "@/models/dataModels";
 import { SettingsStackParamList } from "@/navigation";
 import { useAppState } from "@/state/AppStateContext";
 import { normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "ProfileEdit">;
 
@@ -239,7 +240,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>この子の表示設定</Text>
+          <Text style={styles.sectionTitle}>こども表示設定</Text>
           <Text style={styles.description}>ここで変更した設定は、「保存」を押すまで反映されません。</Text>
 
           <View style={styles.field}>
@@ -309,10 +310,14 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
 
         <View style={styles.actions}>
           {existing ? (
-            <Button title="削除" onPress={handleDelete} color={users.length <= 1 ? "#A9A29A" : "#D90429"} />
+            <Button
+              title="削除"
+              onPress={handleDelete}
+              color={users.length <= 1 ? COLORS.textSecondary : COLORS.sunday}
+            />
           ) : null}
-          <Button title="保存" onPress={handleSave} color="#3A86FF" />
-          <Button title="キャンセル" onPress={() => navigation.goBack()} color="#6B665E" />
+          <Button title="保存" onPress={handleSave} color={COLORS.accentMain} />
+          <Button title="キャンセル" onPress={() => navigation.goBack()} color={COLORS.textSecondary} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -322,7 +327,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
   },
   container: {
     padding: 20,
@@ -331,43 +336,43 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   field: {
     gap: 8,
   },
   label: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     borderRadius: 8,
     padding: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   dateRow: {
     height: 52,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   dateRowLabel: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   dateRowValue: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "700",
   },
   datePickerArea: {
@@ -377,18 +382,18 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#E7E2D9",
+    borderColor: COLORS.border,
     borderRadius: 12,
-    backgroundColor: "#FFFEFB",
+    backgroundColor: COLORS.surface,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   description: {
     fontSize: 14,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   optionRow: {
     flexDirection: "row",
@@ -400,19 +405,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#D7D3CC",
-    backgroundColor: "#FFFFFF",
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
   optionButtonSelected: {
-    borderColor: "#3A86FF",
-    backgroundColor: "#E8F1FF",
+    borderColor: COLORS.accentMain,
+    backgroundColor: COLORS.highlightToday,
   },
   optionLabel: {
     fontSize: 14,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   optionLabelSelected: {
-    color: "#1A5FB4",
+    color: COLORS.saturday,
     fontWeight: "700",
   },
   switchRow: {

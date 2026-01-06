@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import CalendarGrid from "@/components/CalendarGrid";
+import CalendarDecorations from "@/components/CalendarDecorations";
 import MonthHeader from "@/components/MonthHeader";
 import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
@@ -19,6 +20,7 @@ import {
   toIsoDateString,
   toUtcDateOnly,
 } from "@/utils/dateUtils";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<CalendarStackParamList, "Calendar">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
@@ -122,50 +124,67 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     : null;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <CalendarDecorations />
       <View style={styles.fixedHeader}>
         <Text style={styles.headerName}>{user?.name ?? "プロフィール未設定"}</Text>
         <Text style={styles.headerDate}>{todayDisplay}</Text>
         {todayAgeInfo ? (
           <View style={styles.headerAgeBlock}>
-            {correctedTodayLabel ? <Text style={styles.headerCorrected}>{correctedTodayLabel}</Text> : null}
-            {chronologicalTodayLabel ? <Text style={styles.headerChronological}>{chronologicalTodayLabel}</Text> : null}
+            {correctedTodayLabel && chronologicalTodayLabel ? (
+              <Text style={styles.headerCorrected}>
+                {correctedTodayLabel}
+                <Text style={styles.headerChronological}>（{chronologicalTodayLabel}）</Text>
+              </Text>
+            ) : correctedTodayLabel ? (
+              <Text style={styles.headerCorrected}>{correctedTodayLabel}</Text>
+            ) : chronologicalTodayLabel ? (
+              <Text style={styles.headerChronological}>{chronologicalTodayLabel}</Text>
+            ) : null}
             <Text style={styles.headerDays}>生後日数: {todayAgeInfo.daysSinceBirth}日目</Text>
           </View>
         ) : (
           <Text style={styles.headerPlaceholder}>年齢情報は設定済みのプロフィールで表示されます</Text>
         )}
       </View>
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+      <ScrollView keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           <MonthHeader
             monthLabel={monthLabel}
             onPrev={handlePrev}
             onNext={handleNext}
             onToday={handleToday}
-            // Settings は「戻る」前提のスタック画面なので navigate で積む（replace は使用しない）
+            // Settings は「戻る」前提のスタック画面なので navigate で積み重ね replace は使用しない
             onOpenSettings={() => rootNavigation.navigate("SettingsStack", { screen: "Settings" })}
             onOpenList={() => rootNavigation.navigate("RecordListStack", { screen: "AchievementList" })}
           />
           <View style={styles.weekRow}>
-            {WEEK_LABELS.map((label) => (
-              <Text key={label} style={styles.weekLabel}>
+            {WEEK_LABELS.map((label, idx) => (
+              <Text
+                key={label}
+                style={[
+                  styles.weekLabel,
+                  idx === 0 && { color: COLORS.sunday },
+                  idx === 6 && { color: COLORS.saturday },
+                  idx !== 0 && idx !== 6 && { color: COLORS.weekday },
+                ]}
+              >
                 {label}
               </Text>
             ))}
           </View>
           <CalendarGrid days={monthView.days} onPressDay={handlePressDay} />
           <Text style={styles.footer}>修正月齢の表記は目安です。医療的判断は主治医にご相談ください。</Text>
-          <Text style={styles.footer}>データは端末内のみで保存します。</Text>
+          <Text style={styles.footer}>データは端末内で保存します。</Text>
         </View>
       </ScrollView>
       <TouchableOpacity
         style={styles.fab}
         accessibilityRole="button"
-        // Phase 1: FAB は記録入力画面への入口だけを担う
+        // Phase 1: FAB は記録入力画面への入口だけを保持
         onPress={() => rootNavigation.navigate("RecordInput")}
       >
-        <Text style={styles.fabText}>＋ 記録</Text>
+        <Text style={styles.fabText}>＋記録</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -174,46 +193,53 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
   },
   fixedHeader: {
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.headerBackground,
     borderBottomWidth: 1,
-    borderBottomColor: "#E6E2DA",
+    borderBottomColor: COLORS.border,
     gap: 4,
   },
   headerName: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
+    textAlign: "center",
+    fontFamily: "ZenMaruGothic-Medium",
   },
   headerDate: {
     fontSize: 14,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
+    textAlign: "center",
   },
   headerAgeBlock: {
+    alignItems: "center",
     gap: 2,
   },
   headerCorrected: {
     fontSize: 14,
-    color: "#3A86FF",
+    color: COLORS.accentMain,
+    fontFamily: "ZenMaruGothic-Regular",
+    textAlign: "center",
   },
   headerChronological: {
     fontSize: 14,
-    color: "#3A3A3A",
+    color: COLORS.textPrimary,
+    fontFamily: "ZenMaruGothic-Regular",
+    textAlign: "center",
   },
   headerDays: {
     fontSize: 12,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
+    textAlign: "center",
   },
   headerPlaceholder: {
     fontSize: 12,
-    color: "#9C968C",
-  },
-  scrollContainer: {
-    flexGrow: 1,
+    color: COLORS.textSecondary,
+    textAlign: "center",
   },
   container: {
     flex: 1,
@@ -221,36 +247,37 @@ const styles = StyleSheet.create({
   },
   weekRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     paddingHorizontal: 12,
   },
   weekLabel: {
     flex: 1,
     textAlign: "center",
-    fontSize: 14,
-    color: "#6B665E",
+    fontSize: 12,
+    fontWeight: "500",
+    color: COLORS.textSecondary,
   },
   footer: {
     textAlign: "center",
-    color: "#6B665E",
+    color: COLORS.textSecondary,
     fontSize: 12,
   },
   fab: {
     position: "absolute",
     right: 20,
     bottom: 24,
-    backgroundColor: "#3A86FF",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 32,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: COLORS.accentSub,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 28,
+    shadowColor: COLORS.textPrimary,
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
   },
   fabText: {
-    color: "#FFFFFF",
-    fontSize: 16,
+    color: COLORS.surface,
+    fontSize: 14,
     fontWeight: "700",
   },
 });

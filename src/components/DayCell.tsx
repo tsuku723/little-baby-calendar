@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { CalendarDay } from "@/models/dataModels";
+import { COLORS } from "@/constants/colors";
 
 interface Props {
   day: CalendarDay;
@@ -37,18 +38,27 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
       onPress={() => onPress(day.date)}
       style={[
         styles.container,
+        isDimmed && styles.containerDimmed,
         day.isToday && styles.today,
-        isDimmed && styles.dimmed,
       ]}
     >
       <Text style={[styles.dateLabel, isDimmed && styles.dateDimmed]}>
         {dateNumber}
       </Text>
 
-      {renderAgeLine(topLabel, topStyle)}
-      {renderAgeLine(bottomLabel, hasBothLabels ? styles.ageWeak : styles.hidden)}
+      {day.isCurrentMonth ? (
+        <>
+          {renderAgeLine(topLabel, topStyle)}
+          {renderAgeLine(bottomLabel, hasBothLabels ? styles.ageWeak : styles.hidden)}
+        </>
+      ) : (
+        <>
+          <Text style={styles.hidden}> </Text>
+          <Text style={styles.hidden}> </Text>
+        </>
+      )}
 
-      {hasAchievements && <View style={styles.dot} />}
+      {hasAchievements && <View style={styles.recordIcon} />}
     </TouchableOpacity>
   );
 };
@@ -56,64 +66,61 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    minHeight: 78, 
-    borderWidth: 1,
-    borderColor: "#E6E2DA",
     paddingVertical: 4,
     paddingHorizontal: 2,
     borderRadius: 8,
-    backgroundColor: "#FFFFFF",
+    marginHorizontal: 4,
+    marginVertical: 6,
+    backgroundColor: COLORS.cellCurrent,
 
     flexDirection: "column",
     justifyContent: "flex-start",
     gap: 2,
   },
-
-  today: {
-    borderColor: "#3A86FF",
-    borderWidth: 2,
+  containerDimmed: {
+    backgroundColor: COLORS.cellDimmed,
   },
-
-  dimmed: {
-    backgroundColor: "#FAF7F0",
+  today: {
+    borderWidth: 2,
+    borderColor: COLORS.highlightToday,
   },
 
   dateLabel: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
 
   dateDimmed: {
-    color: "#9C968C",
+    color: COLORS.textSecondary,
   },
 
   age: {
-    fontSize: 12,
-    color: "#3A3A3A",
+    fontSize: 10,
+    color: COLORS.textPrimary,
   },
 
   corrected: {
-    fontSize: 12,
-    color: "#3A86FF",
+    fontSize: 10,
+    color: COLORS.accentMain,
   },
 
   ageWeak: {
-    fontSize: 12,
-    color: "#6B665E",
+    fontSize: 10,
+    color: COLORS.textSecondary,
   },
 
   ageDimmed: {
-    color: "#9C968C",
+    color: COLORS.textSecondary,
   },
 
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#FF7A59",
-    alignSelf: "flex-end",
-    marginTop: 2,
+  recordIcon: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.accentMain,
+    alignSelf: "center",
+    marginTop: 4,
   },
 
   hidden: { opacity: 0 },

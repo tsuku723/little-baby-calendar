@@ -228,13 +228,21 @@ export const buildCalendarMonthView = ({
   achievementCountsByDay?: Record<string, number>;
 }): CalendarMonthView => {
   const startDate = startOfCalendarGrid(anchorDate);
+  const firstDay = new Date(
+    Date.UTC(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth(), 1)
+  );
+  const startDay = firstDay.getUTCDay();
+  const daysInCurrentMonth = daysInMonth(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth() + 1);
+  const totalCells = startDay + daysInCurrentMonth;
+  const weeks = Math.ceil(totalCells / 7);
+  const cellCount = weeks * 7;
   const todayIso = todayIsoDate();
   const days: CalendarDay[] = [];
   const hasValidBirthDate = Boolean(birthDate) && isIsoDateString(birthDate);
   const normalizedDueDate = dueDate && isIsoDateString(dueDate) ? dueDate : null;
   let previousAgeInfo: AgeInfo | null = null;
 
-  for (let offset = 0; offset < 42; offset += 1) {
+  for (let offset = 0; offset < cellCount; offset += 1) {
     const date = new Date(startDate);
     date.setUTCDate(startDate.getUTCDate() + offset);
     const iso = toIsoDateString(date);
@@ -267,7 +275,7 @@ export const buildCalendarMonthView = ({
       previousCorrectedVisible &&
       totalMonths(ageInfo.corrected) === totalMonths(previousAgeInfo!.corrected) + 1;
 
-    const calendarAgeLabel =
+    let calendarAgeLabel =
       ageInfo && (chronologicalChanged || correctedChanged)
         ? {
             chronological: chronologicalChanged
@@ -278,6 +286,10 @@ export const buildCalendarMonthView = ({
               : undefined,
           }
         : null;
+
+    if (!isCurrentMonth) {
+      calendarAgeLabel = null;
+    }
 
     days.push({
       date: iso,

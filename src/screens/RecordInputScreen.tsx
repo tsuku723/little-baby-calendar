@@ -1,5 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Image, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+﻿import React, { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Button,
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
@@ -13,6 +27,7 @@ import { clampComment, remainingChars } from "@/utils/text";
 import { normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync } from "@/utils/photo";
 import { RECORD_TITLE_CANDIDATES } from "./recordTitleCandidates";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RecordInput">;
 
@@ -44,8 +59,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const [photoPath, setPhotoPath] = useState<string | null>(editingRecord?.photoPath ?? null);
   const [hasRemovedPhoto, setHasRemovedPhoto] = useState<boolean>(false);
   const [isTitleSheetVisible, setTitleSheetVisible] = useState(false);
-
-
 
   // 編集対象が変わったらフォームを最新の値に合わせる
   useEffect(() => {
@@ -102,7 +115,6 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     setShowPicker(false);
   };
 
-
   // 候補選択時のハンドリング
   const handleSelectCandidate = (candidate: string) => {
     setTitle(candidate);
@@ -149,7 +161,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
 
-    // 日付は ISO 文字列で受け取り、必ず UTC 正規化して保存する
+    // 日付は ISO 形式で受け取り、UTC に正規化して保存する
     const normalizedDate = normalizeToUtcDate(dateInput);
     if (Number.isNaN(normalizedDate.getTime())) {
       Alert.alert("日付を確認してください", "YYYY-MM-DD 形式で入力してください。");
@@ -159,8 +171,8 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
     const titleValue = title.trim() || content.trim();
     const photoPayload: string | null | undefined = (() => {
-      if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存写真の削除
-      if (photoPath && photoPath !== editingRecord?.photoPath) return photoPath; // 新規・差し替え
+      if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存の写真を削除
+      if (photoPath && photoPath !== editingRecord?.photoPath) return photoPath; // 新規に差し替え
       if (!editingRecord && photoPath) return photoPath; // 新規レコードで写真あり
       return undefined; // 変更なし
     })();
@@ -267,7 +279,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
                   setShowPicker(false);
                 }}
               >
-                <Text style={styles.todayResetText}>今日に戻す</Text>
+                <Text style={styles.todayResetText}>今日に戻る</Text>
               </TouchableOpacity>
               <DateTimePicker
                 value={currentDateForPicker}
@@ -282,13 +294,13 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>内容</Text>
+          <Text style={styles.label}>メモ</Text>
           <TextInput
             style={[styles.input, styles.textarea]}
             value={content}
             onChangeText={(text) => setContent(clampComment(text))}
-            placeholder="今日の成長や頑張りを書き残しましょう（最大500文字）"
-            accessibilityLabel="内容"
+            placeholder="今日の成長や出来事を書き残しましょう（最大500文字）"
+            accessibilityLabel="メモ"
             multiline
             numberOfLines={6}
             textAlignVertical="top"
@@ -314,18 +326,18 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
               <Text style={styles.helper}>保存時にこの写真を記録へ紐付けます。</Text>
             </View>
           ) : (
-            <Text style={styles.helper}>写真はアプリ内に JPEG 形式で保存されます。</Text>
+            <Text style={styles.helper}>写真はアプリ内で JPEG 形式で保存されます。</Text>
           )}
         </View>
 
         <View style={styles.actions}>
-          <Button title="キャンセル" color="#6B665E" onPress={() => navigation.goBack()} />
-          <Button title="保存" color="#3A86FF" onPress={handleSave} />
+          <Button title="キャンセル" color={COLORS.textSecondary} onPress={() => navigation.goBack()} />
+          <Button title="保存" color={COLORS.accentMain} onPress={handleSave} />
         </View>
 
-      {editingRecord ? (
+        {editingRecord ? (
           <View style={styles.deleteArea}>
-            <Button title="この記録を削除" color="#D9534F" onPress={confirmDelete} />
+            <Button title="この記録を削除" color={COLORS.sunday} onPress={confirmDelete} />
           </View>
         ) : null}
       </ScrollView>
@@ -362,7 +374,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
   },
   container: {
     flexGrow: 1,
@@ -379,11 +391,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   note: {
     fontSize: 14,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
     textAlign: "center",
   },
   field: {
@@ -391,12 +403,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   helper: {
     fontSize: 12,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   photoActions: {
     flexDirection: "row",
@@ -407,12 +419,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: "#E9F2FF",
+    backgroundColor: COLORS.highlightToday,
     borderWidth: 1,
-    borderColor: "#B8D0FF",
+    borderColor: COLORS.border,
   },
   photoButtonText: {
-    color: "#1D5BBF",
+    color: COLORS.saturday,
     fontWeight: "700",
   },
   photoRemoveButton: {
@@ -420,11 +432,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E5E1DA",
-    backgroundColor: "#FAF8F4",
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
   photoRemoveText: {
-    color: "#8A8277",
+    color: COLORS.textSecondary,
     fontWeight: "600",
   },
   photoPreviewWrapper: {
@@ -435,7 +447,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 220,
     borderRadius: 12,
-    backgroundColor: "#F1EEE8",
+    backgroundColor: COLORS.cellDimmed,
   },
   titleSuggestionButton: {
     alignSelf: "flex-start",
@@ -443,37 +455,37 @@ const styles = StyleSheet.create({
   },
   titleSuggestionText: {
     fontSize: 13,
-    color: "#3A86FF",
+    color: COLORS.accentMain,
     textDecorationLine: "underline",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     borderRadius: 12,
     padding: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   dateRow: {
     height: 52,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   dateRowLabel: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   dateRowValue: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "700",
   },
   datePickerArea: {
@@ -487,10 +499,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: "#E9F2FF",
+    backgroundColor: COLORS.highlightToday,
   },
   todayResetText: {
-    color: "#3A86FF",
+    color: COLORS.accentMain,
     fontWeight: "700",
   },
   actions: {
@@ -510,7 +522,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 16,
@@ -521,13 +533,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#E5E1DA",
+    backgroundColor: COLORS.border,
     marginBottom: 12,
   },
   sheetTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     marginBottom: 12,
   },
   sheetList: {
@@ -539,12 +551,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E5E1DA",
-    backgroundColor: "#FAF8F4",
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
   candidateText: {
     fontSize: 15,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
 });
 

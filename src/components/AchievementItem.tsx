@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Achievement } from "@/models/dataModels";
+import { COLORS } from "@/constants/colors";
 
 interface Props {
   item: Achievement;
@@ -27,11 +28,11 @@ const AchievementItem: React.FC<Props> = ({ item, onEdit, onDelete }) => (
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 16,
     gap: 8,
-    borderColor: "#E6E2DA",
+    borderColor: COLORS.border,
     borderWidth: 1,
   },
   deleteButton: {
@@ -39,16 +40,16 @@ const styles = StyleSheet.create({
   },
   delete: {
     fontSize: 14,
-    color: "#D9534F",
+    color: COLORS.sunday,
   },
   title: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "500",
   },
   memo: {
     fontSize: 14,
-    color: "#4A453D",
+    color: COLORS.textSecondary,
     lineHeight: 20,
   },
 });

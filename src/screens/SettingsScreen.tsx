@@ -1,12 +1,12 @@
-/**
+﻿/**
  * NOTE:
  * データエクスポート機能は MVP では一旦見送る。
  *
- * 理由：
- * - Expo Go（iOS）では FileSystem / Sharing に制約があり
+ * 理由:
+ * - Expo Go / iOS / Android では FileSystem / Sharing に制約あり
  * - 実行環境による挙動差が大きいため
  *
- * 将来：
+ * 追記:
  * - Development Build / 製品版アプリでは再検討可能
  */
 import React, { useCallback } from "react";
@@ -16,6 +16,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { SettingsStackParamList } from "@/navigation";
 import { useAppState } from "@/state/AppStateContext";
+import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
 
@@ -37,7 +38,7 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Button title="← 戻る" onPress={handleClose} color="#3A86FF" />
+          <Button title="← 戻る" onPress={handleClose} color={COLORS.accentMain} />
           <Text style={styles.title}>設定</Text>
         </View>
 
@@ -69,7 +70,7 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
             onPress={() => navigation.navigate("ProfileManager")}
             accessibilityRole="button"
           >
-            <Text style={styles.addRowText}>＋ 子どもの追加・編集</Text>
+            <Text style={styles.addRowText}>＋ 子どもを追加・編集</Text>
           </TouchableOpacity>
         </View>
 
@@ -83,7 +84,7 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
   },
   container: {
     padding: 24,
@@ -97,19 +98,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   field: {
     gap: 8,
   },
   label: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   childList: {
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#E5E1DA",
+    borderColor: COLORS.border,
     overflow: "hidden",
   },
   childRow: {
@@ -119,8 +120,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#E5E1DA",
-    backgroundColor: "#FFFFFF",
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
   childInfo: {
     gap: 4,
@@ -128,24 +129,24 @@ const styles = StyleSheet.create({
   },
   childName: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   childNameActive: {
-    color: "#1D5BBF",
+    color: COLORS.saturday,
   },
   childMeta: {
     fontSize: 13,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
   childCheck: {
     width: 24,
     textAlign: "center",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
     fontSize: 18,
   },
   childCheckActive: {
-    color: "#1D5BBF",
+    color: COLORS.saturday,
     fontWeight: "700",
   },
   addRow: {
@@ -154,18 +155,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#E5E1DA",
-    backgroundColor: "#FFFFFF",
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
   addRowText: {
-    color: "#3A86FF",
+    color: COLORS.accentMain,
     fontSize: 16,
     fontWeight: "700",
   },
   notice: {
     fontSize: 14,
-    color: "#2E2A27",
-    backgroundColor: "#F2EFEA",
+    color: COLORS.textPrimary,
+    backgroundColor: COLORS.cellDimmed,
     padding: 12,
     borderRadius: 8,
   },

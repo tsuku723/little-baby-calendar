@@ -6,6 +6,7 @@ import AchievementItem from "@/components/AchievementItem";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useActiveUser } from "@/state/AppStateContext";
 import { calculateAgeInfo, isIsoDateString, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+import { COLORS } from "@/constants/colors";
 
 interface Props {
   isoDay: string | null;
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: COLORS.background,
     padding: 16,
   },
   header: {
@@ -145,15 +146,15 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   close: {
     fontSize: 16,
-    color: "#3A86FF",
+    color: COLORS.accentMain,
   },
   age: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   scroll: {
     padding: 16,
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
   },
   empty: {
     fontSize: 16,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
     textAlign: "center",
   },
   formSection: {
@@ -172,7 +173,7 @@ const styles = StyleSheet.create({
   },
   notice: {
     fontSize: 12,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
     marginTop: 16,
     textAlign: "center",
   },

@@ -4,6 +4,7 @@ import { Button, StyleSheet, Text, TextInput, View } from "react-native";
 import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
 import { Achievement } from "@/models/dataModels";
 import { clampComment, remainingChars } from "@/utils/text";
+import { COLORS } from "@/constants/colors";
 
 interface Props {
   isoDay: string;
@@ -75,8 +76,8 @@ const AchievementForm: React.FC<Props> = ({ isoDay, draft, onClose }) => {
         <Text style={styles.remaining}>残り {charsLeft} / 500</Text>
       </View>
       <View style={styles.actions}>
-        {draft?.id ? <Button title="この記録を削除" color="#D9534F" onPress={handleDelete} /> : null}
-        <Button title="保存して閉じる" onPress={handleSubmit} color="#3A86FF" />
+        {draft?.id ? <Button title="この記録を削除" color={COLORS.sunday} onPress={handleDelete} /> : null}
+        <Button title="保存して閉じる" onPress={handleSubmit} color={COLORS.accentMain} />
       </View>
       <Text style={styles.note}>保存するとカレンダーの該当日に●が付きます。</Text>
     </View>
@@ -92,17 +93,17 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   input: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#D7D3CC",
+    borderColor: COLORS.border,
     padding: 12,
     fontSize: 16,
     lineHeight: 22,
-    color: "#2E2A27",
-    backgroundColor: "#FFFFFF",
+    color: COLORS.textPrimary,
+    backgroundColor: COLORS.surface,
   },
   memo: {
     minHeight: 120,
@@ -110,14 +111,14 @@ const styles = StyleSheet.create({
   remaining: {
     alignSelf: "flex-end",
     fontSize: 14,
-    color: "#2E2A27",
+    color: COLORS.textPrimary,
   },
   actions: {
     gap: 12,
   },
   note: {
     fontSize: 12,
-    color: "#6B665E",
+    color: COLORS.textSecondary,
   },
 });
 
