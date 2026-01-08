@@ -141,7 +141,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             ) : chronologicalTodayLabel ? (
               <Text style={styles.headerChronological}>{chronologicalTodayLabel}</Text>
             ) : null}
-            <Text style={styles.headerDays}>生後日数: {todayAgeInfo.daysSinceBirth}日目</Text>
+            <Text style={styles.headerDays}>生まれてから{todayAgeInfo.daysSinceBirth}日目</Text>
           </View>
         ) : (
           <Text style={styles.headerPlaceholder}>年齢情報は設定済みのプロフィールで表示されます</Text>

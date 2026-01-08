@@ -46,6 +46,7 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
     >
       <View style={styles.dateArea}>
         <Text style={[styles.dateLabel, isDimmed && styles.dateDimmed]}>{dateNumber}</Text>
+        {hasAchievements && <View style={styles.recordIcon} />}
       </View>
       <View style={styles.contentArea}>
         {day.isCurrentMonth ? (
@@ -59,7 +60,6 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
             <Text style={styles.hidden}> </Text>
           </>
         )}
-        {hasAchievements && <View style={styles.recordIcon} />}
       </View>
     </TouchableOpacity>
   );
@@ -86,15 +86,15 @@ const styles = StyleSheet.create({
   },
   dateArea: {
     height: 26,
-    justifyContent: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 6,
   },
   contentArea: {
     flex: 1,
-    aspectRatio: 1,
     justifyContent: "center",
     alignItems: "center",
-    alignSelf: "center",
   },
 
   dateLabel: {
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     backgroundColor: COLORS.accentMain,
-    alignSelf: "center",
+    marginLeft: 4,
   },
 
   hidden: { opacity: 0 },
