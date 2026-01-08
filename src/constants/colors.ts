@@ -18,7 +18,7 @@ export const COLORS = {
   accentMain: "#F2A48A",
   accentSub: "#F6C1CC",
   highlightToday: "#CFE6D6",
-  headerBackground: "#CFE7DA",
+  headerBackground: "#BFDCCF",
 
   // 曜日
   sunday: "#E7A3A3",
