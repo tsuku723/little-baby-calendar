@@ -9,6 +9,8 @@ interface Props {
   onPress: (iso: string) => void;
 }
 
+const CELL_HEIGHT = 96;
+
 const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const isDimmed = !day.isCurrentMonth;
   const dateNumber = parseInt(day.date.slice(-2), 10);
@@ -42,40 +44,38 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
         day.isToday && styles.today,
       ]}
     >
-      <Text style={[styles.dateLabel, isDimmed && styles.dateDimmed]}>
-        {dateNumber}
-      </Text>
-
-      {day.isCurrentMonth ? (
-        <>
-          {renderAgeLine(topLabel, topStyle)}
-          {renderAgeLine(bottomLabel, hasBothLabels ? styles.ageWeak : styles.hidden)}
-        </>
-      ) : (
-        <>
-          <Text style={styles.hidden}> </Text>
-          <Text style={styles.hidden}> </Text>
-        </>
-      )}
-
-      {hasAchievements && <View style={styles.recordIcon} />}
+      <View style={styles.dateArea}>
+        <Text style={[styles.dateLabel, isDimmed && styles.dateDimmed]}>{dateNumber}</Text>
+      </View>
+      <View style={styles.contentArea}>
+        {day.isCurrentMonth ? (
+          <>
+            {renderAgeLine(topLabel, topStyle)}
+            {renderAgeLine(bottomLabel, hasBothLabels ? styles.ageWeak : styles.hidden)}
+          </>
+        ) : (
+          <>
+            <Text style={styles.hidden}> </Text>
+            <Text style={styles.hidden}> </Text>
+          </>
+        )}
+        {hasAchievements && <View style={styles.recordIcon} />}
+      </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    height: CELL_HEIGHT,
     flex: 1,
-    paddingVertical: 4,
-    paddingHorizontal: 2,
-    borderRadius: 8,
-    marginHorizontal: 4,
-    marginVertical: 6,
+    borderRadius: 10,
+    marginHorizontal: 2,
+    marginVertical: 2,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     backgroundColor: COLORS.cellCurrent,
-
-    flexDirection: "column",
-    justifyContent: "flex-start",
-    gap: 2,
+    overflow: "hidden",
   },
   containerDimmed: {
     backgroundColor: COLORS.cellDimmed,
@@ -83,6 +83,18 @@ const styles = StyleSheet.create({
   today: {
     borderWidth: 2,
     borderColor: COLORS.highlightToday,
+  },
+  dateArea: {
+    height: 26,
+    justifyContent: "center",
+    paddingHorizontal: 6,
+  },
+  contentArea: {
+    flex: 1,
+    aspectRatio: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
   },
 
   dateLabel: {
@@ -120,7 +132,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: COLORS.accentMain,
     alignSelf: "center",
-    marginTop: 4,
   },
 
   hidden: { opacity: 0 },
