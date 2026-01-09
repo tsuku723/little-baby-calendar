@@ -24,15 +24,33 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const bottomLabel = hasBothLabels ? chronologicalLabel : null;
 
   const hasAchievements = day.achievementCount > 0;
+  const showAgeLabel = Boolean(day.calendarAgeLabel);
 
-  const renderAgeLine = (text: string | null, baseStyle: object) => {
+  const renderAgeLine = (
+    text: string | null,
+    baseStyle: object,
+    useSticker: boolean,
+    stickerStyle?: object,
+    textColorStyle?: object
+  ) => {
     const shouldDim = Boolean(text) && baseStyle !== styles.hidden;
-    return (
-      <Text style={[baseStyle, shouldDim && isDimmed && styles.ageDimmed]}>
+    const label = (
+      <Text style={[baseStyle, textColorStyle, shouldDim && isDimmed && styles.ageDimmed]}>
         {text ?? " "}
       </Text>
     );
+
+    if (!useSticker || !text || baseStyle === styles.hidden) {
+      return label;
+    }
+
+    return <View style={[styles.ageSticker, stickerStyle]}>{label}</View>;
   };
+
+  const topStickerStyle = correctedLabel
+    ? styles.ageStickerCorrected
+    : styles.ageStickerActual;
+  const topTextStyle = correctedLabel ? styles.ageTextCorrected : styles.ageTextActual;
 
   return (
     <TouchableOpacity
@@ -45,19 +63,27 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
       ]}
     >
       <View style={styles.dateArea}>
-        <Text style={[styles.dateLabel, isDimmed && styles.dateDimmed]}>{dateNumber}</Text>
+        <View style={[styles.datePill, day.isToday && styles.datePillToday]}>
+          <Text style={[styles.dateLabel, isDimmed && styles.dateDimmed]}>{dateNumber}</Text>
+        </View>
         {hasAchievements && <View style={styles.recordIcon} />}
       </View>
       <View style={styles.contentArea}>
         {day.isCurrentMonth ? (
           <>
-            {renderAgeLine(topLabel, topStyle)}
-            {renderAgeLine(bottomLabel, hasBothLabels ? styles.ageWeak : styles.hidden)}
+            {renderAgeLine(topLabel, topStyle, showAgeLabel, topStickerStyle, topTextStyle)}
+            {renderAgeLine(
+              bottomLabel,
+              hasBothLabels ? styles.ageWeak : styles.hidden,
+              showAgeLabel,
+              styles.ageStickerActual,
+              styles.ageTextActual
+            )}
           </>
         ) : (
           <>
-            <Text style={styles.hidden}> </Text>
-            <Text style={styles.hidden}> </Text>
+            {renderAgeLine(null, styles.hidden, false)}
+            {renderAgeLine(null, styles.hidden, false)}
           </>
         )}
       </View>
@@ -85,11 +111,19 @@ const styles = StyleSheet.create({
     borderColor: COLORS.highlightToday,
   },
   dateArea: {
-    height: 26,
+    height: 22,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 6,
+  },
+  datePill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  datePillToday: {
+    backgroundColor: COLORS.todayFill,
   },
   contentArea: {
     flex: 1,
@@ -98,7 +132,7 @@ const styles = StyleSheet.create({
   },
 
   dateLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "500",
     color: COLORS.textPrimary,
   },
@@ -125,6 +159,29 @@ const styles = StyleSheet.create({
   ageDimmed: {
     color: COLORS.textSecondary,
   },
+  ageSticker: {
+    backgroundColor: "rgba(246, 193, 204, 0.45)",
+    borderRadius: 999,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  ageStickerCorrected: {
+    backgroundColor: "rgba(243, 160, 138, 0.35)",
+  },
+  ageStickerActual: {
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
+  },
+  ageTextCorrected: {
+    color: COLORS.accentSub,
+  },
+  ageTextActual: {
+    color: COLORS.textSecondary,
+  },
 
   recordIcon: {
     width: 16,
@@ -132,6 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: COLORS.accentMain,
     marginLeft: 4,
+    marginTop: 1,
   },
 
   hidden: { opacity: 0 },

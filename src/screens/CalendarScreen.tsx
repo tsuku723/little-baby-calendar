@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -29,6 +30,7 @@ const WEEK_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
 
 const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   const rootNavigation = useNavigation<RootNavigation>();
+  const insets = useSafeAreaInsets();
   const user = useActiveUser();
   const { updateUser } = useAppState();
   const { monthCounts, loadMonth } = useAchievements();
@@ -122,24 +124,33 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   const chronologicalTodayLabel = todayAgeInfo
     ? formatCalendarAgeLabel(todayAgeInfo.chronological, ageFormat, false)
     : null;
+  const chronologicalTodayLabelWithPrefix = chronologicalTodayLabel
+    ? `実${chronologicalTodayLabel}`
+    : null;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <CalendarDecorations />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.backgroundLayer} pointerEvents="none" accessible={false}>
+        <View style={styles.backgroundTop} />
+        <View style={styles.backgroundBottom} />
+      </View>
+      <CalendarDecorations topOffset={insets.top} />
       <View style={styles.fixedHeader}>
         <Text style={styles.headerName}>{user?.name ?? "プロフィール未設定"}</Text>
         <Text style={styles.headerDate}>{todayDisplay}</Text>
         {todayAgeInfo ? (
           <View style={styles.headerAgeBlock}>
-            {correctedTodayLabel && chronologicalTodayLabel ? (
+            {correctedTodayLabel && chronologicalTodayLabelWithPrefix ? (
               <Text style={styles.headerCorrected}>
                 {correctedTodayLabel}
-                <Text style={styles.headerChronological}>（{chronologicalTodayLabel}）</Text>
+                <Text style={styles.headerChronological}>
+                  （{chronologicalTodayLabelWithPrefix}）
+                </Text>
               </Text>
             ) : correctedTodayLabel ? (
               <Text style={styles.headerCorrected}>{correctedTodayLabel}</Text>
-            ) : chronologicalTodayLabel ? (
-              <Text style={styles.headerChronological}>{chronologicalTodayLabel}</Text>
+            ) : chronologicalTodayLabelWithPrefix ? (
+              <Text style={styles.headerChronological}>{chronologicalTodayLabelWithPrefix}</Text>
             ) : null}
             <Text style={styles.headerDays}>生まれてから{todayAgeInfo.daysSinceBirth}日目</Text>
           </View>
@@ -147,7 +158,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.headerPlaceholder}>年齢情報は設定済みのプロフィールで表示されます</Text>
         )}
       </View>
-      <ScrollView keyboardShouldPersistTaps="handled">
+      <ScrollView keyboardShouldPersistTaps="handled" style={styles.scroll}>
         <View style={styles.container}>
           <MonthHeader
             monthLabel={monthLabel}
@@ -193,18 +204,33 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  backgroundLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  backgroundTop: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  backgroundBottom: {
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
   fixedHeader: {
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 6,
     backgroundColor: COLORS.headerBackground,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-    gap: 4,
+    gap: 6,
+  },
+  scroll: {
+    backgroundColor: COLORS.background,
   },
   headerName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
     color: COLORS.textPrimary,
     textAlign: "center",
@@ -217,7 +243,7 @@ const styles = StyleSheet.create({
   },
   headerAgeBlock: {
     alignItems: "center",
-    gap: 2,
+    gap: 4,
   },
   headerCorrected: {
     fontSize: 14,
@@ -283,3 +309,7 @@ const styles = StyleSheet.create({
 });
 
 export default CalendarScreen;
+
+
+
+

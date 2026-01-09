@@ -1,26 +1,28 @@
 export const COLORS = {
-  // 背景
-  background: "#F4F7F1",
-  surface: "#FBFAF7",
+  // Backgrounds
+  background: "#FFFDF7",
+  bottomBackground: "#FFFDF7",
+  surface: "#FFFDF7",
 
-  // セル
-  cellCurrent: "#FBFAF7",
-  cellDimmed: "#F1EFE8",
+  // Calendar cells
+  cellCurrent: "#FFFDF7",
+  cellDimmed: "#F3EFE3",
+  todayFill: "#F7F2E8",
 
-  // 枠・区切り
-  border: "#E3E0D8",
+  // Borders
+  border: "rgba(0, 0, 0, 0.06)",
 
-  // 文字
+  // Text
   textPrimary: "#4A3F35",
   textSecondary: "#8B8278",
 
-  // アクセント
+  // Accents
   accentMain: "#F2A48A",
   accentSub: "#F6C1CC",
   highlightToday: "#CFE6D6",
   headerBackground: "#BFDCCF",
 
-  // 曜日
+  // Weekdays
   sunday: "#E7A3A3",
   saturday: "#A9C4E4",
   weekday: "#8B8278",

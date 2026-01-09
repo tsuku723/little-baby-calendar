@@ -135,7 +135,6 @@ export const formatCalendarAgeLabel = (
 
   return `${labelPrefix}${parts.years}歳${parts.months}ヵ月`;
 };
-
 const isWithinCorrectedLimit = (
   parts: AgeParts,
   limitMonths: number | null
