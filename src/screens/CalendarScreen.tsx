@@ -99,7 +99,6 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
 
   const todayDate = useMemo(() => toUtcDateOnly(new Date()), []);
   const todayIso = useMemo(() => toIsoDateString(todayDate), [todayDate]);
-  const todayDisplay = useMemo(() => todayIso.replace(/-/g, "/"), [todayIso]);
   const ageFormat = user?.settings.ageFormat ?? "md";
 
   const todayAgeInfo = useMemo(() => {
@@ -137,7 +136,6 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
       <CalendarDecorations topOffset={insets.top} />
       <View style={styles.fixedHeader}>
         <Text style={styles.headerName}>{user?.name ?? "プロフィール未設定"}</Text>
-        <Text style={styles.headerDate}>{todayDisplay}</Text>
         {todayAgeInfo ? (
           <View style={styles.headerAgeBlock}>
             {correctedTodayLabel && chronologicalTodayLabelWithPrefix ? (
@@ -165,9 +163,6 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             onPrev={handlePrev}
             onNext={handleNext}
             onToday={handleToday}
-            // Settings は「戻る」前提のスタック画面なので navigate で積み重ね replace は使用しない
-            onOpenSettings={() => rootNavigation.navigate("SettingsStack", { screen: "Settings" })}
-            onOpenList={() => rootNavigation.navigate("RecordListStack", { screen: "AchievementList" })}
           />
           <View style={styles.weekRow}>
             {WEEK_LABELS.map((label, idx) => (
@@ -235,11 +230,6 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     textAlign: "center",
     fontFamily: "ZenMaruGothic-Medium",
-  },
-  headerDate: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: "center",
   },
   headerAgeBlock: {
     alignItems: "center",
