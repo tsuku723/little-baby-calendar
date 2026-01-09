@@ -111,15 +111,16 @@ const styles = StyleSheet.create({
     borderColor: COLORS.highlightToday,
   },
   dateArea: {
-    height: 22,
+    height: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 6,
   },
   datePill: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+ paddingLeft: 3,
+  paddingRight: 5,
+      paddingVertical: 2,
     borderRadius: 10,
   },
   datePillToday: {
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
   },
 
   dateLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "500",
     color: COLORS.textPrimary,
   },
@@ -160,9 +161,9 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   ageSticker: {
-    backgroundColor: "rgba(246, 193, 204, 0.45)",
-    borderRadius: 999,
-    paddingHorizontal: 6,
+    backgroundColor: "rgba(255, 200, 223, 0.96)",
+    borderRadius: 8,
+    paddingHorizontal: 3,
     paddingVertical: 2,
     shadowColor: "#000",
     shadowOpacity: 0.06,
@@ -184,11 +185,11 @@ const styles = StyleSheet.create({
   },
 
   recordIcon: {
-    width: 16,
-    height: 16,
+    width: 14,
+    height: 14,
     borderRadius: 8,
     backgroundColor: COLORS.accentMain,
-    marginLeft: 4,
+    marginLeft: 1,
     marginTop: 1,
   },
 
