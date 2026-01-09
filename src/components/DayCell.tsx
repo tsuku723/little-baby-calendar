@@ -9,7 +9,7 @@ interface Props {
   onPress: (iso: string) => void;
 }
 
-const CELL_HEIGHT = 96;
+const CELL_HEIGHT = 80;
 
 const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const isDimmed = !day.isCurrentMonth;
@@ -64,7 +64,15 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
     >
       <View style={styles.dateArea}>
         <View style={[styles.datePill, day.isToday && styles.datePillToday]}>
-          <Text style={[styles.dateLabel, isDimmed && styles.dateDimmed]}>{dateNumber}</Text>
+          <Text
+            style={[
+              styles.dateLabel,
+              day.isToday && styles.dateLabelToday,
+              isDimmed && styles.dateDimmed,
+            ]}
+          >
+            {dateNumber}
+          </Text>
         </View>
         {hasAchievements && <View style={styles.recordIcon} />}
       </View>
@@ -109,6 +117,7 @@ const styles = StyleSheet.create({
   today: {
     borderWidth: 2,
     borderColor: COLORS.highlightToday,
+    backgroundColor: COLORS.highlightToday,
   },
   dateArea: {
     height: 20,
@@ -136,6 +145,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
     color: COLORS.textPrimary,
+  },
+  dateLabelToday: {
+    fontWeight: "700",
   },
 
   dateDimmed: {

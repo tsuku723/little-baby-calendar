@@ -10,15 +10,13 @@ interface Props {
 }
 
 const CalendarGrid: React.FC<Props> = ({ days, onPressDay }) => {
-  const fixedDays = useMemo(() => days.slice(0, 35), [days]);
-
   const rows = useMemo(() => {
     const chunks: CalendarDay[][] = [];
-    for (let i = 0; i < fixedDays.length; i += 7) {
-      chunks.push(fixedDays.slice(i, i + 7));
+    for (let i = 0; i < days.length; i += 7) {
+      chunks.push(days.slice(i, i + 7));
     }
     return chunks;
-  }, [fixedDays]);
+  }, [days]);
 
   return (
     <View style={[styles.container, { flex: 1 }]}>
