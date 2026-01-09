@@ -127,13 +127,13 @@ export const formatCalendarAgeLabel = (
   ageFormat: AgeFormat,
   isCorrected: boolean
 ): string => {
-  const labelPrefix = isCorrected ? "修正" : "";
+  const labelPrefix = isCorrected ? "修" : "";
 
   if (ageFormat === "md") {
-    return `${labelPrefix}${totalMonths(parts)}ヵ月`;
+    return `${labelPrefix}${totalMonths(parts)}m`;
   }
 
-  return `${labelPrefix}${parts.years}歳${parts.months}ヵ月`;
+  return `${labelPrefix}${parts.years}y${parts.months}m`;
 };
 const isWithinCorrectedLimit = (
   parts: AgeParts,
