@@ -107,7 +107,8 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
   }, [sortedAchievements]);
 
   const handleOpenCalendar = () => {
-    stackNavigation.getParent()?.getParent()?.navigate("MainTabs", { screen: "CalendarStack" });
+    // Today が CalendarStack 内にいる前提：カレンダー（スタック先頭）に戻す
+    stackNavigation.popToTop();
   };
 
   const handleSaveImage = async () => {
