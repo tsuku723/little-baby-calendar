@@ -9,8 +9,10 @@ import ViewShot from "react-native-view-shot";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 
 import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navigation";
+import AppText from "@/components/AppText";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useDateViewContext } from "@/state/DateViewContext";
@@ -105,7 +107,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
   }, [sortedAchievements]);
 
   const handleOpenCalendar = () => {
-    stackNavigation.popToTop();
+    stackNavigation.getParent()?.getParent()?.navigate("MainTabs", { screen: "CalendarStack" });
   };
 
   const handleSaveImage = async () => {
@@ -132,7 +134,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
   if (!user) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
+        <View style={styles.container}> 
           <Text style={styles.title}>プロフィールを作成してください</Text>
           <Text style={styles.subtitle}>最初にプロフィール設定から始めましょう</Text>
           <View style={styles.buttonRow}>
@@ -163,25 +165,52 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{user.name}</Text>
-        <Text style={styles.date}>{displayDate}</Text>
-        <View style={styles.actionRow}>
-          <Button title="カレンダー" color={COLORS.accentMain} onPress={handleOpenCalendar} />
+      <View style={styles.header}>
+        <View style={styles.headerTextBlock}>
+          <AppText style={styles.headerName} weight="medium">
+            {user.name}
+          </AppText>
+          <AppText style={styles.headerDate}>{displayDate}</AppText>
         </View>
-
+        <TouchableOpacity
+          style={styles.headerCalendarButton}
+          onPress={handleOpenCalendar}
+          accessibilityRole="button"
+          accessibilityLabel="カレンダーへ戻る"
+        >
+          <Ionicons name="calendar-outline" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+      </View>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.exportActionRow}>
-          <Button title="画像として保存" color={COLORS.accentMain} onPress={handleSaveImage} />
+          <TouchableOpacity
+            style={styles.exportButton}
+            onPress={handleSaveImage}
+            accessibilityRole="button"
+          >
+            <Ionicons name="image-outline" size={18} color={COLORS.textPrimary} />
+            <Text style={styles.exportButtonText}>画像として保存</Text>
+          </TouchableOpacity>
         </View>
 
         {ageInfo ? (
           <View style={styles.ageBlock}>
-            <Text style={styles.ageText}>暦: {ageInfo.chronological.formatted}</Text>
             {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
-              <Text style={styles.ageText}>修: {ageInfo.corrected.formatted}</Text>
-            ) : null}
+              <View style={styles.ageRow}>
+                <Text style={styles.ageLabel}>修正:</Text>
+                <Text style={styles.ageValue}>{ageInfo.corrected.formatted}</Text>
+                {ageInfo.chronological.formatted ? (
+                  <Text style={styles.ageNote}>（実: {ageInfo.chronological.formatted}）</Text>
+                ) : null}
+              </View>
+            ) : (
+              <View style={styles.ageRow}>
+                <Text style={styles.ageLabel}>実:</Text>
+                <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
+              </View>
+            )}
             {user.settings.showDaysSinceBirth ? (
-              <Text style={styles.ageText}>生後日数: {ageInfo.daysSinceBirth}日目</Text>
+              <Text style={styles.ageText}>生まれてから{ageInfo.daysSinceBirth}日目</Text>
             ) : null}
           </View>
         ) : null}
@@ -191,7 +220,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
           {achievementsLoading ? (
             <Text style={styles.empty}>読み込み中...</Text>
           ) : todaysAchievements.length === 0 ? (
-            <Text style={styles.empty}>まだ記録はありません</Text>
+            <Text style={styles.empty}>気づいたことがあれば記録しよう</Text>
           ) : (
             todaysAchievements.map((item) => (
               <TouchableOpacity
@@ -245,6 +274,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  header: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.headerBackground,
+  },
+  headerTextBlock: {
+    alignItems: "center",
+    gap: 4,
+  },
+  headerName: {
+    fontSize: 20,
+    color: COLORS.textPrimary,
+    textAlign: "center",
+  },
+  headerDate: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    textAlign: "center",
+  },
+  headerCalendarButton: {
+    position: "absolute",
+    right: 16,
+    padding: 6,
+  },
   container: {
     flexGrow: 1,
     padding: 24,
@@ -260,23 +315,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textPrimary,
   },
-  date: {
-    fontSize: 18,
+  ageBlock: {
+    gap: 6,
+  },
+  ageRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  ageLabel: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+    fontWeight: "600",
+  },
+  ageValue: {
+    fontSize: 16,
     color: COLORS.textPrimary,
   },
-  ageBlock: {
-    gap: 4,
+  ageNote: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
   },
   ageText: {
     fontSize: 16,
     color: COLORS.textPrimary,
   },
-  actionRow: {
+  exportActionRow: {
     alignSelf: "flex-start",
   },
-  exportActionRow: {
-    marginTop: 6,
-    alignSelf: "flex-start",
+  exportButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: COLORS.filterBackground,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  exportButtonText: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    fontWeight: "600",
   },
   section: {
     paddingVertical: 12,
@@ -287,7 +369,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: COLORS.textPrimary,
+    color: COLORS.accentMain,
     marginBottom: 8,
   },
   empty: {

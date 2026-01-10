@@ -3,10 +3,13 @@ import { FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, 
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 
 import { Achievement } from "@/models/dataModels";
 import { RecordListStackParamList, RootStackParamList, TabParamList } from "@/navigation";
+import AppText from "@/components/AppText";
 import { useAchievements } from "@/state/AchievementsContext";
+import { useActiveUser } from "@/state/AppStateContext";
 import { isIsoDateString } from "@/utils/dateUtils";
 import { normalizeSearchText } from "@/utils/text";
 import { COLORS } from "@/constants/colors";
@@ -18,6 +21,7 @@ const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
 
 const AchievementListScreen: React.FC<Props> = () => {
   const rootNavigation = useNavigation<RootNavigation>();
+  const user = useActiveUser();
   const { loading, store } = useAchievements();
   const [searchText, setSearchText] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>("");
@@ -66,7 +70,7 @@ const AchievementListScreen: React.FC<Props> = () => {
       <View style={styles.rowHeader}>
         <Text style={styles.date}>{dateLabel(item.date)}</Text>
       </View>
-      <Text style={styles.title} numberOfLines={2}>
+      <Text style={styles.rowTitle} numberOfLines={2}>
         {item.title}
       </Text>
       {item.memo ? (
@@ -80,54 +84,58 @@ const AchievementListScreen: React.FC<Props> = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        {/* <TouchableOpacity onPress={() => rootNavigation.navigate("TodayStack")} accessibilityRole="button">
-          <Text style={styles.back}>← 戻る</Text>
-        </TouchableOpacity> */}
-        <Text style={styles.title}>記録一覧</Text>
+        <AppText style={styles.headerTitle} weight="medium">
+          {(user?.name ?? "プロフィール未設定") + " 記録一覧"}
+        </AppText>
       </View>
-      <View style={styles.searchArea}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="タイトル / メモを検索"
-          value={searchText}
-          onChangeText={(text) => setSearchText(text)}
-          accessibilityLabel="フリーワード検索"
-        />
-        <View style={styles.dateRangeRow}>
-          <View style={styles.dateField}>
-            <Text style={styles.rangeLabel}>From</Text>
+      <View style={styles.content}>
+        <View style={styles.searchArea}>
+          <View style={styles.searchRow}>
+            <Ionicons name="search" size={18} color={COLORS.textSecondary} />
             <TextInput
-              style={styles.dateInput}
-              placeholder="YYYY-MM-DD"
-              value={fromDate}
-              onChangeText={(text) => setFromDate(text.trim().slice(0, 10))}
-              keyboardType="numbers-and-punctuation"
-              maxLength={10}
-              accessibilityLabel="開始日"
+              style={styles.searchInput}
+              placeholder="タイトル / メモを検索"
+              value={searchText}
+              onChangeText={(text) => setSearchText(text)}
+              accessibilityLabel="フリーワード検索"
             />
           </View>
-          <View style={styles.dateField}>
-            <Text style={styles.rangeLabel}>To</Text>
-            <TextInput
-              style={styles.dateInput}
-              placeholder="YYYY-MM-DD"
-              value={toDate}
-              onChangeText={(text) => setToDate(text.trim().slice(0, 10))}
-              keyboardType="numbers-and-punctuation"
-              maxLength={10}
-              accessibilityLabel="終了日"
-            />
+          <View style={styles.dateRangeRow}>
+            <View style={styles.dateField}>
+              <Text style={styles.rangeLabel}>From</Text>
+              <TextInput
+                style={styles.dateInput}
+                placeholder="YYYY-MM-DD"
+                value={fromDate}
+                onChangeText={(text) => setFromDate(text.trim().slice(0, 10))}
+                keyboardType="numbers-and-punctuation"
+                maxLength={10}
+                accessibilityLabel="開始日"
+              />
+            </View>
+            <View style={styles.dateField}>
+              <Text style={styles.rangeLabel}>To</Text>
+              <TextInput
+                style={styles.dateInput}
+                placeholder="YYYY-MM-DD"
+                value={toDate}
+                onChangeText={(text) => setToDate(text.trim().slice(0, 10))}
+                keyboardType="numbers-and-punctuation"
+                maxLength={10}
+                accessibilityLabel="終了日"
+              />
+            </View>
           </View>
+          <Text style={styles.searchHint}>※ 英字小文字化 / 全角英数の半角化 / 空白整形済みで正規化します。</Text>
         </View>
-        <Text style={styles.searchHint}>※ 英字小文字化 / 全角英数の半角化 / 空白整形済みで正規化します。</Text>
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={<Text style={styles.empty}>{loading ? "読み込み中..." : "まだ記録がありません"}</Text>}
+        />
       </View>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={<Text style={styles.empty}>{loading ? "読み込み中..." : "まだ記録がありません"}</Text>}
-      />
       <TouchableOpacity
         style={styles.fab}
         accessibilityRole="button"
@@ -144,24 +152,39 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  content: {
+    flex: 1,
     padding: 16,
     gap: 12,
   },
   header: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.headerBackground,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: COLORS.textPrimary,
+    textAlign: "center",
   },
   searchArea: {
     gap: 10,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.filterBackground,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: 12,
   },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   searchInput: {
+    flex: 1,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 10,
@@ -194,15 +217,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textSecondary,
   },
-  back: {
-    fontSize: 16,
-    color: COLORS.accentMain,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
-  },
   list: {
     gap: 12,
     paddingBottom: 120,
@@ -223,6 +237,11 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     color: COLORS.textSecondary,
+  },
+  rowTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
   },
   memo: {
     fontSize: 14,

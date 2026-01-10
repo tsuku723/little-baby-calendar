@@ -10,11 +10,12 @@
  * - Development Build / 製品版アプリでは再検討可能
  */
 import React, { useCallback } from "react";
-import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { SettingsStackParamList } from "@/navigation";
+import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
 import { COLORS } from "@/constants/colors";
 
@@ -22,10 +23,6 @@ type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
 
 const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { state, setActiveUser } = useAppState();
-
-  const handleClose = useCallback(() => {
-    navigation.goBack();
-  }, [navigation]);
 
   const handleSelectChild = useCallback(
     async (userId: string) => {
@@ -36,12 +33,12 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <AppText style={styles.title} weight="medium">
+          設定
+        </AppText>
+      </View>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Button title="← 戻る" onPress={handleClose} color={COLORS.accentMain} />
-          <Text style={styles.title}>設定</Text>
-        </View>
-
         <View style={styles.field}>
           <Text style={styles.label}>ベビーを選択</Text>
           <View style={styles.childList}>
@@ -86,19 +83,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  header: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.headerBackground,
+  },
   container: {
     padding: 24,
     gap: 16,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
   title: {
     fontSize: 20,
-    fontWeight: "600",
     color: COLORS.textPrimary,
+    textAlign: "center",
   },
   field: {
     gap: 8,

@@ -1,7 +1,6 @@
 ﻿import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   Alert,
-  Button,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -19,8 +18,9 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { UserSettings } from "@/models/dataModels";
 import { SettingsStackParamList } from "@/navigation";
+import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
-import { normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+import { isIsoDateString, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "ProfileEdit">;
@@ -95,6 +95,12 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
       });
     }
   }, [existing]);
+
+  const isFormValid = useMemo(() => {
+    const name = formState.name.trim();
+    const birthDate = formState.birthDate.trim();
+    return Boolean(name) && isIsoDateString(birthDate);
+  }, [formState.birthDate, formState.name]);
 
   const handleSave = async () => {
     const name = formState.name.trim();
@@ -172,9 +178,27 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={[styles.headerButton, styles.headerButtonLeft]}
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+        >
+          <Text style={styles.headerButtonText}>キャンセル</Text>
+        </TouchableOpacity>
+        <AppText style={styles.headerTitle} weight="medium">
+          {title}
+        </AppText>
+        <TouchableOpacity
+          style={[styles.headerButton, styles.headerButtonRight, !isFormValid && styles.headerButtonDisabled]}
+          onPress={handleSave}
+          accessibilityRole="button"
+          disabled={!isFormValid}
+        >
+          <Text style={styles.headerButtonText}>保存</Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{title}</Text>
-
         <View style={styles.field}>
           <Text style={styles.label}>名前</Text>
           <TextInput
@@ -308,17 +332,16 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </View>
 
-        <View style={styles.actions}>
-          {existing ? (
-            <Button
-              title="削除"
-              onPress={handleDelete}
-              color={users.length <= 1 ? COLORS.textSecondary : COLORS.sunday}
-            />
-          ) : null}
-          <Button title="保存" onPress={handleSave} color={COLORS.accentMain} />
-          <Button title="キャンセル" onPress={() => navigation.goBack()} color={COLORS.textSecondary} />
-        </View>
+        {existing ? (
+          <TouchableOpacity
+            style={[styles.deleteButton, users.length <= 1 && styles.deleteButtonDisabled]}
+            onPress={handleDelete}
+            disabled={users.length <= 1}
+            accessibilityRole="button"
+          >
+            <Text style={styles.deleteButtonText}>削除</Text>
+          </TouchableOpacity>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -329,14 +352,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  header: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.headerBackground,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: COLORS.textPrimary,
+    textAlign: "center",
+  },
+  headerButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    position: "absolute",
+  },
+  headerButtonLeft: {
+    left: 16,
+  },
+  headerButtonRight: {
+    right: 16,
+  },
+  headerButtonText: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    fontWeight: "600",
+  },
+  headerButtonDisabled: {
+    opacity: 0.4,
+  },
   container: {
     padding: 20,
     gap: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
   },
   field: {
     gap: 8,
@@ -409,15 +458,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
   },
   optionButtonSelected: {
-    borderColor: COLORS.accentMain,
-    backgroundColor: COLORS.highlightToday,
+    borderColor: COLORS.optionSelectedBorder,
   },
   optionLabel: {
     fontSize: 14,
     color: COLORS.textPrimary,
   },
   optionLabelSelected: {
-    color: COLORS.saturday,
+    color: COLORS.optionSelectedBorder,
     fontWeight: "700",
   },
   switchRow: {
@@ -426,8 +474,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 6,
   },
-  actions: {
-    gap: 12,
+  deleteButton: {
+    backgroundColor: COLORS.sunday,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  deleteButtonDisabled: {
+    opacity: 0.4,
+  },
+  deleteButtonText: {
+    color: COLORS.surface,
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
 

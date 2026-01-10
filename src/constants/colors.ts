@@ -3,6 +3,7 @@ export const COLORS = {
   background: "#FFFDF7",
   bottomBackground: "#FFFDF7",
   surface: "#FFFDF7",
+  filterBackground: "#DFECE3",
 
   // Calendar cells
   cellCurrent: "#FFFDF7",
@@ -21,6 +22,7 @@ export const COLORS = {
   accentSub: "#F6C1CC",
   highlightToday: "#CFE6D6",
   headerBackground: "#BFDCCF",
+  optionSelectedBorder: "#8BBBA5",
 
   // Weekdays
   sunday: "#E7A3A3",
