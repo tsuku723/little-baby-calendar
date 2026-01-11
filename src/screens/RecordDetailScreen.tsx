@@ -1,9 +1,12 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
-import { Button, Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Button, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 
 import { RootStackParamList } from "@/navigation";
+import AppText from "@/components/AppText";
+import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
 import { ensureFileExistsAsync } from "@/utils/photo";
 import { COLORS } from "@/constants/colors";
@@ -11,6 +14,8 @@ import { COLORS } from "@/constants/colors";
 type Props = NativeStackScreenProps<RootStackParamList, "RecordDetail">;
 
 const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
+  // 選択中ベビー名取得（ベビー名のない場合は "記録" のまま）
+  const user = useActiveUser();
   const { recordId, isoDate, from } = route.params ?? {};
   const { store } = useAchievements();
   const [photoPath, setPhotoPath] = useState<string | null>(null);
@@ -55,6 +60,22 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* ヘッダー：左に戻るボタン、中央に「ベビー名の記録」 */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.headerLeft}
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+        >
+          <Ionicons name="chevron-back" size={20} color={COLORS.accentMain} />
+        </TouchableOpacity>
+        <AppText weight="medium" style={styles.headerTitle}>
+          {user?.name ? `${user.name}の記録` : "記録"}
+        </AppText>
+        {/* プレースホルダ（中央揃え用） */}
+        <View style={styles.headerRight} />
+      </View>
       <View style={styles.container}>
         <Text style={styles.title}>記録詳細</Text>
 
@@ -128,6 +149,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     justifyContent: "space-between",
+  },
+  /* 記録詳細ヘッダー */
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.headerBackground,
+  },
+  headerLeft: {
+    position: "absolute",
+    left: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerRight: {
+    position: "absolute",
+    right: 16,
+    width: 24,
+    height: 24,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: COLORS.textPrimary,
   },
   centered: {
     flex: 1,

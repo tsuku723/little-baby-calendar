@@ -20,6 +20,7 @@ import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/dat
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { RootStackParamList } from "@/navigation";
+import AppText from "@/components/AppText";
 import { useActiveUser } from "@/state/AppStateContext";
 import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
 import { useDateViewContext } from "@/state/DateViewContext";
@@ -243,8 +244,20 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* 入力画面ヘッダー：キャンセル／記録する */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button" style={styles.headerLeft}>
+          <AppText weight="medium" style={styles.headerCancel}>
+            キャンセル
+          </AppText>
+        </TouchableOpacity>
+        <AppText weight="medium" style={styles.headerTitle}>
+          記録する
+        </AppText>
+        <View style={styles.headerRight} />
+      </View>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{editingRecord ? "記録を編集" : "記録入力"}</Text>
+        {/* ヘッダーに文言を移したため、ここではタイトルを表示しない */}
 
         <View style={styles.field}>
           <Text style={styles.label}>タイトル</Text>
@@ -509,6 +522,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     justifyContent: "space-between",
+  },
+  /* 記録入力ヘッダー */
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.headerBackground,
+  },
+  headerLeft: {
+    position: "absolute",
+    left: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerRight: {
+    position: "absolute",
+    right: 16,
+    width: 24,
+    height: 24,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: COLORS.textPrimary,
+  },
+  headerCancel: {
+    fontSize: 16,
+    color: COLORS.accentMain,
   },
   deleteArea: {
     marginTop: 8,

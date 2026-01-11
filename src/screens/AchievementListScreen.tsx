@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 20,
     bottom: 24,
-    backgroundColor: COLORS.accentMain,
+    backgroundColor: COLORS.fabBackground,
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 32,
