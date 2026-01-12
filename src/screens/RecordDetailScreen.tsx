@@ -68,7 +68,7 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="戻る"
         >
-          <Ionicons name="chevron-back" size={20} color={COLORS.accentMain} />
+          <Ionicons name="chevron-back" size={20} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <AppText weight="medium" style={styles.headerTitle}>
           {user?.name ? `${user.name}の記録` : "記録"}

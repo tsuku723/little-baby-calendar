@@ -190,7 +190,11 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           {title}
         </AppText>
       </View>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.field}>
           <Text style={styles.label}>名前</Text>
           <TextInput
@@ -324,27 +328,27 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </View>
 
-        <View style={styles.actions}>
-          {existing ? (
-            <TouchableOpacity
-              style={[styles.deleteButton, users.length <= 1 && styles.deleteButtonDisabled]}
-              onPress={handleDelete}
-              disabled={users.length <= 1}
-              accessibilityRole="button"
-            >
-              <Text style={styles.deleteButtonText}>削除</Text>
-            </TouchableOpacity>
-          ) : null}
-          <TouchableOpacity
-            style={[styles.actionButton, styles.saveButton, !isFormValid && styles.saveButtonDisabled]}
-            onPress={handleSave}
-            accessibilityRole="button"
-            disabled={!isFormValid}
-          >
-            <Text style={styles.actionButtonText}>保存</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
+      <View style={styles.fixedActions}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.saveButton, !isFormValid && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          accessibilityRole="button"
+          disabled={!isFormValid}
+        >
+          <Text style={styles.actionButtonText}>保存</Text>
+        </TouchableOpacity>
+        {existing ? (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deleteButton, users.length <= 1 && styles.deleteButtonDisabled]}
+            onPress={handleDelete}
+            disabled={users.length <= 1}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.actionButtonText, styles.deleteButtonText]}>このプロフィールを削除する</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </SafeAreaView>
   );
 };
@@ -374,6 +378,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: COLORS.textPrimary,
     textAlign: "center",
+  },
+  scroll: {
+    flex: 1,
   },
   container: {
     padding: 20,
@@ -466,6 +473,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 6,
   },
+  fixedActions: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+    gap: 12,
+    backgroundColor: COLORS.background,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
   actions: {
     gap: 12,
     alignItems: "center",
@@ -481,6 +497,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.filterBackground,
     borderWidth: 1,
     borderColor: COLORS.border,
+    width: "100%",
   },
   actionButtonText: {
     color: COLORS.textPrimary,
@@ -495,17 +512,13 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: COLORS.sunday,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: "center",
+    borderColor: COLORS.sunday,
   },
   deleteButtonDisabled: {
     opacity: 0.4,
   },
   deleteButtonText: {
     color: COLORS.surface,
-    fontSize: 16,
-    fontWeight: "700",
   },
 });
 
