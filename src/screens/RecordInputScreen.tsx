@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
   },
   headerCancel: {
     fontSize: 16,
-    color: COLORS.accentMain,
+    color: COLORS.textPrimary,
   },
   deleteArea: {
     marginTop: 8,
