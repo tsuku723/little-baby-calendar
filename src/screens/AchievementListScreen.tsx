@@ -126,7 +126,6 @@ const AchievementListScreen: React.FC<Props> = () => {
               />
             </View>
           </View>
-          <Text style={styles.searchHint}>※ 英字小文字化 / 全角英数の半角化 / 空白整形済みで正規化します。</Text>
         </View>
         <FlatList
           data={items}
@@ -171,12 +170,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   searchArea: {
-    gap: 10,
     backgroundColor: COLORS.filterBackground,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
   },
   searchRow: {
     flexDirection: "row",
@@ -185,10 +183,12 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    borderWidth: 1,
+    height: 44,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: COLORS.border,
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    backgroundColor: COLORS.surface,
     fontSize: 15,
     color: COLORS.textPrimary,
   },
@@ -212,10 +212,6 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 14,
     color: COLORS.textPrimary,
-  },
-  searchHint: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
   },
   list: {
     gap: 12,
