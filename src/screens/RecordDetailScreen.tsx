@@ -104,14 +104,15 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
 
         <View style={styles.actions}>
-          <Button title="戻る" color={COLORS.textSecondary} onPress={() => navigation.goBack()} />
-          <Button
-            title="編集する"
-            color={COLORS.accentMain}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.editButton]}
             onPress={() =>
               navigation.navigate("RecordInput", { recordId: record.id, isoDate: record.date, from })
             }
-          />
+            accessibilityRole="button"
+          >
+            <Text style={styles.actionButtonText}>編集する</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -146,9 +147,25 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: 12,
-    flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  actionButton: {
+    backgroundColor: COLORS.filterBackground,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionButtonText: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    fontWeight: "600",
+  },
+  editButton: {
+    alignSelf: "center",
   },
   /* 記録詳細ヘッダー */
   header: {
