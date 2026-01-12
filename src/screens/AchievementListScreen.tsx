@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   },
   pickerActionText: {
     fontSize: 14,
-    color: COLORS.accentMain,
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   pickerBody: {

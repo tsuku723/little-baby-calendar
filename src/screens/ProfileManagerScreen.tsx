@@ -1,5 +1,5 @@
 ﻿import React, { useLayoutEffect } from "react";
-import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -44,25 +44,22 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         {users.map((user) => (
-          <TouchableOpacity
-            key={user.id}
-            style={styles.card}
-            onPress={() => navigation.navigate("ProfileEdit", { profileId: user.id })}
-            accessibilityRole="button"
-          >
+          <View key={user.id} style={styles.card}>
             <View style={styles.cardRow}>
               <View style={styles.cardInfo}>
                 <Text style={styles.cardName}>{user.name || "名前未設定"}</Text>
                 <Text style={styles.cardMeta}>誕生日: {user.birthDate}</Text>
                 <Text style={styles.cardMeta}>予定日: {user.dueDate ?? "なし"}</Text>
               </View>
-              <Button
-                title="編集"
+              <TouchableOpacity
+                style={styles.editButton}
                 onPress={() => navigation.navigate("ProfileEdit", { profileId: user.id })}
-                color={COLORS.accentMain}
-              />
+                accessibilityRole="button"
+              >
+                <Text style={styles.editButtonText}>編集</Text>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+          </View>
         ))}
 
         <View style={styles.footer}>
@@ -138,6 +135,19 @@ const styles = StyleSheet.create({
   cardMeta: {
     fontSize: 14,
     color: COLORS.textPrimary,
+  },
+  editButton: {
+    backgroundColor: COLORS.filterBackground,
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  editButtonText: {
+    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: "700",
   },
   footer: {
     marginTop: 12,

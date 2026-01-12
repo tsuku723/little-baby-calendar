@@ -180,25 +180,21 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity
-          style={[styles.headerButton, styles.headerButtonLeft]}
+          style={styles.headerLeft}
           onPress={() => navigation.goBack()}
           accessibilityRole="button"
         >
-          <Text style={styles.headerButtonText}>キャンセル</Text>
+          <Text style={styles.headerLeftText}>キャンセル</Text>
         </TouchableOpacity>
         <AppText style={styles.headerTitle} weight="medium">
           {title}
         </AppText>
-        <TouchableOpacity
-          style={[styles.headerButton, styles.headerButtonRight, !isFormValid && styles.headerButtonDisabled]}
-          onPress={handleSave}
-          accessibilityRole="button"
-          disabled={!isFormValid}
-        >
-          <Text style={styles.headerButtonText}>保存</Text>
-        </TouchableOpacity>
       </View>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.field}>
           <Text style={styles.label}>名前</Text>
           <TextInput
@@ -332,17 +328,27 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </View>
 
+      </ScrollView>
+      <View style={styles.fixedActions}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.saveButton, !isFormValid && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          accessibilityRole="button"
+          disabled={!isFormValid}
+        >
+          <Text style={styles.actionButtonText}>保存</Text>
+        </TouchableOpacity>
         {existing ? (
           <TouchableOpacity
-            style={[styles.deleteButton, users.length <= 1 && styles.deleteButtonDisabled]}
+            style={[styles.actionButton, styles.deleteButton, users.length <= 1 && styles.deleteButtonDisabled]}
             onPress={handleDelete}
             disabled={users.length <= 1}
             accessibilityRole="button"
           >
-            <Text style={styles.deleteButtonText}>削除</Text>
+            <Text style={[styles.actionButtonText, styles.deleteButtonText]}>このプロフィールを削除する</Text>
           </TouchableOpacity>
         ) : null}
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -359,29 +365,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: COLORS.headerBackground,
   },
+  headerLeft: {
+    position: "absolute",
+    left: 16,
+  },
+  headerLeftText: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+    fontWeight: "600",
+  },
   headerTitle: {
     fontSize: 18,
     color: COLORS.textPrimary,
     textAlign: "center",
   },
-  headerButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    position: "absolute",
-  },
-  headerButtonLeft: {
-    left: 16,
-  },
-  headerButtonRight: {
-    right: 16,
-  },
-  headerButtonText: {
-    fontSize: 14,
-    color: COLORS.textPrimary,
-    fontWeight: "600",
-  },
-  headerButtonDisabled: {
-    opacity: 0.4,
+  scroll: {
+    flex: 1,
   },
   container: {
     padding: 20,
@@ -474,19 +473,52 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 6,
   },
+  fixedActions: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+    gap: 12,
+    backgroundColor: COLORS.background,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  actions: {
+    gap: 12,
+    alignItems: "center",
+  },
+  actionButton: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: COLORS.filterBackground,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    width: "100%",
+  },
+  actionButtonText: {
+    color: COLORS.textPrimary,
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  saveButton: {
+    alignSelf: "center",
+  },
+  saveButtonDisabled: {
+    opacity: 0.4,
+  },
   deleteButton: {
     backgroundColor: COLORS.sunday,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: "center",
+    borderColor: COLORS.sunday,
   },
   deleteButtonDisabled: {
     opacity: 0.4,
   },
   deleteButtonText: {
     color: COLORS.surface,
-    fontSize: 16,
-    fontWeight: "700",
   },
 });
 

@@ -257,7 +257,11 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </AppText>
         <View style={styles.headerRight} />
       </View>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* ヘッダーに文言を移したため、ここではタイトルを表示しない */}
 
         <View style={styles.field}>
@@ -345,22 +349,25 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           )}
         </View>
 
-        <View style={styles.actions}>
+      </ScrollView>
+      <View style={styles.fixedActions}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.fixedActionButton, styles.saveButton]}
+          onPress={handleSave}
+          accessibilityRole="button"
+        >
+          <Text style={styles.actionButtonText}>保存</Text>
+        </TouchableOpacity>
+        {editingRecord ? (
           <TouchableOpacity
-            style={[styles.actionButton, styles.saveButton]}
-            onPress={handleSave}
+            style={[styles.actionButton, styles.fixedActionButton, styles.deleteButton]}
+            onPress={confirmDelete}
             accessibilityRole="button"
           >
-            <Text style={styles.actionButtonText}>保存</Text>
+            <Text style={[styles.actionButtonText, styles.deleteButtonText]}>この記録を削除</Text>
           </TouchableOpacity>
-        </View>
-
-        {editingRecord ? (
-          <View style={styles.deleteArea}>
-            <Button title="この記録を削除" color={COLORS.sunday} onPress={confirmDelete} />
-          </View>
         ) : null}
-      </ScrollView>
+      </View>
       <Modal
         animationType="slide"
         transparent
@@ -396,10 +403,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  scroll: {
+    flex: 1,
+  },
   container: {
     flexGrow: 1,
     padding: 24,
     gap: 20,
+    paddingBottom: 140,
   },
   centered: {
     flex: 1,
@@ -530,8 +541,17 @@ const styles = StyleSheet.create({
     color: COLORS.accentMain,
     fontWeight: "700",
   },
-  actions: {
-    alignItems: "center",
+  fixedActions: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 20,
+    gap: 12,
+    backgroundColor: COLORS.background,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  fixedActionButton: {
+    width: "100%",
   },
   saveButton: {
     alignSelf: "center",
@@ -563,10 +583,14 @@ const styles = StyleSheet.create({
   },
   headerCancel: {
     fontSize: 16,
-    color: COLORS.accentMain,
+    color: COLORS.textPrimary,
   },
-  deleteArea: {
-    marginTop: 8,
+  deleteButton: {
+    backgroundColor: COLORS.sunday,
+    borderColor: COLORS.sunday,
+  },
+  deleteButtonText: {
+    color: COLORS.surface,
   },
   sheetOverlay: {
     flex: 1,

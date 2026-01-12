@@ -63,11 +63,11 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
             })}
           </View>
           <TouchableOpacity
-            style={styles.addRow}
+            style={styles.addButton}
             onPress={() => navigation.navigate("ProfileManager")}
             accessibilityRole="button"
           >
-            <Text style={styles.addRowText}>＋ 子どもを追加・編集</Text>
+            <Text style={styles.addButtonText}>＋ 子どもを追加・編集</Text>
           </TouchableOpacity>
         </View>
 
@@ -148,17 +148,17 @@ const styles = StyleSheet.create({
     color: COLORS.saturday,
     fontWeight: "700",
   },
-  addRow: {
+  addButton: {
     marginTop: 10,
     paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.filterBackground,
   },
-  addRowText: {
-    color: COLORS.accentMain,
+  addButtonText: {
+    color: COLORS.textPrimary,
     fontSize: 16,
     fontWeight: "700",
   },
