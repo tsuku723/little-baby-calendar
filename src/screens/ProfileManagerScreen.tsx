@@ -1,9 +1,11 @@
-import React, { useLayoutEffect } from "react";
+﻿import React, { useLayoutEffect } from "react";
 import { Button, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 
 import { SettingsStackParamList } from "@/navigation";
+import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
 import { COLORS } from "@/constants/colors";
 
@@ -23,9 +25,21 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+        >
+          <Ionicons name="chevron-back" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <AppText style={styles.headerTitle} weight="medium">
+          プロフィール編集
+        </AppText>
+      </View>
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>こどものプロフィールを編集</Text>
+        <View style={styles.headerTextBlock}>
           <Text style={styles.subtitle}>編集したいこどもを選んでください</Text>
         </View>
 
@@ -52,7 +66,13 @@ const ProfileManagerScreen: React.FC<Props> = ({ navigation }) => {
         ))}
 
         <View style={styles.footer}>
-          <Button title="＋ 新しいこどもを追加" onPress={() => navigation.navigate("ProfileEdit")} color={COLORS.accentMain} />
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate("ProfileEdit")}
+            accessibilityRole="button"
+          >
+            <Text style={styles.addButtonText}>＋ 新しいこどもを追加</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -64,18 +84,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  header: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.headerBackground,
+  },
+  backButton: {
+    position: "absolute",
+    left: 16,
+    padding: 6,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: COLORS.textPrimary,
+    textAlign: "center",
+  },
   container: {
     padding: 16,
     gap: 12,
   },
-  header: {
+  headerTextBlock: {
     gap: 4,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
@@ -109,6 +141,20 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 12,
+  },
+  addButton: {
+    backgroundColor: COLORS.filterBackground,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  addButtonText: {
+    color: COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
 

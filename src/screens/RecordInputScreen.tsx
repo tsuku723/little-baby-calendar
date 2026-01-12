@@ -18,8 +18,10 @@ import {
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 
 import { RootStackParamList } from "@/navigation";
+import AppText from "@/components/AppText";
 import { useActiveUser } from "@/state/AppStateContext";
 import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
 import { useDateViewContext } from "@/state/DateViewContext";
@@ -243,8 +245,20 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* 入力画面ヘッダー：キャンセル／記録する */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button" style={styles.headerLeft}>
+          <AppText weight="medium" style={styles.headerCancel}>
+            キャンセル
+          </AppText>
+        </TouchableOpacity>
+        <AppText weight="medium" style={styles.headerTitle}>
+          記録する
+        </AppText>
+        <View style={styles.headerRight} />
+      </View>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{editingRecord ? "記録を編集" : "記録入力"}</Text>
+        {/* ヘッダーに文言を移したため、ここではタイトルを表示しない */}
 
         <View style={styles.field}>
           <Text style={styles.label}>タイトル</Text>
@@ -311,8 +325,9 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.field}>
           <Text style={styles.label}>写真（任意）</Text>
           <View style={styles.photoActions}>
-            <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto} accessibilityRole="button">
-              <Text style={styles.photoButtonText}>{photoPath ? "写真を差し替える" : "写真を追加"}</Text>
+            <TouchableOpacity style={styles.actionButton} onPress={handlePickPhoto} accessibilityRole="button">
+              <Ionicons name="image-outline" size={18} color={COLORS.textPrimary} />
+              <Text style={styles.actionButtonText}>{photoPath ? "写真を差し替える" : "写真を追加"}</Text>
             </TouchableOpacity>
             {photoPath ? (
               <TouchableOpacity style={styles.photoRemoveButton} onPress={handleRemovePhoto} accessibilityRole="button">
@@ -331,8 +346,13 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.actions}>
-          <Button title="キャンセル" color={COLORS.textSecondary} onPress={() => navigation.goBack()} />
-          <Button title="保存" color={COLORS.accentMain} onPress={handleSave} />
+          <TouchableOpacity
+            style={[styles.actionButton, styles.saveButton]}
+            onPress={handleSave}
+            accessibilityRole="button"
+          >
+            <Text style={styles.actionButtonText}>保存</Text>
+          </TouchableOpacity>
         </View>
 
         {editingRecord ? (
@@ -415,17 +435,22 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: "center",
   },
-  photoButton: {
+  actionButton: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: COLORS.highlightToday,
+    backgroundColor: COLORS.filterBackground,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  photoButtonText: {
-    color: COLORS.saturday,
-    fontWeight: "700",
+  actionButtonText: {
+    color: COLORS.textPrimary,
+    fontWeight: "600",
+    fontSize: 14,
   },
   photoRemoveButton: {
     paddingHorizontal: 12,
@@ -506,9 +531,39 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   actions: {
+    alignItems: "center",
+  },
+  saveButton: {
+    alignSelf: "center",
+  },
+  /* 記録入力ヘッダー */
+  header: {
     flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.headerBackground,
+  },
+  headerLeft: {
+    position: "absolute",
+    left: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerRight: {
+    position: "absolute",
+    right: 16,
+    width: 24,
+    height: 24,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: COLORS.textPrimary,
+  },
+  headerCancel: {
+    fontSize: 16,
+    color: COLORS.accentMain,
   },
   deleteArea: {
     marginTop: 8,

@@ -2,6 +2,7 @@ import React from "react";
 
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "@/constants/colors";
 import AchievementListScreen from "@/screens/AchievementListScreen";
@@ -59,13 +60,30 @@ const TabNavigator: React.FC = () => {
         tabBarLabelStyle: { fontSize: 12 },
       }}
     >
-      <Tab.Screen name="CalendarStack" component={CalendarStackNavigator} options={{ tabBarLabel: "カレンダー" }} />
+      <Tab.Screen
+        name="CalendarStack"
+        component={CalendarStackNavigator}
+        options={{
+          tabBarLabel: "カレンダー",
+          tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" color={color} size={size} />,
+        }}
+      />
       <Tab.Screen
         name="RecordListStack"
         component={RecordListStackNavigator}
-        options={{ tabBarLabel: "記録一覧" }}
+        options={{
+          tabBarLabel: "記録一覧",
+          tabBarIcon: ({ color, size }) => <Ionicons name="list-outline" color={color} size={size} />,
+        }}
       />
-      <Tab.Screen name="SettingsStack" component={SettingsStackNavigator} options={{ tabBarLabel: "設定" }} />
+      <Tab.Screen
+        name="SettingsStack"
+        component={SettingsStackNavigator}
+        options={{
+          tabBarLabel: "設定",
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings-outline" color={color} size={size} />,
+        }}
+      />
     </Tab.Navigator>
   );
 };

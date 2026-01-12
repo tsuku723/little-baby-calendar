@@ -1,9 +1,12 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
-import { Button, Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Button, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 
 import { RootStackParamList } from "@/navigation";
+import AppText from "@/components/AppText";
+import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
 import { ensureFileExistsAsync } from "@/utils/photo";
 import { COLORS } from "@/constants/colors";
@@ -11,6 +14,8 @@ import { COLORS } from "@/constants/colors";
 type Props = NativeStackScreenProps<RootStackParamList, "RecordDetail">;
 
 const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
+  // 選択中ベビー名取得（ベビー名のない場合は "記録" のまま）
+  const user = useActiveUser();
   const { recordId, isoDate, from } = route.params ?? {};
   const { store } = useAchievements();
   const [photoPath, setPhotoPath] = useState<string | null>(null);
@@ -55,6 +60,22 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* ヘッダー：左に戻るボタン、中央に「ベビー名の記録」 */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.headerLeft}
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="戻る"
+        >
+          <Ionicons name="chevron-back" size={20} color={COLORS.accentMain} />
+        </TouchableOpacity>
+        <AppText weight="medium" style={styles.headerTitle}>
+          {user?.name ? `${user.name}の記録` : "記録"}
+        </AppText>
+        {/* プレースホルダ（中央揃え用） */}
+        <View style={styles.headerRight} />
+      </View>
       <View style={styles.container}>
         <Text style={styles.title}>記録詳細</Text>
 
@@ -83,14 +104,15 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         ) : null}
 
         <View style={styles.actions}>
-          <Button title="戻る" color={COLORS.textSecondary} onPress={() => navigation.goBack()} />
-          <Button
-            title="編集する"
-            color={COLORS.accentMain}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.editButton]}
             onPress={() =>
               navigation.navigate("RecordInput", { recordId: record.id, isoDate: record.date, from })
             }
-          />
+            accessibilityRole="button"
+          >
+            <Text style={styles.actionButtonText}>編集する</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -125,9 +147,50 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: 12,
+    alignItems: "center",
+  },
+  actionButton: {
+    backgroundColor: COLORS.filterBackground,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionButtonText: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    fontWeight: "600",
+  },
+  editButton: {
+    alignSelf: "center",
+  },
+  /* 記録詳細ヘッダー */
+  header: {
     flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.headerBackground,
+  },
+  headerLeft: {
+    position: "absolute",
+    left: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerRight: {
+    position: "absolute",
+    right: 16,
+    width: 24,
+    height: 24,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: COLORS.textPrimary,
   },
   centered: {
     flex: 1,

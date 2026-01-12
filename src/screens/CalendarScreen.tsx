@@ -99,7 +99,6 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
 
   const todayDate = useMemo(() => toUtcDateOnly(new Date()), []);
   const todayIso = useMemo(() => toIsoDateString(todayDate), [todayDate]);
-  const todayDisplay = useMemo(() => todayIso.replace(/-/g, "/"), [todayIso]);
   const ageFormat = user?.settings.ageFormat ?? "md";
 
   const todayAgeInfo = useMemo(() => {
@@ -137,7 +136,6 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
       <CalendarDecorations topOffset={insets.top} />
       <View style={styles.fixedHeader}>
         <Text style={styles.headerName}>{user?.name ?? "プロフィール未設定"}</Text>
-        <Text style={styles.headerDate}>{todayDisplay}</Text>
         {todayAgeInfo ? (
           <View style={styles.headerAgeBlock}>
             {correctedTodayLabel && chronologicalTodayLabelWithPrefix ? (
@@ -165,9 +163,6 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             onPrev={handlePrev}
             onNext={handleNext}
             onToday={handleToday}
-            // Settings は「戻る」前提のスタック画面なので navigate で積み重ね replace は使用しない
-            onOpenSettings={() => rootNavigation.navigate("SettingsStack", { screen: "Settings" })}
-            onOpenList={() => rootNavigation.navigate("RecordListStack", { screen: "AchievementList" })}
           />
           <View style={styles.weekRow}>
             {WEEK_LABELS.map((label, idx) => (
@@ -236,11 +231,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "ZenMaruGothic-Medium",
   },
-  headerDate: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: "center",
-  },
   headerAgeBlock: {
     alignItems: "center",
     gap: 4,
@@ -292,18 +282,18 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 20,
     bottom: 24,
-    backgroundColor: COLORS.accentSub,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 28,
+    backgroundColor: COLORS.fabBackground,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 32,
     shadowColor: COLORS.textPrimary,
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   fabText: {
     color: COLORS.surface,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "700",
   },
 });
