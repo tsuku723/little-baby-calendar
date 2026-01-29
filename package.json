@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/zen-maru-gothic": "^0.2.3",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-navigation/bottom-tabs": "^7.8.12",
@@ -20,7 +21,6 @@
     "expo-image-picker": "~17.0.10",
     "expo-media-library": "~18.2.1",
     "expo-status-bar": "~3.0.9",
-    "@expo-google-fonts/zen-maru-gothic": "^0.2.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
@@ -38,6 +38,7 @@
     "@types/uuid": "^10.0.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "~54.0.9",
+    "baseline-browser-mapping": "^2.9.15",
     "typescript": "~5.9.2",
     "uuid": "^13.0.0"
   },
