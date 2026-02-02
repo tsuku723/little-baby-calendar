@@ -128,7 +128,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
       });
     }
 
-    navigation.goBack();
+    navigation.popToTop();
   };
 
   const birthDateForPicker = useMemo(() => {
@@ -168,7 +168,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
         style: "destructive",
         onPress: async () => {
           await deleteUser(existing.id);
-          navigation.goBack();
+          navigation.popToTop();
         },
       },
     ]);
@@ -252,7 +252,6 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
                 mode="date"
                 display="inline"
                 locale="ja-JP"
-                maximumDate={today}
                 onChange={handleDueDateChange}
               />
             </View>

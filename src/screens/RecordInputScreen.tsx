@@ -55,7 +55,8 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const selectedDateIso = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
   const todayIso = useMemo(() => toIsoDateString(today), [today]);
   const [dateInput, setDateInput] = useState<string>(preferredDate ?? selectedDateIso);
-  const [showPicker, setShowPicker] = useState<boolean>(false);
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [tempDate, setTempDate] = useState<Date>(selectedDate);
   const [title, setTitle] = useState<string>(editingRecord?.title ?? "");
   const [content, setContent] = useState<string>(editingRecord?.memo ?? "");
   const [photoPath, setPhotoPath] = useState<string | null>(editingRecord?.photoPath ?? null);
@@ -111,10 +112,25 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     return normalized;
   }, [dateInput, selectedDate]);
 
+  const openDatePicker = () => {
+    setTempDate(currentDateForPicker);
+    setShowDatePicker(true);
+  };
+
+  const closeDatePicker = () => {
+    setShowDatePicker(false);
+  };
+
   const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
     if (!pickedDate) return;
-    setDateInput(toIsoDateString(pickedDate));
-    setShowPicker(false);
+    setTempDate(pickedDate);
+  };
+
+  const handleDateConfirm = () => {
+    if (!Number.isNaN(tempDate.getTime())) {
+      setDateInput(toIsoDateString(tempDate));
+    }
+    closeDatePicker();
   };
 
   // 候補選択時のハンドリング
@@ -171,7 +187,12 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     }
     const isoDate = toIsoDateString(normalizedDate);
 
-    const titleValue = title.trim() || content.trim();
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      Alert.alert("タイトルを入力してください", "記録タイトルは必須です。");
+      return;
+    }
+
     const photoPayload: string | null | undefined = (() => {
       if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存の写真を削除
       if (photoPath && photoPath !== editingRecord?.photoPath) return photoPath; // 新規に差し替え
@@ -181,7 +202,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     const payload: SaveAchievementPayload = {
       id: editingRecord?.id,
       date: isoDate,
-      title: titleValue,
+      title: trimmedTitle,
       memo: content,
       photoPath: photoPayload,
     };
@@ -281,34 +302,13 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.field}>
           <TouchableOpacity
             style={styles.dateRow}
-            onPress={() => setShowPicker((prev) => !prev)}
+            onPress={openDatePicker}
             accessibilityRole="button"
             accessibilityLabel="日付を選択"
           >
             <Text style={styles.dateRowLabel}>日付</Text>
             <Text style={styles.dateRowValue}>{dateInput} ▼</Text>
           </TouchableOpacity>
-          {showPicker ? (
-            <View style={styles.datePickerArea}>
-              <TouchableOpacity
-                style={styles.todayResetButton}
-                onPress={() => {
-                  setDateInput(todayIso);
-                  setShowPicker(false);
-                }}
-              >
-                <Text style={styles.todayResetText}>今日に戻る</Text>
-              </TouchableOpacity>
-              <DateTimePicker
-                value={currentDateForPicker}
-                mode="date"
-                display="inline"
-                locale="ja-JP"
-                maximumDate={today}
-                onChange={handleDateChange}
-              />
-            </View>
-          ) : null}
         </View>
 
         <View style={styles.field}>
@@ -392,6 +392,42 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
               </TouchableOpacity>
             ))}
           </ScrollView>
+        </View>
+      </Modal>
+      <Modal
+        animationType="slide"
+        transparent
+        visible={showDatePicker}
+        onRequestClose={closeDatePicker}
+        statusBarTranslucent
+      >
+        <Pressable style={styles.sheetOverlay} onPress={closeDatePicker} accessibilityRole="button" />
+        <View style={styles.datePickerModal}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={closeDatePicker} accessibilityRole="button">
+              <Text style={styles.modalHeaderText}>キャンセル</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>日付を選択</Text>
+            <TouchableOpacity onPress={handleDateConfirm} accessibilityRole="button">
+              <Text style={styles.modalHeaderText}>完了</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.datePickerArea}>
+            <TouchableOpacity
+              style={styles.todayResetButton}
+              onPress={() => setTempDate(normalizeToUtcDate(todayIso))}
+              accessibilityRole="button"
+            >
+              <Text style={styles.todayResetText}>今日に戻る</Text>
+            </TouchableOpacity>
+            <DateTimePicker
+              value={tempDate}
+              mode="date"
+              display="spinner"
+              locale="ja-JP"
+              onChange={handleDateChange}
+            />
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -526,6 +562,32 @@ const styles = StyleSheet.create({
   },
   datePickerArea: {
     gap: 8,
+  },
+  datePickerModal: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  modalHeaderText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: COLORS.accentMain,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
   },
   textarea: {
     minHeight: 140,

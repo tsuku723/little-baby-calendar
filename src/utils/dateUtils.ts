@@ -170,13 +170,15 @@ export const calculateAgeInfo = (params: {
 
   const chronologicalParts = diffYmdBorrow(birth, target);
 
-  const correctedBase = due && due.getTime() > birth.getTime() ? due : birth;
-  const correctedParts = due
+  const prematurityDays = due ? daysBetweenUtc(birth, due) : 0;
+  const hasPrematurity = prematurityDays > 0;
+  const correctedBase = hasPrematurity && due ? due : birth;
+  const correctedParts = hasPrematurity
     ? diffYmdBorrow(correctedBase, target)
     : { years: 0, months: 0, days: 0 };
 
   const correctedVisible =
-    Boolean(due) &&
+    hasPrematurity &&
     !agesEqual(chronologicalParts, correctedParts) &&
     isWithinCorrectedLimit(correctedParts, params.showCorrectedUntilMonths);
 
