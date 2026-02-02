@@ -179,7 +179,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
 
-    // 日付は ISO 形式で受け取り、UTC に正規化して保存する
+    // 日付は ISO 形式で受け取り、ローカル日付として正規化して保存する
     const normalizedDate = normalizeToUtcDate(dateInput);
     if (Number.isNaN(normalizedDate.getTime())) {
       Alert.alert("日付を確認してください", "YYYY-MM-DD 形式で入力してください。");
@@ -423,7 +423,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             <DateTimePicker
               value={tempDate}
               mode="date"
-              display="spinner"
+              display="inline"
               locale="ja-JP"
               onChange={handleDateChange}
             />

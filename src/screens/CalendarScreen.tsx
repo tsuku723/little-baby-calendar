@@ -40,7 +40,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     if (user?.settings.lastViewedMonth) {
       const normalized = normalizeToUtcDate(user.settings.lastViewedMonth);
       if (!Number.isNaN(normalized.getTime())) {
-        return new Date(Date.UTC(normalized.getUTCFullYear(), normalized.getUTCMonth(), 1));
+        return new Date(normalized.getFullYear(), normalized.getMonth(), 1);
       }
     }
     return toUtcDateOnly(new Date());
@@ -51,7 +51,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
 
   useEffect(() => {
     void loadMonth(monthKeyValue);
-    const isoMonth = `${anchorDate.getUTCFullYear()}-${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}-01`;
+    const isoMonth = `${anchorDate.getFullYear()}-${String(anchorDate.getMonth() + 1).padStart(2, "0")}-01`;
     if (user?.settings.lastViewedMonth !== isoMonth && user?.id) {
       void updateUser(user.id, { settings: { ...user.settings, lastViewedMonth: isoMonth } });
     }
@@ -75,18 +75,18 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   );
 
   const handlePrev = () => {
-    const prev = new Date(Date.UTC(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth() - 1, 1));
+    const prev = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - 1, 1);
     setAnchorDate(prev);
   };
 
   const handleNext = () => {
-    const next = new Date(Date.UTC(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth() + 1, 1));
+    const next = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 1);
     setAnchorDate(next);
   };
 
   const handleToday = () => {
     const today = toUtcDateOnly(new Date());
-    setAnchorDate(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)));
+    setAnchorDate(new Date(today.getFullYear(), today.getMonth(), 1));
   };
 
   const openMonthPicker = () => {
@@ -104,13 +104,13 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleMonthConfirm = () => {
-    const year = tempMonthDate.getUTCFullYear();
-    const month = tempMonthDate.getUTCMonth();
-    setAnchorDate(new Date(Date.UTC(year, month, 1)));
+    const year = tempMonthDate.getFullYear();
+    const month = tempMonthDate.getMonth();
+    setAnchorDate(new Date(year, month, 1));
     closeMonthPicker();
   };
 
-  const monthLabel = `${anchorDate.getUTCFullYear()}/${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}`;
+  const monthLabel = `${anchorDate.getFullYear()}/${String(anchorDate.getMonth() + 1).padStart(2, "0")}`;
 
   const handlePressDay = (iso: string) => {
     const normalized = normalizeToUtcDate(iso);

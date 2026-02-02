@@ -15,24 +15,24 @@ export const isIsoDateString = (value: unknown): value is string =>
   typeof value === "string" && ISO_DATE_RE.test(value);
 
 const getDateParts = (date: Date) => ({
-  year: date.getUTCFullYear(),
-  month: date.getUTCMonth() + 1,
-  day: date.getUTCDate(),
+  year: date.getFullYear(),
+  month: date.getMonth() + 1,
+  day: date.getDate(),
 });
 
 const daysInMonth = (year: number, month: number): number =>
-  new Date(Date.UTC(year, month, 0)).getUTCDate();
+  new Date(year, month, 0).getDate();
 
 const parseIsoDateStrict = (isoDate: string): Date | null => {
   if (!isIsoDateString(isoDate)) return null;
 
   const [y, m, d] = isoDate.split("-").map(Number);
-  const parsed = new Date(Date.UTC(y, m - 1, d));
+  const parsed = new Date(y, m - 1, d);
 
   if (
-    parsed.getUTCFullYear() !== y ||
-    parsed.getUTCMonth() + 1 !== m ||
-    parsed.getUTCDate() !== d
+    parsed.getFullYear() !== y ||
+    parsed.getMonth() + 1 !== m ||
+    parsed.getDate() !== d
   ) {
     return null;
   }
@@ -55,12 +55,20 @@ export const normalizeToUtcDate = (isoDate: string | null | undefined): Date => 
   return parsed;
 };
 
+export const safeParseIsoLocal = (isoDate: string | null | undefined, fallback: Date): Date => {
+  const parsed = isoDate ? parseIsoDateStrict(isoDate) : null;
+  if (parsed) return parsed;
+  return toUtcDateOnly(fallback);
+};
+
 export const toUtcDateOnly = (date: Date): Date => {
   if (Number.isNaN(date.getTime())) {
     return new Date(NaN);
   }
   return new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
   );
 };
 
@@ -69,9 +77,9 @@ export const toIsoDateString = (date: Date): string => {
     throw new Error("toIsoDateString: Invalid Date provided");
   }
   const d = toUtcDateOnly(date);
-  const year = d.getUTCFullYear();
-  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
 
@@ -199,18 +207,20 @@ export const calculateAgeInfo = (params: {
 };
 
 export const monthKey = (date: Date): string => {
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${year}-${month}`;
 };
 
 const startOfCalendarGrid = (anchor: Date): Date => {
   const firstDay = new Date(
-    Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1)
+    anchor.getFullYear(),
+    anchor.getMonth(),
+    1
   );
-  const startDay = firstDay.getUTCDay();
+  const startDay = firstDay.getDay();
   const startDate = new Date(firstDay);
-  startDate.setUTCDate(firstDay.getUTCDate() - startDay);
+  startDate.setDate(firstDay.getDate() - startDay);
   return startDate;
 };
 
@@ -230,10 +240,12 @@ export const buildCalendarMonthView = ({
 }): CalendarMonthView => {
   const startDate = startOfCalendarGrid(anchorDate);
   const firstDay = new Date(
-    Date.UTC(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth(), 1)
+    anchorDate.getFullYear(),
+    anchorDate.getMonth(),
+    1
   );
-  const startDay = firstDay.getUTCDay();
-  const daysInCurrentMonth = daysInMonth(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth() + 1);
+  const startDay = firstDay.getDay();
+  const daysInCurrentMonth = daysInMonth(anchorDate.getFullYear(), anchorDate.getMonth() + 1);
   const totalCells = startDay + daysInCurrentMonth;
   const weeks = Math.max(5, Math.min(6, Math.ceil(totalCells / 7)));
   const cellCount = weeks * 7;
@@ -245,11 +257,11 @@ export const buildCalendarMonthView = ({
 
   for (let offset = 0; offset < cellCount; offset += 1) {
     const date = new Date(startDate);
-    date.setUTCDate(startDate.getUTCDate() + offset);
+    date.setDate(startDate.getDate() + offset);
     const iso = toIsoDateString(date);
     const isCurrentMonth =
-      date.getUTCFullYear() === anchorDate.getUTCFullYear() &&
-      date.getUTCMonth() === anchorDate.getUTCMonth();
+      date.getFullYear() === anchorDate.getFullYear() &&
+      date.getMonth() === anchorDate.getMonth();
 
     const ageInfo =
       hasValidBirthDate && iso
@@ -306,8 +318,8 @@ export const buildCalendarMonthView = ({
   }
 
   return {
-    year: anchorDate.getUTCFullYear(),
-    month: anchorDate.getUTCMonth() + 1,
+    year: anchorDate.getFullYear(),
+    month: anchorDate.getMonth() + 1,
     days,
   };
 };

@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Modal,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -20,7 +21,7 @@ import { UserSettings } from "@/models/dataModels";
 import { SettingsStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
-import { isIsoDateString, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+import { isIsoDateString, safeParseIsoLocal, toIsoDateString, toUtcDateOnly } from "@/utils/dateUtils";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "ProfileEdit">;
@@ -65,9 +66,11 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     };
   });
 
-  const today = useMemo(() => new Date(), []);
-  const [showBirthDatePicker, setShowBirthDatePicker] = useState(false);
-  const [showDueDatePicker, setShowDueDatePicker] = useState(false);
+  const today = useMemo(() => toUtcDateOnly(new Date()), []);
+  const [activeDateField, setActiveDateField] = useState<"birth" | "due" | null>(null);
+  const [isDateModalVisible, setDateModalVisible] = useState(false);
+  const [tempBirthDate, setTempBirthDate] = useState<Date>(safeParseIsoLocal(formState.birthDate, today));
+  const [tempDueDate, setTempDueDate] = useState<Date>(safeParseIsoLocal(formState.dueDate, today));
 
   useLayoutEffect(() => {
     const parent = navigation.getParent();
@@ -131,28 +134,37 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     navigation.popToTop();
   };
 
-  const birthDateForPicker = useMemo(() => {
-    const normalized = normalizeToUtcDate(formState.birthDate);
-    if (Number.isNaN(normalized.getTime())) return today;
-    return normalized;
-  }, [formState.birthDate, today]);
-
-  const dueDateForPicker = useMemo(() => {
-    const normalized = normalizeToUtcDate(formState.dueDate);
-    if (Number.isNaN(normalized.getTime())) return today;
-    return normalized;
-  }, [formState.dueDate, today]);
-
-  const handleBirthDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
-    if (!pickedDate) return;
-    setFormState((prev) => ({ ...prev, birthDate: toIsoDateString(pickedDate) }));
-    setShowBirthDatePicker(false);
+  const openDatePicker = (field: "birth" | "due") => {
+    setActiveDateField(field);
+    if (field === "birth") {
+      setTempBirthDate(safeParseIsoLocal(formState.birthDate, today));
+    } else {
+      setTempDueDate(safeParseIsoLocal(formState.dueDate, today));
+    }
+    setDateModalVisible(true);
   };
 
-  const handleDueDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
-    if (!pickedDate) return;
-    setFormState((prev) => ({ ...prev, dueDate: toIsoDateString(pickedDate) }));
-    setShowDueDatePicker(false);
+  const closeDatePicker = () => {
+    setDateModalVisible(false);
+  };
+
+  const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
+    if (!pickedDate || !activeDateField) return;
+    if (activeDateField === "birth") {
+      setTempBirthDate(pickedDate);
+    } else {
+      setTempDueDate(pickedDate);
+    }
+  };
+
+  const handleDateConfirm = () => {
+    if (!activeDateField) return;
+    if (activeDateField === "birth") {
+      setFormState((prev) => ({ ...prev, birthDate: toIsoDateString(tempBirthDate) }));
+    } else {
+      setFormState((prev) => ({ ...prev, dueDate: toIsoDateString(tempDueDate) }));
+    }
+    closeDatePicker();
   };
 
   const handleDelete = async () => {
@@ -208,54 +220,25 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.field}>
           <TouchableOpacity
             style={styles.dateRow}
-            onPress={() => {
-              setShowBirthDatePicker((prev) => !prev);
-              setShowDueDatePicker(false);
-            }}
+            onPress={() => openDatePicker("birth")}
             accessibilityRole="button"
             accessibilityLabel="出生日を選択"
           >
             <Text style={styles.dateRowLabel}>出生日</Text>
             <Text style={styles.dateRowValue}>{formState.birthDate} ▼</Text>
           </TouchableOpacity>
-          {showBirthDatePicker ? (
-            <View style={styles.datePickerArea}>
-              <DateTimePicker
-                value={birthDateForPicker}
-                mode="date"
-                display="inline"
-                locale="ja-JP"
-                maximumDate={today}
-                onChange={handleBirthDateChange}
-              />
-            </View>
-          ) : null}
         </View>
 
         <View style={styles.field}>
           <TouchableOpacity
             style={styles.dateRow}
-            onPress={() => {
-              setShowDueDatePicker((prev) => !prev);
-              setShowBirthDatePicker(false);
-            }}
+            onPress={() => openDatePicker("due")}
             accessibilityRole="button"
             accessibilityLabel="出産予定日を選択"
           >
             <Text style={styles.dateRowLabel}>出産予定日</Text>
             <Text style={styles.dateRowValue}>{formState.dueDate} ▼</Text>
           </TouchableOpacity>
-          {showDueDatePicker ? (
-            <View style={styles.datePickerArea}>
-              <DateTimePicker
-                value={dueDateForPicker}
-                mode="date"
-                display="inline"
-                locale="ja-JP"
-                onChange={handleDueDateChange}
-              />
-            </View>
-          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -348,6 +331,35 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           </TouchableOpacity>
         ) : null}
       </View>
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isDateModalVisible}
+        onRequestClose={closeDatePicker}
+        statusBarTranslucent
+      >
+        <Pressable style={styles.modalOverlay} onPress={closeDatePicker} accessibilityRole="button" />
+        <View style={styles.modalSheet}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={closeDatePicker} accessibilityRole="button">
+              <Text style={styles.modalHeaderText}>キャンセル</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>{activeDateField === "birth" ? "出生日" : "出産予定日"}</Text>
+            <TouchableOpacity onPress={handleDateConfirm} accessibilityRole="button">
+              <Text style={styles.modalHeaderText}>完了</Text>
+            </TouchableOpacity>
+          </View>
+          <DateTimePicker
+            key={activeDateField ?? "date"}
+            value={activeDateField === "birth" ? tempBirthDate : tempDueDate}
+            mode="date"
+            display="inline"
+            locale="ja-JP"
+            maximumDate={activeDateField === "birth" ? today : undefined}
+            onChange={handleDateChange}
+          />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -422,8 +434,35 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontWeight: "700",
   },
-  datePickerArea: {
-    gap: 8,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+  },
+  modalSheet: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  modalHeaderText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: COLORS.accentMain,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
   },
   section: {
     gap: 12,
