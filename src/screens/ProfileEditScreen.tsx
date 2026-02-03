@@ -21,7 +21,7 @@ import { UserSettings } from "@/models/dataModels";
 import { SettingsStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
-import { isIsoDateString, safeParseIsoLocal, toIsoDateString, toUtcDateOnly } from "@/utils/dateUtils";
+import { isIsoDateString, safeParseIsoLocal, toIsoDateString } from "@/utils/dateUtils";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "ProfileEdit">;
@@ -149,11 +149,11 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
       } else {
         setTempDueDate(safeDate(formState.dueDate, today));
       }
-      setDateModalVisible(true);
+      requestAnimationFrame(() => setDateModalVisible(true));
     };
     if (isDateModalVisible) {
       setDateModalVisible(false);
-      setTimeout(open, 0);
+      requestAnimationFrame(open);
       return;
     }
     open();
@@ -372,15 +372,17 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
               <Text style={styles.modalHeaderText}>完了</Text>
             </TouchableOpacity>
           </View>
-          <DateTimePicker
-            key={activeDateField ?? "date"}
-            value={pickerValue}
-            mode="date"
-            display="inline"
-            locale="ja-JP"
-            maximumDate={activeDateField === "birth" ? today : undefined}
-            onChange={handleDateChange}
-          />
+          {activeDateField ? (
+            <DateTimePicker
+              key={activeDateField}
+              value={pickerValue}
+              mode="date"
+              display="inline"
+              locale="ja-JP"
+              maximumDate={activeDateField === "birth" ? today : undefined}
+              onChange={handleDateChange}
+            />
+          ) : null}
         </View>
       </Modal>
     </SafeAreaView>
