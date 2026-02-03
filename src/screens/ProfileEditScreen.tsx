@@ -66,11 +66,18 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     };
   });
 
-  const today = useMemo(() => toUtcDateOnly(new Date()), []);
+  const startOfLocalDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const cloneDate = (d: Date) => new Date(d.getTime());
+  const safeDate = (iso: string, fallback: Date) => {
+    const parsed = safeParseIsoLocal(iso, fallback);
+    if (!parsed || Number.isNaN(parsed.getTime())) return cloneDate(fallback);
+    return cloneDate(parsed);
+  };
+  const today = useMemo(() => startOfLocalDay(new Date()), []);
   const [activeDateField, setActiveDateField] = useState<"birth" | "due" | null>(null);
   const [isDateModalVisible, setDateModalVisible] = useState(false);
-  const [tempBirthDate, setTempBirthDate] = useState<Date>(safeParseIsoLocal(formState.birthDate, today));
-  const [tempDueDate, setTempDueDate] = useState<Date>(safeParseIsoLocal(formState.dueDate, today));
+  const [tempBirthDate, setTempBirthDate] = useState<Date>(() => safeDate(formState.birthDate, today));
+  const [tempDueDate, setTempDueDate] = useState<Date>(() => safeDate(formState.dueDate, today));
 
   useLayoutEffect(() => {
     const parent = navigation.getParent();
@@ -135,27 +142,43 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const openDatePicker = (field: "birth" | "due") => {
-    setActiveDateField(field);
-    if (field === "birth") {
-      setTempBirthDate(safeParseIsoLocal(formState.birthDate, today));
-    } else {
-      setTempDueDate(safeParseIsoLocal(formState.dueDate, today));
+    const open = () => {
+      setActiveDateField(field);
+      if (field === "birth") {
+        setTempBirthDate(safeDate(formState.birthDate, today));
+      } else {
+        setTempDueDate(safeDate(formState.dueDate, today));
+      }
+      setDateModalVisible(true);
+    };
+    if (isDateModalVisible) {
+      setDateModalVisible(false);
+      setTimeout(open, 0);
+      return;
     }
-    setDateModalVisible(true);
+    open();
   };
 
   const closeDatePicker = () => {
     setDateModalVisible(false);
+    setActiveDateField(null);
   };
 
   const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
     if (!pickedDate || !activeDateField) return;
+    const next = cloneDate(pickedDate);
+    if (Number.isNaN(next.getTime())) return;
     if (activeDateField === "birth") {
-      setTempBirthDate(pickedDate);
+      setTempBirthDate(next);
     } else {
-      setTempDueDate(pickedDate);
+      setTempDueDate(next);
     }
   };
+
+  const pickerValue = useMemo(() => {
+    const raw = activeDateField === "birth" ? tempBirthDate : tempDueDate;
+    return raw && !Number.isNaN(raw.getTime()) ? raw : today;
+  }, [activeDateField, tempBirthDate, tempDueDate, today]);
 
   const handleDateConfirm = () => {
     if (!activeDateField) return;
@@ -351,7 +374,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
           <DateTimePicker
             key={activeDateField ?? "date"}
-            value={activeDateField === "birth" ? tempBirthDate : tempDueDate}
+            value={pickerValue}
             mode="date"
             display="inline"
             locale="ja-JP"
