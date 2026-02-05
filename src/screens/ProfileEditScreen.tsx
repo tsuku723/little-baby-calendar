@@ -357,7 +357,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
       <Modal
         animationType="slide"
         transparent
-        visible={isDateModalVisible}
+        visible={isDateModalVisible && activeDateField !== null}
         onRequestClose={closeDatePicker}
         statusBarTranslucent
       >
