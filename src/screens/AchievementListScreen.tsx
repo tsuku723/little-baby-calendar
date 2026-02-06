@@ -22,7 +22,7 @@ import { RecordListStackParamList, RootStackParamList, TabParamList } from "@/na
 import AppText from "@/components/AppText";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useActiveUser } from "@/state/AppStateContext";
-import { isIsoDateString, toIsoDateString } from "@/utils/dateUtils";
+import { isIsoDateString, safeParseIsoLocal, toIsoDateString } from "@/utils/dateUtils";
 import { normalizeSearchText } from "@/utils/text";
 import { COLORS } from "@/constants/colors";
 
@@ -32,16 +32,12 @@ type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
 
 const toIsoDateFromPicker = (picked: Date): string => {
-  const utc = new Date(Date.UTC(picked.getFullYear(), picked.getMonth(), picked.getDate()));
-  return toIsoDateString(utc);
+  return toIsoDateString(picked);
 };
 
 const getPickerDate = (value: string): Date => {
-  if (isIsoDateString(value)) {
-    const parsed = new Date(`${value}T00:00:00.000Z`);
-    if (!Number.isNaN(parsed.getTime())) return parsed;
-  }
-  return new Date();
+  const fallback = new Date();
+  return safeParseIsoLocal(isIsoDateString(value) ? value : null, fallback);
 };
 
 const AchievementListScreen: React.FC<Props> = () => {

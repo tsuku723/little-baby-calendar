@@ -1,9 +1,10 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
 import CalendarGrid from "@/components/CalendarGrid";
 import CalendarDecorations from "@/components/CalendarDecorations";
@@ -39,16 +40,18 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     if (user?.settings.lastViewedMonth) {
       const normalized = normalizeToUtcDate(user.settings.lastViewedMonth);
       if (!Number.isNaN(normalized.getTime())) {
-        return new Date(Date.UTC(normalized.getUTCFullYear(), normalized.getUTCMonth(), 1));
+        return new Date(normalized.getFullYear(), normalized.getMonth(), 1);
       }
     }
     return toUtcDateOnly(new Date());
   });
   const monthKeyValue = monthKey(anchorDate);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [tempMonthDate, setTempMonthDate] = useState<Date>(anchorDate);
 
   useEffect(() => {
     void loadMonth(monthKeyValue);
-    const isoMonth = `${anchorDate.getUTCFullYear()}-${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}-01`;
+    const isoMonth = `${anchorDate.getFullYear()}-${String(anchorDate.getMonth() + 1).padStart(2, "0")}-01`;
     if (user?.settings.lastViewedMonth !== isoMonth && user?.id) {
       void updateUser(user.id, { settings: { ...user.settings, lastViewedMonth: isoMonth } });
     }
@@ -72,21 +75,42 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   );
 
   const handlePrev = () => {
-    const prev = new Date(Date.UTC(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth() - 1, 1));
+    const prev = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - 1, 1);
     setAnchorDate(prev);
   };
 
   const handleNext = () => {
-    const next = new Date(Date.UTC(anchorDate.getUTCFullYear(), anchorDate.getUTCMonth() + 1, 1));
+    const next = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 1);
     setAnchorDate(next);
   };
 
   const handleToday = () => {
     const today = toUtcDateOnly(new Date());
-    setAnchorDate(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)));
+    setAnchorDate(new Date(today.getFullYear(), today.getMonth(), 1));
   };
 
-  const monthLabel = `${anchorDate.getUTCFullYear()}/${String(anchorDate.getUTCMonth() + 1).padStart(2, "0")}`;
+  const openMonthPicker = () => {
+    setTempMonthDate(anchorDate);
+    setShowMonthPicker(true);
+  };
+
+  const closeMonthPicker = () => {
+    setShowMonthPicker(false);
+  };
+
+  const handleMonthChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
+    if (!pickedDate) return;
+    setTempMonthDate(pickedDate);
+  };
+
+  const handleMonthConfirm = () => {
+    const year = tempMonthDate.getFullYear();
+    const month = tempMonthDate.getMonth();
+    setAnchorDate(new Date(year, month, 1));
+    closeMonthPicker();
+  };
+
+  const monthLabel = `${anchorDate.getFullYear()}/${String(anchorDate.getMonth() + 1).padStart(2, "0")}`;
 
   const handlePressDay = (iso: string) => {
     const normalized = normalizeToUtcDate(iso);
@@ -163,6 +187,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             onPrev={handlePrev}
             onNext={handleNext}
             onToday={handleToday}
+            onPressMonthLabel={openMonthPicker}
           />
           <View style={styles.weekRow}>
             {WEEK_LABELS.map((label, idx) => (
@@ -192,6 +217,33 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
       >
         <Text style={styles.fabText}>＋記録</Text>
       </TouchableOpacity>
+      <Modal
+        animationType="slide"
+        transparent
+        visible={showMonthPicker}
+        onRequestClose={closeMonthPicker}
+        statusBarTranslucent
+      >
+        <Pressable style={styles.modalOverlay} onPress={closeMonthPicker} accessibilityRole="button" />
+        <View style={styles.modalSheet}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={closeMonthPicker} accessibilityRole="button">
+              <Text style={styles.modalHeaderText}>キャンセル</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>年月を選択</Text>
+            <TouchableOpacity onPress={handleMonthConfirm} accessibilityRole="button">
+              <Text style={styles.modalHeaderText}>完了</Text>
+            </TouchableOpacity>
+          </View>
+          <DateTimePicker
+            value={tempMonthDate}
+            mode="date"
+            display="spinner"
+            locale="ja-JP"
+            onChange={handleMonthChange}
+          />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -296,10 +348,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+  },
+  modalSheet: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  modalHeaderText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: COLORS.accentMain,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
 });
 
 export default CalendarScreen;
-
 
 
 
