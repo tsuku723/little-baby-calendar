@@ -1,8 +1,7 @@
-﻿import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   Alert,
   Modal,
-  Platform,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -70,9 +69,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   const startOfLocalDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const cloneDate = (d: Date) => new Date(d.getTime());
   const safeDate = (iso: string, fallback: Date) => {
-    const trimmed = iso.trim();
-    if (!trimmed || !isIsoDateString(trimmed)) return cloneDate(fallback);
-    const parsed = safeParseIsoLocal(trimmed, fallback);
+    const parsed = safeParseIsoLocal(iso, fallback);
     if (!parsed || Number.isNaN(parsed.getTime())) return cloneDate(fallback);
     return cloneDate(parsed);
   };
@@ -80,8 +77,6 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   const [activeDateField, setActiveDateField] = useState<"birth" | "due" | null>(null);
   const [isDateModalVisible, setDateModalVisible] = useState(false);
   const [pendingDateField, setPendingDateField] = useState<"birth" | "due" | null>(null);
-  const [datePickerReady, setDatePickerReady] = useState(false);
-  const ignoreNextChangeRef = useRef(false);
   const [tempBirthDate, setTempBirthDate] = useState<Date>(() => safeDate(formState.birthDate, today));
   const [tempDueDate, setTempDueDate] = useState<Date>(() => safeDate(formState.dueDate, today));
 
@@ -148,8 +143,6 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const openDatePicker = (field: "birth" | "due") => {
-    ignoreNextChangeRef.current = true;
-    setDatePickerReady(false);
     if (isDateModalVisible) {
       setDateModalVisible(false);
     }
@@ -157,8 +150,6 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const closeDatePicker = () => {
-    ignoreNextChangeRef.current = false;
-    setDatePickerReady(false);
     setDateModalVisible(false);
     setActiveDateField(null);
     setPendingDateField(null);
@@ -176,14 +167,8 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     setPendingDateField(null);
   }, [formState.birthDate, formState.dueDate, isDateModalVisible, pendingDateField, today]);
 
-  const handleDateChange = (_event: DateTimePickerEvent, pickedDate?: Date) => {
-    if (ignoreNextChangeRef.current) {
-      ignoreNextChangeRef.current = false;
-      return;
-    }
+  const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
     if (!pickedDate || !activeDateField) return;
-    if (Number.isNaN(pickedDate.getTime())) return;
-    if (pickedDate.getFullYear() <= 1971) return;
     const next = cloneDate(pickedDate);
     if (Number.isNaN(next.getTime())) return;
     if (activeDateField === "birth") {
@@ -374,16 +359,15 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
       </View>
       {isDateModalVisible && activeDateField ? (
         <Modal
+          key={activeDateField}
           animationType="slide"
-          visible
           transparent
-          presentationStyle="overFullScreen"
+          visible
           onRequestClose={closeDatePicker}
-          onShow={() => requestAnimationFrame(() => setDatePickerReady(true))}
+          statusBarTranslucent
         >
           <Pressable style={styles.modalOverlay} onPress={closeDatePicker} accessibilityRole="button" />
           <View style={styles.modalSheet}>
-            {/* Screenshot check: the sheet should sit on the lower half and not expand full-screen. */}
             <View style={styles.modalHeader}>
               <TouchableOpacity onPress={closeDatePicker} accessibilityRole="button">
                 <Text style={styles.modalHeaderText}>キャンセル</Text>
@@ -393,22 +377,18 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
                 <Text style={styles.modalHeaderText}>完了</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.pickerWrap}>
-              {datePickerReady ? (
-                <DateTimePicker
-                  value={pickerValue}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  locale="ja-JP"
-                  maximumDate={activeDateField === "birth" ? today : undefined}
-                  onChange={handleDateChange}
-                />
-              ) : null}
-            </View>
+            <DateTimePicker
+              key={activeDateField}
+              value={pickerValue}
+              mode="date"
+              display="inline"
+              locale="ja-JP"
+              maximumDate={activeDateField === "birth" ? today : undefined}
+              onChange={handleDateChange}
+            />
           </View>
         </Modal>
       ) : null}
-
     </SafeAreaView>
   );
 };
@@ -492,18 +472,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 340,
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 16,
-    paddingBottom: 8,
-  },
-  pickerWrap: {
-    height: 216,
-    justifyContent: "center",
-    overflow: "hidden",
-    paddingBottom: 4,
   },
   modalHeader: {
     flexDirection: "row",
@@ -618,4 +590,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileEditScreen;
-
