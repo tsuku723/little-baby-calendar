@@ -76,6 +76,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   const today = useMemo(() => startOfLocalDay(new Date()), []);
   const [activeDateField, setActiveDateField] = useState<"birth" | "due" | null>(null);
   const [isDateModalVisible, setDateModalVisible] = useState(false);
+  const [pendingDateField, setPendingDateField] = useState<"birth" | "due" | null>(null);
   const [tempBirthDate, setTempBirthDate] = useState<Date>(() => safeDate(formState.birthDate, today));
   const [tempDueDate, setTempDueDate] = useState<Date>(() => safeDate(formState.dueDate, today));
 
@@ -142,27 +143,29 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const openDatePicker = (field: "birth" | "due") => {
-    const open = () => {
-      setActiveDateField(field);
-      if (field === "birth") {
-        setTempBirthDate(safeDate(formState.birthDate, today));
-      } else {
-        setTempDueDate(safeDate(formState.dueDate, today));
-      }
-      requestAnimationFrame(() => setDateModalVisible(true));
-    };
     if (isDateModalVisible) {
       setDateModalVisible(false);
-      requestAnimationFrame(open);
-      return;
     }
-    open();
+    setPendingDateField(field);
   };
 
   const closeDatePicker = () => {
     setDateModalVisible(false);
     setActiveDateField(null);
+    setPendingDateField(null);
   };
+
+  useEffect(() => {
+    if (!pendingDateField || isDateModalVisible) return;
+    setActiveDateField(pendingDateField);
+    if (pendingDateField === "birth") {
+      setTempBirthDate(safeDate(formState.birthDate, today));
+    } else {
+      setTempDueDate(safeDate(formState.dueDate, today));
+    }
+    requestAnimationFrame(() => setDateModalVisible(true));
+    setPendingDateField(null);
+  }, [formState.birthDate, formState.dueDate, isDateModalVisible, pendingDateField, today]);
 
   const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
     if (!pickedDate || !activeDateField) return;
