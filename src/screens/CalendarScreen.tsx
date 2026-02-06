@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -47,6 +47,8 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   });
   const monthKeyValue = monthKey(anchorDate);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [datePickerReady, setDatePickerReady] = useState(false);
+  const ignoreNextChangeRef = useRef(false);
   const [tempMonthDate, setTempMonthDate] = useState<Date>(anchorDate);
 
   useEffect(() => {
@@ -90,16 +92,26 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const openMonthPicker = () => {
+    ignoreNextChangeRef.current = true;
+    setDatePickerReady(false);
     setTempMonthDate(anchorDate);
     setShowMonthPicker(true);
   };
 
   const closeMonthPicker = () => {
+    ignoreNextChangeRef.current = false;
+    setDatePickerReady(false);
     setShowMonthPicker(false);
   };
 
   const handleMonthChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
+    if (ignoreNextChangeRef.current) {
+      ignoreNextChangeRef.current = false;
+      return;
+    }
     if (!pickedDate) return;
+    if (Number.isNaN(pickedDate.getTime())) return;
+    if (pickedDate.getFullYear() <= 1971) return;
     setTempMonthDate(pickedDate);
   };
 
@@ -223,6 +235,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
         visible={showMonthPicker}
         onRequestClose={closeMonthPicker}
         statusBarTranslucent
+        onShow={() => requestAnimationFrame(() => setDatePickerReady(true))}
       >
         <Pressable style={styles.modalOverlay} onPress={closeMonthPicker} accessibilityRole="button" />
         <View style={styles.modalSheet}>
@@ -235,13 +248,15 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.modalHeaderText}>完了</Text>
             </TouchableOpacity>
           </View>
-          <DateTimePicker
-            value={tempMonthDate}
-            mode="date"
-            display="spinner"
-            locale="ja-JP"
-            onChange={handleMonthChange}
-          />
+          {datePickerReady ? (
+            <DateTimePicker
+              value={tempMonthDate}
+              mode="date"
+              display="spinner"
+              locale="ja-JP"
+              onChange={handleMonthChange}
+            />
+          ) : null}
         </View>
       </Modal>
     </SafeAreaView>
@@ -381,6 +396,4 @@ const styles = StyleSheet.create({
 });
 
 export default CalendarScreen;
-
-
 

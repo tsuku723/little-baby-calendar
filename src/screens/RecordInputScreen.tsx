@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Button,
@@ -56,6 +56,8 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const todayIso = useMemo(() => toIsoDateString(today), [today]);
   const [dateInput, setDateInput] = useState<string>(preferredDate ?? selectedDateIso);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [datePickerReady, setDatePickerReady] = useState<boolean>(false);
+  const ignoreNextChangeRef = useRef(false);
   const [tempDate, setTempDate] = useState<Date>(selectedDate);
   const [title, setTitle] = useState<string>(editingRecord?.title ?? "");
   const [content, setContent] = useState<string>(editingRecord?.memo ?? "");
@@ -113,16 +115,26 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [dateInput, selectedDate]);
 
   const openDatePicker = () => {
+    ignoreNextChangeRef.current = true;
+    setDatePickerReady(false);
     setTempDate(currentDateForPicker);
     setShowDatePicker(true);
   };
 
   const closeDatePicker = () => {
+    ignoreNextChangeRef.current = false;
+    setDatePickerReady(false);
     setShowDatePicker(false);
   };
 
   const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
+    if (ignoreNextChangeRef.current) {
+      ignoreNextChangeRef.current = false;
+      return;
+    }
     if (!pickedDate) return;
+    if (Number.isNaN(pickedDate.getTime())) return;
+    if (pickedDate.getFullYear() <= 1971) return;
     setTempDate(pickedDate);
   };
 
@@ -400,6 +412,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         visible={showDatePicker}
         onRequestClose={closeDatePicker}
         statusBarTranslucent
+        onShow={() => requestAnimationFrame(() => setDatePickerReady(true))}
       >
         <Pressable style={styles.sheetOverlay} onPress={closeDatePicker} accessibilityRole="button" />
         <View style={styles.datePickerModal}>
@@ -420,13 +433,15 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             >
               <Text style={styles.todayResetText}>今日に戻る</Text>
             </TouchableOpacity>
-            <DateTimePicker
-              value={tempDate}
-              mode="date"
-              display="inline"
-              locale="ja-JP"
-              onChange={handleDateChange}
-            />
+            {datePickerReady ? (
+              <DateTimePicker
+                value={tempDate}
+                mode="date"
+                display="inline"
+                locale="ja-JP"
+                onChange={handleDateChange}
+              />
+            ) : null}
           </View>
         </View>
       </Modal>
@@ -702,3 +717,4 @@ const styles = StyleSheet.create({
 });
 
 export default RecordInputScreen;
+
