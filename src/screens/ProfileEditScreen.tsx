@@ -357,25 +357,26 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           </TouchableOpacity>
         ) : null}
       </View>
-      <Modal
-        animationType="slide"
-        transparent
-        visible={isDateModalVisible && activeDateField !== null}
-        onRequestClose={closeDatePicker}
-        statusBarTranslucent
-      >
-        <Pressable style={styles.modalOverlay} onPress={closeDatePicker} accessibilityRole="button" />
-        <View style={styles.modalSheet}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={closeDatePicker} accessibilityRole="button">
-              <Text style={styles.modalHeaderText}>キャンセル</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>{activeDateField === "birth" ? "出生日" : "出産予定日"}</Text>
-            <TouchableOpacity onPress={handleDateConfirm} accessibilityRole="button">
-              <Text style={styles.modalHeaderText}>完了</Text>
-            </TouchableOpacity>
-          </View>
-          {activeDateField ? (
+      {isDateModalVisible && activeDateField ? (
+        <Modal
+          key={activeDateField}
+          animationType="slide"
+          transparent
+          visible
+          onRequestClose={closeDatePicker}
+          statusBarTranslucent
+        >
+          <Pressable style={styles.modalOverlay} onPress={closeDatePicker} accessibilityRole="button" />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={closeDatePicker} accessibilityRole="button">
+                <Text style={styles.modalHeaderText}>キャンセル</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>{activeDateField === "birth" ? "出生日" : "出産予定日"}</Text>
+              <TouchableOpacity onPress={handleDateConfirm} accessibilityRole="button">
+                <Text style={styles.modalHeaderText}>完了</Text>
+              </TouchableOpacity>
+            </View>
             <DateTimePicker
               key={activeDateField}
               value={pickerValue}
@@ -385,9 +386,9 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
               maximumDate={activeDateField === "birth" ? today : undefined}
               onChange={handleDateChange}
             />
-          ) : null}
-        </View>
-      </Modal>
+          </View>
+        </Modal>
+      ) : null}
     </SafeAreaView>
   );
 };
