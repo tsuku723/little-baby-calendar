@@ -15,18 +15,17 @@ import {
   View,
 } from "react-native";
 
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
-
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
 import { RootStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
+import DatePickerModal from "@/components/DatePickerModal";
 import { useActiveUser } from "@/state/AppStateContext";
 import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
 import { useDateViewContext } from "@/state/DateViewContext";
 import { clampComment, remainingChars } from "@/utils/text";
-import { normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+import { safeParseIsoLocal, toIsoDateString } from "@/utils/dateUtils";
 import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync } from "@/utils/photo";
 import { RECORD_TITLE_CANDIDATES } from "./recordTitleCandidates";
 import { COLORS } from "@/constants/colors";
@@ -36,7 +35,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "RecordInput">;
 const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const user = useActiveUser();
   const { store, upsert, remove } = useAchievements();
-  const { selectedDate, today } = useDateViewContext();
+  const { selectedDate } = useDateViewContext();
 
   const recordId = route.params?.recordId;
   const preferredDate = route.params?.isoDate;
@@ -53,33 +52,36 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [preferredDate, recordId, store]);
 
   const selectedDateIso = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
-  const todayIso = useMemo(() => toIsoDateString(today), [today]);
-  const [dateInput, setDateInput] = useState<string>(preferredDate ?? selectedDateIso);
-  const [showPicker, setShowPicker] = useState<boolean>(false);
+  const [recordDate, setRecordDate] = useState<Date>(() =>
+    safeParseIsoLocal(preferredDate ?? selectedDateIso, selectedDate)
+  );
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [title, setTitle] = useState<string>(editingRecord?.title ?? "");
   const [content, setContent] = useState<string>(editingRecord?.memo ?? "");
   const [photoPath, setPhotoPath] = useState<string | null>(editingRecord?.photoPath ?? null);
   const [hasRemovedPhoto, setHasRemovedPhoto] = useState<boolean>(false);
   const [isTitleSheetVisible, setTitleSheetVisible] = useState(false);
+  const MIN_DATE = useMemo(() => new Date(1900, 0, 1), []);
+  const MAX_DATE = useMemo(() => new Date(2100, 11, 31), []);
 
   // 編集対象が変わったらフォームを最新の値に合わせる
   useEffect(() => {
     if (editingRecord) {
-      setDateInput(editingRecord.date);
+      setRecordDate(safeParseIsoLocal(editingRecord.date, selectedDate));
       setTitle(editingRecord.title ?? "");
       setContent(editingRecord.memo ?? "");
       setPhotoPath(editingRecord.photoPath ?? null);
       setHasRemovedPhoto(false);
     } else if (preferredDate) {
-      setDateInput(preferredDate);
+      setRecordDate(safeParseIsoLocal(preferredDate, selectedDate));
       setTitle("");
       setContent("");
       setPhotoPath(null);
       setHasRemovedPhoto(false);
     } else {
-      setDateInput(selectedDateIso);
+      setRecordDate(safeParseIsoLocal(selectedDateIso, selectedDate));
     }
-  }, [editingRecord, preferredDate, selectedDateIso]);
+  }, [editingRecord, preferredDate, selectedDate, selectedDateIso]);
 
   // 編集対象の photoPath が実ファイルとして存在するかを確認する
   useEffect(() => {
@@ -103,18 +105,17 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const closeTitleSheet = () => setTitleSheetVisible(false);
 
-  const currentDateForPicker = useMemo(() => {
-    const normalized = normalizeToUtcDate(dateInput);
-    if (Number.isNaN(normalized.getTime())) {
-      return selectedDate;
-    }
-    return normalized;
-  }, [dateInput, selectedDate]);
+  const openDatePicker = () => {
+    setShowDatePicker(true);
+  };
 
-  const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
-    if (!pickedDate) return;
-    setDateInput(toIsoDateString(pickedDate));
-    setShowPicker(false);
+  const closeDatePicker = () => {
+    setShowDatePicker(false);
+  };
+
+  const handleDateConfirm = (nextDate: Date) => {
+    setRecordDate(nextDate);
+    closeDatePicker();
   };
 
   // 候補選択時のハンドリング
@@ -163,15 +164,18 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       return;
     }
 
-    // 日付は ISO 形式で受け取り、UTC に正規化して保存する
-    const normalizedDate = normalizeToUtcDate(dateInput);
-    if (Number.isNaN(normalizedDate.getTime())) {
-      Alert.alert("日付を確認してください", "YYYY-MM-DD 形式で入力してください。");
+    if (Number.isNaN(recordDate.getTime())) {
+      Alert.alert("日付を確認してください", "有効な日付を選択してください。");
       return;
     }
-    const isoDate = toIsoDateString(normalizedDate);
+    const isoDate = toIsoDateString(recordDate);
 
-    const titleValue = title.trim() || content.trim();
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      Alert.alert("タイトルを入力してください", "記録タイトルは必須です。");
+      return;
+    }
+
     const photoPayload: string | null | undefined = (() => {
       if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存の写真を削除
       if (photoPath && photoPath !== editingRecord?.photoPath) return photoPath; // 新規に差し替え
@@ -181,7 +185,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     const payload: SaveAchievementPayload = {
       id: editingRecord?.id,
       date: isoDate,
-      title: titleValue,
+      title: trimmedTitle,
       memo: content,
       photoPath: photoPayload,
     };
@@ -281,34 +285,13 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.field}>
           <TouchableOpacity
             style={styles.dateRow}
-            onPress={() => setShowPicker((prev) => !prev)}
+            onPress={openDatePicker}
             accessibilityRole="button"
             accessibilityLabel="日付を選択"
           >
             <Text style={styles.dateRowLabel}>日付</Text>
-            <Text style={styles.dateRowValue}>{dateInput} ▼</Text>
+            <Text style={styles.dateRowValue}>{toIsoDateString(recordDate)} ▼</Text>
           </TouchableOpacity>
-          {showPicker ? (
-            <View style={styles.datePickerArea}>
-              <TouchableOpacity
-                style={styles.todayResetButton}
-                onPress={() => {
-                  setDateInput(todayIso);
-                  setShowPicker(false);
-                }}
-              >
-                <Text style={styles.todayResetText}>今日に戻る</Text>
-              </TouchableOpacity>
-              <DateTimePicker
-                value={currentDateForPicker}
-                mode="date"
-                display="inline"
-                locale="ja-JP"
-                maximumDate={today}
-                onChange={handleDateChange}
-              />
-            </View>
-          ) : null}
         </View>
 
         <View style={styles.field}>
@@ -394,6 +377,15 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           </ScrollView>
         </View>
       </Modal>
+      <DatePickerModal
+        visible={showDatePicker}
+        title="日付を選択"
+        value={recordDate}
+        minimumDate={MIN_DATE}
+        maximumDate={MAX_DATE}
+        onConfirm={handleDateConfirm}
+        onCancel={closeDatePicker}
+      />
     </SafeAreaView>
   );
 };
@@ -524,22 +516,8 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontWeight: "700",
   },
-  datePickerArea: {
-    gap: 8,
-  },
   textarea: {
     minHeight: 140,
-  },
-  todayResetButton: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: COLORS.highlightToday,
-  },
-  todayResetText: {
-    color: COLORS.accentMain,
-    fontWeight: "700",
   },
   fixedActions: {
     paddingHorizontal: 24,
