@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   Alert,
   Modal,
@@ -70,7 +70,6 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   const cloneDate = (d: Date) => new Date(d.getTime());
   const sanitizePickerDate = (date: Date, fallback: Date) => {
     if (Number.isNaN(date.getTime())) return cloneDate(fallback);
-    if (date.getFullYear() <= 1971) return cloneDate(fallback);
     return cloneDate(date);
   };
   const safeDate = (iso: string, fallback: Date) => {
@@ -79,7 +78,8 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     return sanitizePickerDate(parsed, fallback);
   };
   const today = useMemo(() => startOfLocalDay(new Date()), []);
-  const ignoreNextChangeRef = useRef(false);
+  const MIN_DATE = useMemo(() => new Date(1900, 0, 1), []);
+  const MAX_DUE_DATE = useMemo(() => new Date(2100, 11, 31), []);
   const [datePickerReady, setDatePickerReady] = useState(false);
   const [activeDateField, setActiveDateField] = useState<"birth" | "due" | null>(null);
   const [isDateModalVisible, setDateModalVisible] = useState(false);
@@ -150,7 +150,6 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const openDatePicker = (field: "birth" | "due") => {
-    ignoreNextChangeRef.current = true;
     setDatePickerReady(false);
     setPickerSessionId((prev) => prev + 1);
     if (isDateModalVisible) {
@@ -160,7 +159,6 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const closeDatePicker = () => {
-    ignoreNextChangeRef.current = false;
     setDatePickerReady(false);
     setDateModalVisible(false);
     setActiveDateField(null);
@@ -179,15 +177,15 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     setPendingDateField(null);
   }, [formState.birthDate, formState.dueDate, isDateModalVisible, pendingDateField, today]);
 
-  const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
-    if (ignoreNextChangeRef.current) {
-      ignoreNextChangeRef.current = false;
-      return;
-    }
+  const handleDateChange = (event: DateTimePickerEvent, pickedDate?: Date) => {
+    console.log("[picker] field=", activeDateField, "type=", event.type);
+console.log("[picker] picked=", pickedDate?.toISOString?.() ?? pickedDate);
+console.log("[picker] props value/min/max=", pickerValue.toISOString(), MIN_DATE.toISOString(), (activeDateField === "birth" ? today : MAX_DUE_DATE).toISOString());
+
+    if (event.type === "dismissed") return;
     if (!pickedDate || !activeDateField) return;
-    const next = cloneDate(pickedDate);
+    const next = new Date(pickedDate.getTime());
     if (Number.isNaN(next.getTime())) return;
-    if (next.getFullYear() <= 1971) return;
     setTempDate(next);
   };
 
@@ -204,14 +202,6 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
       setFormState((prev) => ({ ...prev, dueDate: toIsoDateString(finalDate) }));
     }
     closeDatePicker();
-  };
-  const primePickerDateForActiveField = () => {
-    if (!activeDateField) return;
-    const nextTempDate =
-      activeDateField === "birth"
-        ? safeDate(formState.birthDate, today)
-        : safeDate(formState.dueDate, today);
-    setTempDate(sanitizePickerDate(nextTempDate, today));
   };
 
   const handleDelete = async () => {
@@ -386,13 +376,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           visible
           onRequestClose={closeDatePicker}
           statusBarTranslucent
-          onShow={() =>
-            requestAnimationFrame(() => {
-              ignoreNextChangeRef.current = true;
-              primePickerDateForActiveField();
-              setDatePickerReady(true);
-            })
-          }
+          onShow={() => requestAnimationFrame(() => setDatePickerReady(true))}
         >
           <Pressable style={styles.modalOverlay} onPress={closeDatePicker} accessibilityRole="button" />
           <View style={styles.modalSheet}>
@@ -412,7 +396,8 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
                 mode="date"
                 display="spinner"
                 locale="ja-JP"
-                maximumDate={activeDateField === "birth" ? today : undefined}
+                minimumDate={MIN_DATE}
+                maximumDate={activeDateField === "birth" ? today : MAX_DUE_DATE}
                 onChange={handleDateChange}
               />
             ) : null}
