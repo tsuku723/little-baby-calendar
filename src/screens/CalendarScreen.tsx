@@ -1,13 +1,13 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+﻿import React, { useEffect, useMemo, useState } from "react";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
 import CalendarGrid from "@/components/CalendarGrid";
 import CalendarDecorations from "@/components/CalendarDecorations";
+import DatePickerModal from "@/components/DatePickerModal";
 import MonthHeader from "@/components/MonthHeader";
 import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
@@ -47,9 +47,8 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   });
   const monthKeyValue = monthKey(anchorDate);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const [datePickerReady, setDatePickerReady] = useState(false);
-  const ignoreNextChangeRef = useRef(false);
-  const [tempMonthDate, setTempMonthDate] = useState<Date>(anchorDate);
+  const MIN_DATE = useMemo(() => new Date(1900, 0, 1), []);
+  const MAX_DATE = useMemo(() => new Date(2100, 11, 31), []);
 
   useEffect(() => {
     void loadMonth(monthKeyValue);
@@ -92,33 +91,16 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const openMonthPicker = () => {
-    ignoreNextChangeRef.current = true;
-    setDatePickerReady(false);
-    setTempMonthDate(anchorDate);
     setShowMonthPicker(true);
   };
 
   const closeMonthPicker = () => {
-    ignoreNextChangeRef.current = false;
-    setDatePickerReady(false);
     setShowMonthPicker(false);
   };
 
-  const handleMonthChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
-    if (ignoreNextChangeRef.current) {
-      ignoreNextChangeRef.current = false;
-      return;
-    }
-    if (!pickedDate) return;
-    if (Number.isNaN(pickedDate.getTime())) return;
-    if (pickedDate.getFullYear() <= 1971) return;
-    setTempMonthDate(pickedDate);
-  };
-
-  const handleMonthConfirm = () => {
-    const year = tempMonthDate.getFullYear();
-    const month = tempMonthDate.getMonth();
-    setAnchorDate(new Date(year, month, 1));
+  const handleMonthConfirm = (pickedDate: Date) => {
+    const next = new Date(pickedDate.getFullYear(), pickedDate.getMonth(), 1);
+    setAnchorDate(next);
     closeMonthPicker();
   };
 
@@ -162,6 +144,11 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   const chronologicalTodayLabelWithPrefix = chronologicalTodayLabel
     ? `実${chronologicalTodayLabel}`
     : null;
+
+  const monthPickerValue = useMemo(
+    () => new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1),
+    [anchorDate]
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -229,36 +216,15 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
       >
         <Text style={styles.fabText}>＋記録</Text>
       </TouchableOpacity>
-      <Modal
-        animationType="slide"
-        transparent
+      <DatePickerModal
         visible={showMonthPicker}
-        onRequestClose={closeMonthPicker}
-        statusBarTranslucent
-        onShow={() => requestAnimationFrame(() => setDatePickerReady(true))}
-      >
-        <Pressable style={styles.modalOverlay} onPress={closeMonthPicker} accessibilityRole="button" />
-        <View style={styles.modalSheet}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={closeMonthPicker} accessibilityRole="button">
-              <Text style={styles.modalHeaderText}>キャンセル</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>年月を選択</Text>
-            <TouchableOpacity onPress={handleMonthConfirm} accessibilityRole="button">
-              <Text style={styles.modalHeaderText}>完了</Text>
-            </TouchableOpacity>
-          </View>
-          {datePickerReady ? (
-            <DateTimePicker
-              value={tempMonthDate}
-              mode="date"
-              display="spinner"
-              locale="ja-JP"
-              onChange={handleMonthChange}
-            />
-          ) : null}
-        </View>
-      </Modal>
+        title="年月を選択"
+        value={monthPickerValue}
+        minimumDate={MIN_DATE}
+        maximumDate={MAX_DATE}
+        onConfirm={handleMonthConfirm}
+        onCancel={closeMonthPicker}
+      />
     </SafeAreaView>
   );
 };
@@ -363,37 +329,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.35)",
-  },
-  modalSheet: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 16,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  modalHeaderText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.accentMain,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
-  },
 });
 
 export default CalendarScreen;
-
