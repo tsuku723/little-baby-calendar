@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Modal,
@@ -68,17 +68,24 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const startOfLocalDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const cloneDate = (d: Date) => new Date(d.getTime());
+  const sanitizePickerDate = (date: Date, fallback: Date) => {
+    if (Number.isNaN(date.getTime())) return cloneDate(fallback);
+    if (date.getFullYear() <= 1971) return cloneDate(fallback);
+    return cloneDate(date);
+  };
   const safeDate = (iso: string, fallback: Date) => {
     const parsed = safeParseIsoLocal(iso, fallback);
-    if (!parsed || Number.isNaN(parsed.getTime())) return cloneDate(fallback);
-    return cloneDate(parsed);
+    if (!parsed) return cloneDate(fallback);
+    return sanitizePickerDate(parsed, fallback);
   };
   const today = useMemo(() => startOfLocalDay(new Date()), []);
+  const ignoreNextChangeRef = useRef(false);
+  const [datePickerReady, setDatePickerReady] = useState(false);
   const [activeDateField, setActiveDateField] = useState<"birth" | "due" | null>(null);
   const [isDateModalVisible, setDateModalVisible] = useState(false);
   const [pendingDateField, setPendingDateField] = useState<"birth" | "due" | null>(null);
-  const [tempBirthDate, setTempBirthDate] = useState<Date>(() => safeDate(formState.birthDate, today));
-  const [tempDueDate, setTempDueDate] = useState<Date>(() => safeDate(formState.dueDate, today));
+  const [pickerSessionId, setPickerSessionId] = useState(0);
+  const [tempDate, setTempDate] = useState<Date>(() => safeDate(formState.birthDate, today));
 
   useLayoutEffect(() => {
     const parent = navigation.getParent();
@@ -143,6 +150,9 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const openDatePicker = (field: "birth" | "due") => {
+    ignoreNextChangeRef.current = true;
+    setDatePickerReady(false);
+    setPickerSessionId((prev) => prev + 1);
     if (isDateModalVisible) {
       setDateModalVisible(false);
     }
@@ -150,6 +160,8 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const closeDatePicker = () => {
+    ignoreNextChangeRef.current = false;
+    setDatePickerReady(false);
     setDateModalVisible(false);
     setActiveDateField(null);
     setPendingDateField(null);
@@ -158,39 +170,48 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   useEffect(() => {
     if (!pendingDateField || isDateModalVisible) return;
     setActiveDateField(pendingDateField);
-    if (pendingDateField === "birth") {
-      setTempBirthDate(safeDate(formState.birthDate, today));
-    } else {
-      setTempDueDate(safeDate(formState.dueDate, today));
-    }
+    const nextTempDate =
+      pendingDateField === "birth"
+        ? safeDate(formState.birthDate, today)
+        : safeDate(formState.dueDate, today);
+    setTempDate(sanitizePickerDate(nextTempDate, today));
     requestAnimationFrame(() => setDateModalVisible(true));
     setPendingDateField(null);
   }, [formState.birthDate, formState.dueDate, isDateModalVisible, pendingDateField, today]);
 
   const handleDateChange = (_: DateTimePickerEvent, pickedDate?: Date) => {
+    if (ignoreNextChangeRef.current) {
+      ignoreNextChangeRef.current = false;
+      return;
+    }
     if (!pickedDate || !activeDateField) return;
     const next = cloneDate(pickedDate);
     if (Number.isNaN(next.getTime())) return;
-    if (activeDateField === "birth") {
-      setTempBirthDate(next);
-    } else {
-      setTempDueDate(next);
-    }
+    if (next.getFullYear() <= 1971) return;
+    setTempDate(next);
   };
 
   const pickerValue = useMemo(() => {
-    const raw = activeDateField === "birth" ? tempBirthDate : tempDueDate;
-    return raw && !Number.isNaN(raw.getTime()) ? raw : today;
-  }, [activeDateField, tempBirthDate, tempDueDate, today]);
+    return sanitizePickerDate(tempDate, today);
+  }, [tempDate, today]);
 
   const handleDateConfirm = () => {
     if (!activeDateField) return;
+    const finalDate = sanitizePickerDate(tempDate, today);
     if (activeDateField === "birth") {
-      setFormState((prev) => ({ ...prev, birthDate: toIsoDateString(tempBirthDate) }));
+      setFormState((prev) => ({ ...prev, birthDate: toIsoDateString(finalDate) }));
     } else {
-      setFormState((prev) => ({ ...prev, dueDate: toIsoDateString(tempDueDate) }));
+      setFormState((prev) => ({ ...prev, dueDate: toIsoDateString(finalDate) }));
     }
     closeDatePicker();
+  };
+  const primePickerDateForActiveField = () => {
+    if (!activeDateField) return;
+    const nextTempDate =
+      activeDateField === "birth"
+        ? safeDate(formState.birthDate, today)
+        : safeDate(formState.dueDate, today);
+    setTempDate(sanitizePickerDate(nextTempDate, today));
   };
 
   const handleDelete = async () => {
@@ -359,12 +380,19 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
       </View>
       {isDateModalVisible && activeDateField ? (
         <Modal
-          key={activeDateField}
+          key={`${activeDateField}-${pickerSessionId}`}
           animationType="slide"
           transparent
           visible
           onRequestClose={closeDatePicker}
           statusBarTranslucent
+          onShow={() =>
+            requestAnimationFrame(() => {
+              ignoreNextChangeRef.current = true;
+              primePickerDateForActiveField();
+              setDatePickerReady(true);
+            })
+          }
         >
           <Pressable style={styles.modalOverlay} onPress={closeDatePicker} accessibilityRole="button" />
           <View style={styles.modalSheet}>
@@ -377,15 +405,17 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
                 <Text style={styles.modalHeaderText}>完了</Text>
               </TouchableOpacity>
             </View>
-            <DateTimePicker
-              key={activeDateField}
-              value={pickerValue}
-              mode="date"
-              display="inline"
-              locale="ja-JP"
-              maximumDate={activeDateField === "birth" ? today : undefined}
-              onChange={handleDateChange}
-            />
+            {datePickerReady ? (
+              <DateTimePicker
+                key={`${activeDateField}-${pickerSessionId}`}
+                value={pickerValue}
+                mode="date"
+                display="spinner"
+                locale="ja-JP"
+                maximumDate={activeDateField === "birth" ? today : undefined}
+                onChange={handleDateChange}
+              />
+            ) : null}
           </View>
         </Modal>
       ) : null}

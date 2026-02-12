@@ -57,6 +57,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const [dateInput, setDateInput] = useState<string>(preferredDate ?? selectedDateIso);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [datePickerReady, setDatePickerReady] = useState<boolean>(false);
+  const [pickerSessionId, setPickerSessionId] = useState(0);
   const ignoreNextChangeRef = useRef(false);
   const [tempDate, setTempDate] = useState<Date>(selectedDate);
   const [title, setTitle] = useState<string>(editingRecord?.title ?? "");
@@ -64,6 +65,11 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const [photoPath, setPhotoPath] = useState<string | null>(editingRecord?.photoPath ?? null);
   const [hasRemovedPhoto, setHasRemovedPhoto] = useState<boolean>(false);
   const [isTitleSheetVisible, setTitleSheetVisible] = useState(false);
+  const sanitizePickerDate = (date: Date, fallback: Date) => {
+    if (Number.isNaN(date.getTime())) return new Date(fallback.getTime());
+    if (date.getFullYear() <= 1971) return new Date(fallback.getTime());
+    return new Date(date.getTime());
+  };
 
   // 編集対象が変わったらフォームを最新の値に合わせる
   useEffect(() => {
@@ -109,16 +115,17 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   const currentDateForPicker = useMemo(() => {
     const normalized = normalizeToUtcDate(dateInput);
     if (Number.isNaN(normalized.getTime())) {
-      return selectedDate;
+      return sanitizePickerDate(selectedDate, today);
     }
-    return normalized;
-  }, [dateInput, selectedDate]);
+    return sanitizePickerDate(normalized, selectedDate);
+  }, [dateInput, selectedDate, today]);
 
   const openDatePicker = () => {
     ignoreNextChangeRef.current = true;
     setDatePickerReady(false);
-    setTempDate(currentDateForPicker);
-    setShowDatePicker(true);
+    setPickerSessionId((prev) => prev + 1);
+    setTempDate(sanitizePickerDate(currentDateForPicker, selectedDate));
+    requestAnimationFrame(() => setShowDatePicker(true));
   };
 
   const closeDatePicker = () => {
@@ -135,14 +142,18 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     if (!pickedDate) return;
     if (Number.isNaN(pickedDate.getTime())) return;
     if (pickedDate.getFullYear() <= 1971) return;
-    setTempDate(pickedDate);
+    setTempDate(sanitizePickerDate(pickedDate, selectedDate));
   };
 
   const handleDateConfirm = () => {
-    if (!Number.isNaN(tempDate.getTime())) {
-      setDateInput(toIsoDateString(tempDate));
+    const finalDate = sanitizePickerDate(tempDate, selectedDate);
+    if (!Number.isNaN(finalDate.getTime())) {
+      setDateInput(toIsoDateString(finalDate));
     }
     closeDatePicker();
+  };
+  const primePickerDate = () => {
+    setTempDate(sanitizePickerDate(currentDateForPicker, selectedDate));
   };
 
   // 候補選択時のハンドリング
@@ -407,12 +418,19 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
       </Modal>
       <Modal
+        key={`record-date-picker-${pickerSessionId}`}
         animationType="slide"
         transparent
         visible={showDatePicker}
         onRequestClose={closeDatePicker}
         statusBarTranslucent
-        onShow={() => requestAnimationFrame(() => setDatePickerReady(true))}
+        onShow={() =>
+          requestAnimationFrame(() => {
+            ignoreNextChangeRef.current = true;
+            primePickerDate();
+            setDatePickerReady(true);
+          })
+        }
       >
         <Pressable style={styles.sheetOverlay} onPress={closeDatePicker} accessibilityRole="button" />
         <View style={styles.datePickerModal}>
@@ -428,13 +446,14 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.datePickerArea}>
             <TouchableOpacity
               style={styles.todayResetButton}
-              onPress={() => setTempDate(normalizeToUtcDate(todayIso))}
+              onPress={() => setTempDate(sanitizePickerDate(normalizeToUtcDate(todayIso), today))}
               accessibilityRole="button"
             >
               <Text style={styles.todayResetText}>今日に戻る</Text>
             </TouchableOpacity>
             {datePickerReady ? (
               <DateTimePicker
+                key={`record-date-picker-${pickerSessionId}`}
                 value={tempDate}
                 mode="date"
                 display="inline"
