@@ -2,7 +2,7 @@
 // Renaming to DayScreen is deferred for future refactor.
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Alert, Button, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Button, Image, ImageBackground, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import * as MediaLibrary from "expo-media-library";
 import ViewShot from "react-native-view-shot";
@@ -75,7 +75,14 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
     () => todaysAchievements.slice().sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)),
     [todaysAchievements]
   );
-  const topTitles = useMemo(() => sortedAchievements.slice(0, 10), [sortedAchievements]);
+  const exportRecordText = useMemo(() => {
+    const lines = sortedAchievements.map((item) => `・${item.title || "(タイトルなし)"}`);
+    if (lines.length === 0) {
+      return "まだ記録がありません";
+    }
+
+    return lines.join("\n");
+  }, [sortedAchievements]);
 
   const displayDate = selectedDateIso.replace(/-/g, "/");
 
@@ -239,22 +246,29 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
       </ScrollView>
       {/* 保存用の描画領域（画面には表示しない） */}
       <View style={styles.hiddenRenderer} pointerEvents="none">
-        <ViewShot ref={viewShotRef} options={{ format: "jpg", quality: 0.9 }} style={styles.exportContainer}>
+        <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }} style={styles.exportContainer}>
           <View style={styles.exportContent} collapsable={false}>
-            <Text style={styles.exportTitle}>{displayDate}</Text>
-            {latestPhotoPath ? <Image source={{ uri: latestPhotoPath }} style={styles.exportPhoto} resizeMode="cover" /> : null}
-            <View style={styles.exportList}>
-              {topTitles.map((item) => (
-                <View key={item.id} style={styles.exportListItem}>
-                  <Text style={styles.exportListText} numberOfLines={2}>
-                    ・{item.title || "(タイトルなし)"}
-                  </Text>
-                </View>
-              ))}
-              {topTitles.length === 0 ? (
-                <Text style={styles.exportEmpty}>まだ記録がありません</Text>
-              ) : null}
-            </View>
+            <ImageBackground
+              source={require("../../assets/export/bg_cream_watercolor.png")}
+              style={styles.exportBackground}
+              imageStyle={styles.exportBackgroundImage}
+              resizeMode="cover"
+            >
+              <View style={styles.exportPhotoFrame}>
+                {latestPhotoPath ? <Image source={{ uri: latestPhotoPath }} style={styles.exportPhoto} resizeMode="cover" /> : <View style={styles.exportPhotoPlaceholder} />}
+              </View>
+
+              <View style={styles.exportAgeBlock}>
+                <Text style={styles.exportChronologicalAge}>{ageInfo?.chronological.formatted ?? "-"}</Text>
+                <Text style={styles.exportCorrectedAge}>修正 {ageInfo?.corrected.formatted ?? "-"}</Text>
+              </View>
+
+              <View style={styles.exportRecordCard}>
+                <Text style={styles.exportRecordText} numberOfLines={3} ellipsizeMode="tail">
+                  {exportRecordText}
+                </Text>
+              </View>
+            </ImageBackground>
           </View>
         </ViewShot>
       </View>
@@ -404,42 +418,73 @@ const styles = StyleSheet.create({
     top: -9999,
   },
   exportContainer: {
-    width: 720,
-    backgroundColor: COLORS.background,
-    padding: 24,
-    borderRadius: 16,
+    width: 1080,
+    height: 1080,
   },
   exportContent: {
-    gap: 12,
+    width: 1080,
+    height: 1080,
   },
-  exportTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: COLORS.textPrimary,
+  exportBackground: {
+    width: "100%",
+    height: "100%",
+  },
+  exportBackgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  exportPhotoFrame: {
+    position: "absolute",
+    left: 120,
+    top: 170,
+    width: 840,
+    height: 520,
+    borderRadius: 36,
+    padding: 18,
+    backgroundColor: "rgba(255,255,255,0.55)",
   },
   exportPhoto: {
     width: "100%",
-    height: 360,
-    borderRadius: 14,
+    height: "100%",
+    borderRadius: 24,
     backgroundColor: COLORS.cellDimmed,
   },
-  exportList: {
-    gap: 6,
+  exportPhotoPlaceholder: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.8)",
   },
-  exportListItem: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 10,
+  exportAgeBlock: {
+    position: "absolute",
+    top: 720,
+    width: "100%",
+    alignItems: "center",
+    gap: 8,
   },
-  exportListText: {
-    fontSize: 16,
+  exportChronologicalAge: {
+    fontSize: 64,
+    fontWeight: "800",
     color: COLORS.textPrimary,
   },
-  exportEmpty: {
-    fontSize: 15,
+  exportCorrectedAge: {
+    fontSize: 38,
+    fontWeight: "600",
     color: COLORS.textSecondary,
+  },
+  exportRecordCard: {
+    position: "absolute",
+    left: 120,
+    right: 120,
+    bottom: 120,
+    borderRadius: 26,
+    paddingVertical: 22,
+    paddingHorizontal: 26,
+    backgroundColor: "rgba(255,255,255,0.9)",
+  },
+  exportRecordText: {
+    fontSize: 38,
+    lineHeight: 50,
+    color: COLORS.textPrimary,
   },
   fab: {
     position: "absolute",
