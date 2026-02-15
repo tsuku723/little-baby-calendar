@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
     gap: 6,
-    backgroundColor: "transparent",
+    backgroundColor: "#FFFFFF",
   },
   searchInput: {
     flex: 1,
