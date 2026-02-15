@@ -8,6 +8,7 @@ interface Props {
   onPrev: () => void;
   onNext: () => void;
   onToday: () => void;
+  onPressMonthLabel: () => void;
 }
 
 const MonthHeader: React.FC<Props> = ({
@@ -15,13 +16,17 @@ const MonthHeader: React.FC<Props> = ({
   onPrev,
   onNext,
   onToday,
+  onPressMonthLabel,
 }) => (
   <View style={styles.container}>
     <TouchableOpacity accessibilityRole="button" onPress={onPrev} style={styles.navButton}>
       <Text style={styles.navLabel}>{"<"}</Text>
     </TouchableOpacity>
     <View style={styles.center}>
-      <Text style={styles.month}>{monthLabel}</Text>
+      <TouchableOpacity accessibilityRole="button" onPress={onPressMonthLabel} style={styles.monthButton}>
+        <Text style={styles.month}>{monthLabel}</Text>
+        <Text style={styles.monthHint}>年月を選択</Text>
+      </TouchableOpacity>
       <TouchableOpacity accessibilityRole="button" onPress={onToday}>
         <Text style={styles.today}>今日へ</Text>
       </TouchableOpacity>
@@ -55,10 +60,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 2,
   },
+  monthButton: {
+    alignItems: "center",
+  },
   month: {
     fontSize: 20,
     color: COLORS.textPrimary,
     fontWeight: "600",
+  },
+  monthHint: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
   },
   today: {
     fontSize: 14,

@@ -16,7 +16,7 @@ type DateViewContextValue = {
 const DateViewContext = createContext<DateViewContextValue | undefined>(undefined);
 
 const normalizeToStartOfDay = (date: Date): Date => {
-  // Normalize to the start of the day (00:00 UTC) to avoid time component drift when
+  // Normalize to the start of the day (00:00 local) to avoid time component drift when
   // comparing or highlighting dates (e.g., "today" checks in Calendar cells).
   return toUtcDateOnly(date);
 };
