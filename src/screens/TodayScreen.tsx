@@ -23,7 +23,8 @@ import { COLORS } from "@/constants/colors";
 type Props = NativeStackScreenProps<CalendarStackParamList, "Today">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
-const EXPORT_BACKGROUND_IMAGE = require("../../assets/export/bg_cream_watercolor.png");
+const EXPORT_BACKGROUND_IMAGE = require("../../assets/export/bg_base_green.png");
+const EXPORT_DECORATION_IMAGE = require("../../assets/export/deco_overlay_green.png");
 
 const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) => {
   const rootNavigation = useNavigation<RootNavigation>();
@@ -77,16 +78,21 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
     () => todaysAchievements.slice().sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)),
     [todaysAchievements]
   );
-  const exportRecordText = useMemo(() => {
+  const exportRecordLines = useMemo(() => {
+    const maxVisibleRecords = 6;
     const lines = sortedAchievements.map((item) => `・${item.title || "(タイトルなし)"}`);
     if (lines.length === 0) {
-      return "まだ記録がありません";
+      return ["まだ記録がありません"];
     }
-
-    return lines.join("\n");
+    if (lines.length <= maxVisibleRecords) {
+      return lines;
+    }
+    const hiddenCount = lines.length - maxVisibleRecords;
+    return [...lines.slice(0, maxVisibleRecords), `…他${hiddenCount}件`];
   }, [sortedAchievements]);
 
   const displayDate = selectedDateIso.replace(/-/g, "/");
+  const exportDisplayDate = selectedDateIso.replace(/-/g, ".");
 
   useLayoutEffect(() => {
     const parent = stackNavigation.getParent();
@@ -254,12 +260,22 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
               source={EXPORT_BACKGROUND_IMAGE}
               style={styles.exportBackground}
               imageStyle={styles.exportBackgroundImage}
-              resizeMode="cover"
+              resizeMode="contain"
             >
               <View style={styles.exportPhotoFrame}>
                 {latestPhotoPath ? <Image source={{ uri: latestPhotoPath }} style={styles.exportPhoto} resizeMode="cover" /> : <View style={styles.exportPhotoPlaceholder} />}
               </View>
-              {__DEV__ ? <Text style={styles.exportDebugBadge}>BG OK</Text> : null}
+              <Image
+                source={EXPORT_DECORATION_IMAGE}
+                style={styles.exportDecorationOverlay}
+                resizeMode="contain"
+                pointerEvents="none"
+              />
+              <View style={styles.exportDateBlock}>
+                <Text style={styles.exportDateText} numberOfLines={1} ellipsizeMode="clip">
+                  {exportDisplayDate}
+                </Text>
+              </View>
 
               <View style={styles.exportAgeBlock}>
                 <Text style={styles.exportChronologicalAge}>{ageInfo?.chronological.formatted ?? "-"}</Text>
@@ -267,9 +283,11 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
               </View>
 
               <View style={styles.exportRecordCard}>
-                <Text style={styles.exportRecordText} numberOfLines={3} ellipsizeMode="tail">
-                  {exportRecordText}
+                {exportRecordLines.map((line, index) => (
+                  <Text key={`${line}-${index}`} style={styles.exportRecordText} numberOfLines={1} ellipsizeMode="tail">
+                    {line}
                 </Text>
+                ))}
               </View>
             </ImageBackground>
           </View>
@@ -421,12 +439,12 @@ const styles = StyleSheet.create({
     top: -9999,
   },
   exportContainer: {
-    width: 1080,
-    height: 1080,
+    width: 1024,
+    height: 1536,
   },
   exportContent: {
-    width: 1080,
-    height: 1080,
+    width: 1024,
+    height: 1536,
   },
   exportBackground: {
     width: "100%",
@@ -437,70 +455,80 @@ const styles = StyleSheet.create({
   },
   exportPhotoFrame: {
     position: "absolute",
-    left: 120,
-    top: 170,
-    width: 840,
-    height: 520,
-    borderRadius: 36,
-    padding: 18,
+    left: 114,
+    top: 161,
+    width: 796,
+    height: 796,
+    borderRadius: 34,
+    padding: 17,
     backgroundColor: "rgba(255,255,255,0.55)",
     overflow: "hidden",
   },
   exportPhoto: {
     width: "100%",
     height: "100%",
-    borderRadius: 24,
+    borderRadius: 23,
     backgroundColor: COLORS.cellDimmed,
   },
   exportPhotoPlaceholder: {
     width: "100%",
     height: "100%",
-    borderRadius: 24,
+    borderRadius: 23,
     backgroundColor: "rgba(255,255,255,0.8)",
   },
   exportAgeBlock: {
     position: "absolute",
-    top: 720,
+    top: 980,
     width: "100%",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
+    zIndex: 2,
   },
   exportChronologicalAge: {
-    fontSize: 64,
+    fontSize: 68,
     fontWeight: "800",
     color: "#3F5F55",
   },
   exportCorrectedAge: {
-    fontSize: 38,
+    fontSize: 32,
     fontWeight: "600",
     color: "#7F9C93",
   },
   exportRecordCard: {
     position: "absolute",
-    left: 120,
-    right: 120,
-    bottom: 120,
-    borderRadius: 26,
-    paddingVertical: 22,
-    paddingHorizontal: 26,
-    backgroundColor: "rgba(255,255,255,0.9)",
+    left: 114,
+    right: 114,
+    top: 1140,
+    borderRadius: 25,
+    paddingVertical: 19,
+    paddingHorizontal: 25,
+    backgroundColor: "rgba(255,255,255,0.6)",
+    zIndex: 2,
   },
   exportRecordText: {
-    fontSize: 38,
-    lineHeight: 50,
+    fontSize: 32,
+    lineHeight: 43,
     color: "#2F4F4F",
   },
-  exportDebugBadge: {
+  exportDecorationOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+  },
+  exportDateBlock: {
     position: "absolute",
-    top: 24,
-    left: 24,
-    fontSize: 28,
+    top: 50,
+    width: "100%",
+    alignItems: "center",
+    zIndex: 2,
+  },
+  exportDateText: {
+    fontSize: 44,
     fontWeight: "700",
-    color: "#2F4F4F",
-    backgroundColor: "rgba(255,255,255,0.7)",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
+    color: "#4E6F66",
+    backgroundColor: "rgba(255,255,255,0.75)",
+    borderRadius: 23,
+    paddingVertical: 11,
+    paddingHorizontal: 21,
   },
   fab: {
     position: "absolute",
