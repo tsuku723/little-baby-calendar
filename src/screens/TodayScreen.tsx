@@ -23,6 +23,8 @@ import { COLORS } from "@/constants/colors";
 type Props = NativeStackScreenProps<CalendarStackParamList, "Today">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
+const EXPORT_BACKGROUND_IMAGE = require("../../assets/export/bg_cream_watercolor.png");
+
 const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) => {
   const rootNavigation = useNavigation<RootNavigation>();
   // Hooks should remain at top level (no conditional hooks)
@@ -249,7 +251,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
         <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }} style={styles.exportContainer}>
           <View style={styles.exportContent} collapsable={false}>
             <ImageBackground
-              source={require("../../assets/export/bg_cream_watercolor.png")}
+              source={EXPORT_BACKGROUND_IMAGE}
               style={styles.exportBackground}
               imageStyle={styles.exportBackgroundImage}
               resizeMode="cover"
@@ -257,6 +259,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
               <View style={styles.exportPhotoFrame}>
                 {latestPhotoPath ? <Image source={{ uri: latestPhotoPath }} style={styles.exportPhoto} resizeMode="cover" /> : <View style={styles.exportPhotoPlaceholder} />}
               </View>
+              {__DEV__ ? <Text style={styles.exportDebugBadge}>BG OK</Text> : null}
 
               <View style={styles.exportAgeBlock}>
                 <Text style={styles.exportChronologicalAge}>{ageInfo?.chronological.formatted ?? "-"}</Text>
@@ -441,6 +444,7 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     padding: 18,
     backgroundColor: "rgba(255,255,255,0.55)",
+    overflow: "hidden",
   },
   exportPhoto: {
     width: "100%",
@@ -464,12 +468,12 @@ const styles = StyleSheet.create({
   exportChronologicalAge: {
     fontSize: 64,
     fontWeight: "800",
-    color: COLORS.textPrimary,
+    color: "#3F5F55",
   },
   exportCorrectedAge: {
     fontSize: 38,
     fontWeight: "600",
-    color: COLORS.textSecondary,
+    color: "#7F9C93",
   },
   exportRecordCard: {
     position: "absolute",
@@ -484,7 +488,19 @@ const styles = StyleSheet.create({
   exportRecordText: {
     fontSize: 38,
     lineHeight: 50,
-    color: COLORS.textPrimary,
+    color: "#2F4F4F",
+  },
+  exportDebugBadge: {
+    position: "absolute",
+    top: 24,
+    left: 24,
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#2F4F4F",
+    backgroundColor: "rgba(255,255,255,0.7)",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
   },
   fab: {
     position: "absolute",
