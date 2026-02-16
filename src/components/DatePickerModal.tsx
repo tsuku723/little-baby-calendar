@@ -82,6 +82,7 @@ const DatePickerModal: React.FC<Props> = ({
           value={tempDate}
           mode="date"
           display="spinner"
+          style={{ height: 260 }}
           locale="ja-JP"
           minimumDate={minimumDate}
           maximumDate={maximumDate}
@@ -112,6 +113,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
+    position: "relative", 
   },
   headerText: {
     fontSize: 16,
@@ -119,10 +121,15 @@ const styles = StyleSheet.create({
     color: COLORS.accentMain,
   },
   title: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
-  },
+  position: "absolute",
+  left: 0,
+  right: 0,
+  textAlign: "center",
+  fontSize: 16,
+  fontWeight: "700",
+  color: COLORS.textPrimary,
+}
+
 });
 
 export default DatePickerModal;

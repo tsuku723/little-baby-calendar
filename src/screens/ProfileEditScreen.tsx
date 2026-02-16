@@ -497,6 +497,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
+    position: "relative",
   },
   modalHeaderText: {
     fontSize: 16,
@@ -504,6 +505,10 @@ const styles = StyleSheet.create({
     color: COLORS.accentMain,
   },
   modalTitle: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
     fontSize: 16,
     fontWeight: "700",
     color: COLORS.textPrimary,
