@@ -1,7 +1,6 @@
-﻿import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   Alert,
-  Modal,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -13,16 +12,15 @@ import {
   View,
 } from "react-native";
 
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
-
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
+import AppText from "@/components/AppText";
+import DatePickerModal from "@/components/DatePickerModal";
+import { COLORS } from "@/constants/colors";
 import { UserSettings } from "@/models/dataModels";
 import { SettingsStackParamList } from "@/navigation";
-import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
 import { isIsoDateString, safeParseIsoLocal, toIsoDateString } from "@/utils/dateUtils";
-import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "ProfileEdit">;
 
@@ -77,14 +75,13 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     if (!parsed) return cloneDate(fallback);
     return sanitizePickerDate(parsed, fallback);
   };
+
   const today = useMemo(() => startOfLocalDay(new Date()), []);
   const MIN_DATE = useMemo(() => new Date(1900, 0, 1), []);
   const MAX_DUE_DATE = useMemo(() => new Date(2100, 11, 31), []);
-  const [datePickerReady, setDatePickerReady] = useState(false);
+
   const [activeDateField, setActiveDateField] = useState<"birth" | "due" | null>(null);
   const [isDateModalVisible, setDateModalVisible] = useState(false);
-  const [pendingDateField, setPendingDateField] = useState<"birth" | "due" | null>(null);
-  const [pickerSessionId, setPickerSessionId] = useState(0);
   const [tempDate, setTempDate] = useState<Date>(() => safeDate(formState.birthDate, today));
 
   useLayoutEffect(() => {
@@ -150,52 +147,23 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const openDatePicker = (field: "birth" | "due") => {
-    setDatePickerReady(false);
-    setPickerSessionId((prev) => prev + 1);
-    if (isDateModalVisible) {
-      setDateModalVisible(false);
-    }
-    setPendingDateField(field);
+    setActiveDateField(field);
+    const nextTempDate = field === "birth" ? safeDate(formState.birthDate, today) : safeDate(formState.dueDate, today);
+    setTempDate(sanitizePickerDate(nextTempDate, today));
+    setDateModalVisible(true);
   };
 
   const closeDatePicker = () => {
-    setDatePickerReady(false);
     setDateModalVisible(false);
     setActiveDateField(null);
-    setPendingDateField(null);
   };
 
-  useEffect(() => {
-    if (!pendingDateField || isDateModalVisible) return;
-    setActiveDateField(pendingDateField);
-    const nextTempDate =
-      pendingDateField === "birth"
-        ? safeDate(formState.birthDate, today)
-        : safeDate(formState.dueDate, today);
-    setTempDate(sanitizePickerDate(nextTempDate, today));
-    requestAnimationFrame(() => setDateModalVisible(true));
-    setPendingDateField(null);
-  }, [formState.birthDate, formState.dueDate, isDateModalVisible, pendingDateField, today]);
+  const pickerValue = useMemo(() => sanitizePickerDate(tempDate, today), [tempDate, today]);
 
-  const handleDateChange = (event: DateTimePickerEvent, pickedDate?: Date) => {
-    console.log("[picker] field=", activeDateField, "type=", event.type);
-console.log("[picker] picked=", pickedDate?.toISOString?.() ?? pickedDate);
-console.log("[picker] props value/min/max=", pickerValue.toISOString(), MIN_DATE.toISOString(), (activeDateField === "birth" ? today : MAX_DUE_DATE).toISOString());
-
-    if (event.type === "dismissed") return;
-    if (!pickedDate || !activeDateField) return;
-    const next = new Date(pickedDate.getTime());
-    if (Number.isNaN(next.getTime())) return;
-    setTempDate(next);
-  };
-
-  const pickerValue = useMemo(() => {
-    return sanitizePickerDate(tempDate, today);
-  }, [tempDate, today]);
-
-  const handleDateConfirm = () => {
+  const handleDateConfirm = (date: Date) => {
     if (!activeDateField) return;
-    const finalDate = sanitizePickerDate(tempDate, today);
+    const finalDate = sanitizePickerDate(date, today);
+    setTempDate(finalDate);
     if (activeDateField === "birth") {
       setFormState((prev) => ({ ...prev, birthDate: toIsoDateString(finalDate) }));
     } else {
@@ -346,7 +314,6 @@ console.log("[picker] props value/min/max=", pickerValue.toISOString(), MIN_DATE
             </View>
           </View>
         </View>
-
       </ScrollView>
       <View style={styles.fixedActions}>
         <TouchableOpacity
@@ -368,41 +335,16 @@ console.log("[picker] props value/min/max=", pickerValue.toISOString(), MIN_DATE
           </TouchableOpacity>
         ) : null}
       </View>
-      {isDateModalVisible && activeDateField ? (
-        <Modal
-          key={`${activeDateField}-${pickerSessionId}`}
-          animationType="slide"
-          transparent
-          visible
-          onRequestClose={closeDatePicker}
-          statusBarTranslucent
-          onShow={() => requestAnimationFrame(() => setDatePickerReady(true))}
-        >
-          <Pressable style={styles.modalOverlay} onPress={closeDatePicker} accessibilityRole="button" />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={closeDatePicker} accessibilityRole="button">
-                <Text style={styles.modalHeaderText}>キャンセル</Text>
-              </TouchableOpacity>
-              <Text style={styles.modalTitle}>{activeDateField === "birth" ? "出生日" : "出産予定日"}</Text>
-              <TouchableOpacity onPress={handleDateConfirm} accessibilityRole="button">
-                <Text style={styles.modalHeaderText}>完了</Text>
-              </TouchableOpacity>
-            </View>
-            {datePickerReady ? (
-              <DateTimePicker
-                key={`${activeDateField}-${pickerSessionId}`}
-                value={pickerValue}
-                mode="date"
-                display="spinner"
-                locale="ja-JP"
-                minimumDate={MIN_DATE}
-                maximumDate={activeDateField === "birth" ? today : MAX_DUE_DATE}
-                onChange={handleDateChange}
-              />
-            ) : null}
-          </View>
-        </Modal>
+      {activeDateField ? (
+        <DatePickerModal
+          visible={isDateModalVisible}
+          title={activeDateField === "birth" ? "出生日" : "出産予定日"}
+          value={pickerValue}
+          minimumDate={MIN_DATE}
+          maximumDate={activeDateField === "birth" ? today : MAX_DUE_DATE}
+          onCancel={closeDatePicker}
+          onConfirm={handleDateConfirm}
+        />
       ) : null}
     </SafeAreaView>
   );
@@ -477,41 +419,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textPrimary,
     fontWeight: "700",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.35)",
-  },
-  modalSheet: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 16,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-    position: "relative",
-  },
-  modalHeaderText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.accentMain,
-  },
-  modalTitle: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    textAlign: "center",
-    fontSize: 16,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
   },
   section: {
     gap: 12,

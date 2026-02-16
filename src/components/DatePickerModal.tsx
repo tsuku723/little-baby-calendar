@@ -56,7 +56,8 @@ const DatePickerModal: React.FC<Props> = ({
   const handleDateChange = (event: DateTimePickerEvent, pickedDate?: Date) => {
     if (event.type === "dismissed") return;
     if (!pickedDate) return;
-    setTempDate(normalizeDate(pickedDate, minimumDate, maximumDate));
+    const next = normalizeDate(pickedDate, minimumDate, maximumDate);
+    setTempDate((prev) => (prev.getTime() === next.getTime() ? prev : next));
   };
 
   return (
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
-    position: "relative", 
+    position: "relative",
   },
   headerText: {
     fontSize: 16,
