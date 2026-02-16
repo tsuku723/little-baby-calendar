@@ -5,10 +5,15 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "@/constants/colors";
+import AboutScreen from "@/screens/AboutScreen";
 import AchievementListScreen from "@/screens/AchievementListScreen";
+import ContactScreen from "@/screens/ContactScreen";
+import OpenSourceLicensesScreen from "@/screens/OpenSourceLicensesScreen";
+import PrivacyPolicyScreen from "@/screens/PrivacyPolicyScreen";
 import ProfileEditScreen from "@/screens/ProfileEditScreen";
 import ProfileManagerScreen from "@/screens/ProfileManagerScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
+import TermsScreen from "@/screens/TermsScreen";
 import TodayScreen from "@/screens/TodayScreen";
 import CalendarScreen from "@/screens/CalendarScreen";
 import {
@@ -41,6 +46,27 @@ const SettingsStackNavigator: React.FC = () => (
     <SettingsStack.Screen name="Settings" component={SettingsScreen} />
     <SettingsStack.Screen name="ProfileEdit" component={ProfileEditScreen} />
     <SettingsStack.Screen name="ProfileManager" component={ProfileManagerScreen} />
+    <SettingsStack.Screen
+      name="About"
+      component={AboutScreen}
+      options={{ headerShown: true, title: "このアプリについて" }}
+    />
+    <SettingsStack.Screen
+      name="PrivacyPolicy"
+      component={PrivacyPolicyScreen}
+      options={{ headerShown: true, title: "プライバシーポリシー" }}
+    />
+    <SettingsStack.Screen name="Terms" component={TermsScreen} options={{ headerShown: true, title: "利用規約" }} />
+    <SettingsStack.Screen
+      name="OpenSourceLicenses"
+      component={OpenSourceLicensesScreen}
+      options={{ headerShown: true, title: "オープンソースライセンス" }}
+    />
+    <SettingsStack.Screen
+      name="Contact"
+      component={ContactScreen}
+      options={{ headerShown: true, title: "お問い合わせ" }}
+    />
   </SettingsStack.Navigator>
 );
 

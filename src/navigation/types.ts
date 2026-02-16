@@ -38,6 +38,11 @@ export type SettingsStackParamList = {
         profileId?: string;
       }
     | undefined;
+  About: undefined;
+  PrivacyPolicy: undefined;
+  Terms: undefined;
+  OpenSourceLicenses: undefined;
+  Contact: undefined;
 };
 
 export type TabParamList = {
