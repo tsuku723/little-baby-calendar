@@ -56,7 +56,8 @@ const DatePickerModal: React.FC<Props> = ({
   const handleDateChange = (event: DateTimePickerEvent, pickedDate?: Date) => {
     if (event.type === "dismissed") return;
     if (!pickedDate) return;
-    setTempDate(normalizeDate(pickedDate, minimumDate, maximumDate));
+    const next = normalizeDate(pickedDate, minimumDate, maximumDate);
+    setTempDate((prev) => (prev.getTime() === next.getTime() ? prev : next));
   };
 
   return (
@@ -78,15 +79,20 @@ const DatePickerModal: React.FC<Props> = ({
             <Text style={styles.headerText}>完了</Text>
           </TouchableOpacity>
         </View>
-        <DateTimePicker
-          value={tempDate}
-          mode="date"
-          display="spinner"
-          locale="ja-JP"
-          minimumDate={minimumDate}
-          maximumDate={maximumDate}
-          onChange={handleDateChange}
-        />
+        <View style={styles.pickerContainer}>
+          <DateTimePicker
+            value={tempDate}
+            mode="date"
+            display="spinner"
+            locale="ja-JP"
+            minimumDate={minimumDate}
+            maximumDate={maximumDate}
+            onChange={handleDateChange}
+            themeVariant="light"
+            textColor={COLORS.textPrimary}
+            style={[styles.picker, { backgroundColor: COLORS.surface }]}
+          />
+        </View>
       </View>
     </Modal>
   );
@@ -112,6 +118,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 12,
+    position: "relative",
   },
   headerText: {
     fontSize: 16,
@@ -119,9 +126,20 @@ const styles = StyleSheet.create({
     color: COLORS.accentMain,
   },
   title: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
     fontSize: 16,
     fontWeight: "700",
     color: COLORS.textPrimary,
+  },
+  pickerContainer: {
+    backgroundColor: COLORS.surface,
+  },
+  picker: {
+    height: 260,
+    backgroundColor: COLORS.surface,
   },
 });
 
