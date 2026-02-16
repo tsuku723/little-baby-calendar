@@ -1,25 +1,14 @@
 ﻿import React, { useMemo, useState } from "react";
-import {
-  FlatList,
-  Modal,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
 import { Achievement } from "@/models/dataModels";
 import { RecordListStackParamList, RootStackParamList, TabParamList } from "@/navigation";
 import AppText from "@/components/AppText";
+import DatePickerModal from "@/components/DatePickerModal";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useActiveUser } from "@/state/AppStateContext";
 import { isIsoDateString, safeParseIsoLocal, toIsoDateString } from "@/utils/dateUtils";
@@ -30,14 +19,17 @@ type Props = NativeStackScreenProps<RecordListStackParamList, "AchievementList">
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
 const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
+const startOfLocalDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const cloneDate = (d: Date) => new Date(d.getTime());
 
 const toIsoDateFromPicker = (picked: Date): string => {
   return toIsoDateString(picked);
 };
 
-const getPickerDate = (value: string): Date => {
-  const fallback = new Date();
-  return safeParseIsoLocal(isIsoDateString(value) ? value : null, fallback);
+const getPickerDate = (value: string | null, fallback: Date): Date => {
+  const parsed = safeParseIsoLocal(value && isIsoDateString(value) ? value : null, fallback);
+  if (Number.isNaN(parsed.getTime())) return cloneDate(fallback);
+  return cloneDate(parsed);
 };
 
 const AchievementListScreen: React.FC<Props> = () => {
@@ -45,29 +37,32 @@ const AchievementListScreen: React.FC<Props> = () => {
   const user = useActiveUser();
   const { loading, store } = useAchievements();
   const [searchText, setSearchText] = useState<string>("");
-  const [fromDate, setFromDate] = useState<string>("");
-  const [toDate, setToDate] = useState<string>("");
+  const [fromDate, setFromDate] = useState<string | null>(null);
+  const [toDate, setToDate] = useState<string | null>(null);
   const [isFilterExpanded, setFilterExpanded] = useState(false);
+  const today = useMemo(() => startOfLocalDay(new Date()), []);
+  const MIN_DATE = useMemo(() => new Date(1900, 0, 1), []);
+  const MAX_DATE = useMemo(() => new Date(2100, 11, 31), []);
   const [pickerTarget, setPickerTarget] = useState<"from" | "to" | null>(null);
-  const [tempPickerDate, setTempPickerDate] = useState<Date>(new Date());
+  const [pickerValue, setPickerValue] = useState<Date>(today);
 
-  const applyFromDate = (nextFrom: string) => {
+  const applyFromDate = (nextFrom: string | null) => {
     setFromDate(nextFrom);
-    if (nextFrom && isIsoDateString(toDate) && nextFrom > toDate) {
+    if (nextFrom && toDate && isIsoDateString(toDate) && nextFrom > toDate) {
       setToDate(nextFrom);
     }
   };
 
-  const applyToDate = (nextTo: string) => {
+  const applyToDate = (nextTo: string | null) => {
     setToDate(nextTo);
-    if (nextTo && isIsoDateString(fromDate) && nextTo < fromDate) {
+    if (nextTo && fromDate && isIsoDateString(fromDate) && nextTo < fromDate) {
       setFromDate(nextTo);
     }
   };
 
   const openPicker = (target: "from" | "to") => {
-    setTempPickerDate(getPickerDate(target === "from" ? fromDate : toDate));
     setPickerTarget(target);
+    setPickerValue(getPickerDate(target === "from" ? fromDate : toDate, today));
   };
 
   const items = useMemo(() => {
@@ -84,8 +79,8 @@ const AchievementListScreen: React.FC<Props> = () => {
       : allList;
 
     // 2) 期間フィルタ（日付は ISO 形式で比較 OK）
-    const validFrom = isIsoDateString(fromDate) ? fromDate : null;
-    const validTo = isIsoDateString(toDate) ? toDate : null;
+    const validFrom = fromDate && isIsoDateString(fromDate) ? fromDate : null;
+    const validTo = toDate && isIsoDateString(toDate) ? toDate : null;
     const filteredByRange = filteredBySearch.filter((item) => {
       if (validFrom && item.date < validFrom) return false;
       if (validTo && item.date > validTo) return false;
@@ -158,7 +153,7 @@ const AchievementListScreen: React.FC<Props> = () => {
               accessibilityLabel="開始日を選択"
             >
               <Text style={styles.filterLabel}>From</Text>
-              <Text style={styles.filterValue}>{fromDate || "未設定"}</Text>
+              <Text style={styles.filterValue}>{fromDate ?? "未設定"}</Text>
               <Ionicons name="calendar-outline" size={18} color={COLORS.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity
@@ -168,14 +163,14 @@ const AchievementListScreen: React.FC<Props> = () => {
               accessibilityLabel="終了日を選択"
             >
               <Text style={styles.filterLabel}>To</Text>
-              <Text style={styles.filterValue}>{toDate || "未設定"}</Text>
+              <Text style={styles.filterValue}>{toDate ?? "未設定"}</Text>
               <Ionicons name="calendar-outline" size={18} color={COLORS.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.clearButton}
               onPress={() => {
-                setFromDate("");
-                setToDate("");
+                setFromDate(null);
+                setToDate(null);
               }}
               accessibilityRole="button"
             >
@@ -199,71 +194,27 @@ const AchievementListScreen: React.FC<Props> = () => {
       >
         <Text style={styles.fabText}>＋記録</Text>
       </TouchableOpacity>
-      {Platform.OS === "ios" && pickerTarget ? (
-        <Modal animationType="fade" transparent onRequestClose={() => setPickerTarget(null)}>
-          <Pressable style={styles.pickerOverlay} onPress={() => setPickerTarget(null)} accessibilityRole="button" />
-          <View style={styles.pickerSheet}>
-            <View style={styles.pickerHeader}>
-              <TouchableOpacity
-                onPress={() => setPickerTarget(null)}
-                accessibilityRole="button"
-                style={styles.pickerAction}
-              >
-                <Text style={styles.pickerActionText}>キャンセル</Text>
-              </TouchableOpacity>
-              <Text style={styles.pickerTitle}>{pickerTarget === "from" ? "From" : "To"}</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  const iso = toIsoDateFromPicker(tempPickerDate);
-                  if (pickerTarget === "from") {
-                    applyFromDate(iso);
-                  } else {
-                    applyToDate(iso);
-                  }
-                  setPickerTarget(null);
-                }}
-                accessibilityRole="button"
-                style={styles.pickerAction}
-              >
-                <Text style={styles.pickerActionText}>完了</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.pickerBody}>
-              <DateTimePicker
-                value={tempPickerDate}
-                mode="date"
-                display="spinner"
-                locale="ja-JP"
-                onChange={(_event: DateTimePickerEvent, date?: Date) => {
-                  if (date) setTempPickerDate(date);
-                }}
-              />
-            </View>
-          </View>
-        </Modal>
-      ) : null}
-      {Platform.OS === "android" && pickerTarget ? (
-        <DateTimePicker
-          value={getPickerDate(pickerTarget === "from" ? fromDate : toDate)}
-          mode="date"
-          display="default"
-          onChange={(event: DateTimePickerEvent, date?: Date) => {
-            if (event.type === "dismissed") {
-              setPickerTarget(null);
-              return;
-            }
-            if (date) {
-              const nextValue = toIsoDateFromPicker(date);
-              if (pickerTarget === "from") {
-                applyFromDate(nextValue);
-              } else {
-                applyToDate(nextValue);
-              }
-            }
+      <DatePickerModal
+        visible={pickerTarget !== null}
+        title={pickerTarget === "from" ? "From" : "To"}
+        value={pickerValue}
+        minimumDate={MIN_DATE}
+        maximumDate={MAX_DATE}
+        onCancel={() => setPickerTarget(null)}
+        onConfirm={(date) => {
+          if (!pickerTarget) {
             setPickerTarget(null);
-          }}
-        />
-      ) : null}
+            return;
+          }
+          const iso = toIsoDateFromPicker(date);
+          if (pickerTarget === "from") {
+            applyFromDate(iso);
+          } else {
+            applyToDate(iso);
+          }
+          setPickerTarget(null);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -345,46 +296,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textSecondary,
   },
-  pickerOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
-  },
-  pickerSheet: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 12,
-  },
-  pickerHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-  },
-  pickerTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.textPrimary,
-  },
-  pickerAction: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  pickerActionText: {
-    fontSize: 14,
-    color: COLORS.textPrimary,
-    fontWeight: "600",
-  },
-  pickerBody: {
-    paddingHorizontal: 8,
-  },
   list: {
     gap: 12,
     paddingBottom: 120,
@@ -443,4 +354,3 @@ const styles = StyleSheet.create({
 });
 
 export default AchievementListScreen;
-
