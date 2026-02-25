@@ -16,11 +16,13 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const dateNumber = parseInt(day.date.slice(-2), 10);
 
   const correctedLabel = day.calendarAgeLabel?.corrected ?? null;
+  const gestationalLabel = day.calendarAgeLabel?.gestational ?? null;
   const chronologicalLabel = day.calendarAgeLabel?.chronological ?? null;
-  const hasBothLabels = Boolean(correctedLabel && chronologicalLabel);
+  const primaryLabel = gestationalLabel ?? correctedLabel;
+  const hasBothLabels = Boolean(primaryLabel && chronologicalLabel);
 
-  const topLabel = correctedLabel ?? chronologicalLabel;
-  const topStyle = topLabel ? (correctedLabel ? styles.corrected : styles.age) : styles.hidden;
+  const topLabel = primaryLabel ?? chronologicalLabel;
+  const topStyle = topLabel ? ((gestationalLabel || correctedLabel) ? styles.corrected : styles.age) : styles.hidden;
   const bottomLabel = hasBothLabels ? chronologicalLabel : null;
 
   const hasAchievements = day.achievementCount > 0;
@@ -47,10 +49,10 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
     return <View style={[styles.ageSticker, stickerStyle]}>{label}</View>;
   };
 
-  const topStickerStyle = correctedLabel
+  const topStickerStyle = (correctedLabel || gestationalLabel)
     ? styles.ageStickerCorrected
     : styles.ageStickerActual;
-  const topTextStyle = correctedLabel ? styles.ageTextCorrected : styles.ageTextActual;
+  const topTextStyle = (correctedLabel || gestationalLabel) ? styles.ageTextCorrected : styles.ageTextActual;
 
   return (
     <TouchableOpacity

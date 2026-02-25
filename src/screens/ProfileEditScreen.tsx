@@ -282,28 +282,6 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>月齢表示形式</Text>
-            <View style={styles.optionRow}>
-              {[
-                { label: "2M4D", value: "md" },
-                { label: "1Y2M4D", value: "ymd" },
-              ].map((option) => (
-                <Pressable
-                  key={option.value}
-                  style={[styles.optionButton, draftSettings.ageFormat === option.value && styles.optionButtonSelected]}
-                  onPress={() => setDraftSettings((prev) => ({ ...prev, ageFormat: option.value as UserSettings["ageFormat"] }))}
-                >
-                  <Text
-                    style={[styles.optionLabel, draftSettings.ageFormat === option.value && styles.optionLabelSelected]}
-                  >
-                    {option.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.field}>
             <Text style={styles.label}>生まれてからの日数表示</Text>
             <View style={styles.switchRow}>
               <Text style={styles.optionLabel}>{draftSettings.showDaysSinceBirth ? "ON" : "OFF"}</Text>
@@ -312,6 +290,12 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
                 onValueChange={(value) => setDraftSettings((prev) => ({ ...prev, showDaysSinceBirth: value }))}
               />
             </View>
+          </View>
+
+          <View style={styles.notesBox}>
+            <Text style={styles.noteText}>・予定日は妊娠40週0日（280日）相当として扱います</Text>
+            <Text style={styles.noteText}>・予定日前は修正月齢が負になり得るため、本アプリでは在胎週数で表示します</Text>
+            <Text style={styles.noteText}>・表示は目安であり医療判断ではありません</Text>
           </View>
         </View>
       </ScrollView>
@@ -466,6 +450,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 6,
+  },
+  notesBox: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 10,
+    gap: 6,
+  },
+  noteText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    lineHeight: 18,
   },
   fixedActions: {
     paddingHorizontal: 20,

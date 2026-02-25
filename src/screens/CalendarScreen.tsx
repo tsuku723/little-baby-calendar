@@ -16,7 +16,6 @@ import { useDateViewContext } from "@/state/DateViewContext";
 import {
   buildCalendarMonthView,
   calculateAgeInfo,
-  formatCalendarAgeLabel,
   monthKey,
   normalizeToUtcDate,
   toIsoDateString,
@@ -118,6 +117,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   const todayDate = useMemo(() => toUtcDateOnly(new Date()), []);
   const todayIso = useMemo(() => toIsoDateString(todayDate), [todayDate]);
   const ageFormat = user?.settings.ageFormat ?? "md";
+  const showDaysSinceBirth = user?.settings.showDaysSinceBirth ?? true;
 
   const todayAgeInfo = useMemo(() => {
     if (!user?.birthDate) return null;
@@ -133,17 +133,6 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
       return null;
     }
   }, [ageFormat, todayIso, user?.birthDate, user?.dueDate, user?.settings.showCorrectedUntilMonths]);
-
-  const correctedTodayLabel =
-    todayAgeInfo?.corrected.visible && todayAgeInfo.corrected.formatted
-      ? formatCalendarAgeLabel(todayAgeInfo.corrected, ageFormat, true)
-      : null;
-  const chronologicalTodayLabel = todayAgeInfo
-    ? formatCalendarAgeLabel(todayAgeInfo.chronological, ageFormat, false)
-    : null;
-  const chronologicalTodayLabelWithPrefix = chronologicalTodayLabel
-    ? `実${chronologicalTodayLabel}`
-    : null;
 
   const monthPickerValue = useMemo(
     () => new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1),
@@ -161,19 +150,20 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.headerName}>{user?.name ?? "プロフィール未設定"}</Text>
         {todayAgeInfo ? (
           <View style={styles.headerAgeBlock}>
-            {correctedTodayLabel && chronologicalTodayLabelWithPrefix ? (
+            {todayAgeInfo.flags.showMode === "gestational" && todayAgeInfo.gestational.formatted ? (
               <Text style={styles.headerCorrected}>
-                {correctedTodayLabel}
-                <Text style={styles.headerChronological}>
-                  （{chronologicalTodayLabelWithPrefix}）
-                </Text>
+                在胎 {todayAgeInfo.gestational.formatted}
+                <Text style={styles.headerChronological}>（暦 {todayAgeInfo.chronological.formatted}）</Text>
               </Text>
-            ) : correctedTodayLabel ? (
-              <Text style={styles.headerCorrected}>{correctedTodayLabel}</Text>
-            ) : chronologicalTodayLabelWithPrefix ? (
-              <Text style={styles.headerChronological}>{chronologicalTodayLabelWithPrefix}</Text>
-            ) : null}
-            <Text style={styles.headerDays}>生まれてから{todayAgeInfo.daysSinceBirth}日目</Text>
+            ) : todayAgeInfo.corrected.visible && todayAgeInfo.corrected.formatted ? (
+              <Text style={styles.headerCorrected}>
+                修正 {todayAgeInfo.corrected.formatted}
+                <Text style={styles.headerChronological}>（暦 {todayAgeInfo.chronological.formatted}）</Text>
+              </Text>
+            ) : (
+              <Text style={styles.headerChronological}>月齢 {todayAgeInfo.chronological.formatted}</Text>
+            )}
+            {showDaysSinceBirth ? <Text style={styles.headerDays}>生まれてから{todayAgeInfo.daysSinceBirth}日目</Text> : null}
           </View>
         ) : (
           <Text style={styles.headerPlaceholder}>年齢情報は設定済みのプロフィールで表示されます</Text>
@@ -204,6 +194,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             ))}
           </View>
           <CalendarGrid days={monthView.days} onPressDay={handlePressDay} />
+          <Text style={styles.footer}>予定日前は在胎表示です（修正月齢は表示しません）。</Text>
           <Text style={styles.footer}>修正月齢の表記は目安です。医療的判断は主治医にご相談ください。</Text>
           <Text style={styles.footer}>データは端末内で保存します。</Text>
         </View>

@@ -14,12 +14,6 @@ const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 export const isIsoDateString = (value: unknown): value is string =>
   typeof value === "string" && ISO_DATE_RE.test(value);
 
-const getDateParts = (date: Date) => ({
-  year: date.getFullYear(),
-  month: date.getMonth() + 1,
-  day: date.getDate(),
-});
-
 const daysInMonth = (year: number, month: number): number =>
   new Date(year, month, 0).getDate();
 
@@ -65,11 +59,7 @@ export const toUtcDateOnly = (date: Date): Date => {
   if (Number.isNaN(date.getTime())) {
     return new Date(NaN);
   }
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  );
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 };
 
 export const toIsoDateString = (date: Date): string => {
@@ -85,78 +75,80 @@ export const toIsoDateString = (date: Date): string => {
 
 export const todayIsoDate = (): string => toIsoDateString(toUtcDateOnly(new Date()));
 
-const diffYmdBorrow = (start: Date, end: Date): AgeParts => {
+const utcDateMs = (date: Date): number =>
+  Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+
+const addMonthsClamped = (base: Date, monthsToAdd: number): Date => {
+  const baseYear = base.getFullYear();
+  const baseMonth = base.getMonth();
+  const baseDay = base.getDate();
+
+  const totalMonths = baseMonth + monthsToAdd;
+  const targetYear = baseYear + Math.floor(totalMonths / 12);
+  const targetMonth = ((totalMonths % 12) + 12) % 12;
+  const maxDay = daysInMonth(targetYear, targetMonth + 1);
+  const clampedDay = Math.min(baseDay, maxDay);
+
+  return new Date(targetYear, targetMonth, clampedDay);
+};
+
+const diffYmdAnchored = (start: Date, end: Date): AgeParts => {
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
     return { years: 0, months: 0, days: 0 };
   }
 
-  if (end.getTime() < start.getTime()) {
+  if (utcDateMs(end) < utcDateMs(start)) {
     return { years: 0, months: 0, days: 0 };
   }
 
-  const s = getDateParts(start);
-  const e = getDateParts(end);
+  let totalMonths =
+    (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
 
-  let years = e.year - s.year;
-  let months = e.month - s.month;
-  let days = e.day - s.day;
-
-  if (days < 0) {
-    months -= 1;
-    const prevMonth = e.month === 1 ? 12 : e.month - 1;
-    const prevMonthYear = e.month === 1 ? e.year - 1 : e.year;
-    days += daysInMonth(prevMonthYear, prevMonth);
+  let anchor = addMonthsClamped(start, totalMonths);
+  if (utcDateMs(anchor) > utcDateMs(end)) {
+    totalMonths -= 1;
+    anchor = addMonthsClamped(start, totalMonths);
   }
 
-  if (months < 0) {
-    years -= 1;
-    months += 12;
-  }
-
-  return { years, months, days };
+  const days = daysBetweenUtc(anchor, end);
+  return {
+    years: Math.floor(totalMonths / 12),
+    months: totalMonths % 12,
+    days,
+  };
 };
 
-const formatAge = (parts: AgeParts, ageFormat: AgeFormat): string => {
-  if (ageFormat === "md") {
-    const totalMonths = parts.years * 12 + parts.months;
-    return `${totalMonths}m${parts.days}d`;
-  }
-  return `${parts.years}y${parts.months}m${parts.days}d`;
-};
+const formatAge = (parts: AgeParts): string =>
+  `${parts.years}才${parts.months}ヶ月${parts.days}日`;
 
-const agesEqual = (a: AgeParts, b: AgeParts): boolean =>
-  a.years === b.years && a.months === b.months && a.days === b.days;
-
-const totalMonths = (parts: { years: number; months: number }): number =>
+const totalMonthsFromParts = (parts: { years: number; months: number }): number =>
   parts.years * 12 + parts.months;
 
 export const formatCalendarAgeLabel = (
   parts: { years: number; months: number },
-  ageFormat: AgeFormat,
+  _ageFormat: AgeFormat,
   isCorrected: boolean
 ): string => {
-  const labelPrefix = isCorrected ? "修" : "";
-
-  if (ageFormat === "md") {
-    return `${labelPrefix}${totalMonths(parts)}m`;
-  }
-
-  return `${labelPrefix}${parts.years}y${parts.months}m`;
+  const labelPrefix = isCorrected ? "修正 " : "暦 ";
+  return `${labelPrefix}${totalMonthsFromParts(parts)}ヶ月`;
 };
+
+const formatGestational = (weeks: number, days: number): string => `${weeks}週${days}日`;
+
 const isWithinCorrectedLimit = (
   parts: AgeParts,
   limitMonths: number | null
 ): boolean => {
   if (limitMonths === null) return true;
-  const totalMonths = parts.years * 12 + parts.months;
-  if (totalMonths > limitMonths) return false;
-  if (totalMonths === limitMonths && parts.days > 0) return false;
+  const months = parts.years * 12 + parts.months;
+  if (months > limitMonths) return false;
+  if (months === limitMonths && parts.days > 0) return false;
   return true;
 };
 
 export const daysBetweenUtc = (start: Date, end: Date): number => {
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
-  const diff = Math.floor((end.getTime() - start.getTime()) / MS_PER_DAY);
+  const diff = Math.floor((utcDateMs(end) - utcDateMs(start)) / MS_PER_DAY);
   return diff < 0 ? 0 : diff;
 };
 
@@ -176,33 +168,55 @@ export const calculateAgeInfo = (params: {
     throw new Error("calculateAgeInfo: Invalid date input");
   }
 
-  const chronologicalParts = diffYmdBorrow(birth, target);
+  const chronologicalParts = diffYmdAnchored(birth, target);
+  const daysSinceBirth = daysBetweenUtc(birth, target);
 
   const prematurityDays = due ? daysBetweenUtc(birth, due) : 0;
-  const hasPrematurity = prematurityDays > 0;
-  const correctedBase = hasPrematurity && due ? due : birth;
-  const correctedParts = hasPrematurity
-    ? diffYmdBorrow(correctedBase, target)
-    : { years: 0, months: 0, days: 0 };
+  const gestationAtBirthDays = 280 - prematurityDays;
+  const isPreterm = Boolean(due) && gestationAtBirthDays < 259;
 
+  const isBeforeDue = Boolean(due && utcDateMs(target) < utcDateMs(due));
+  const correctedParts = due && isPreterm ? diffYmdAnchored(due, target) : { years: 0, months: 0, days: 0 };
   const correctedVisible =
-    hasPrematurity &&
-    !agesEqual(chronologicalParts, correctedParts) &&
+    Boolean(due) &&
+    isPreterm &&
+    !isBeforeDue &&
     isWithinCorrectedLimit(correctedParts, params.showCorrectedUntilMonths);
+
+  const gestationAtTargetDays = gestationAtBirthDays + daysSinceBirth;
+  const gestationalWeeks = Math.floor(gestationAtTargetDays / 7);
+  const gestationalDays = gestationAtTargetDays % 7;
+  const gestationalVisible = Boolean(due) && isPreterm && isBeforeDue;
+
+  const showMode: AgeInfo["flags"]["showMode"] = !isPreterm
+    ? "chronologicalOnly"
+    : isBeforeDue
+      ? "gestational"
+      : "corrected";
 
   return {
     chronological: {
+      parts: chronologicalParts,
       ...chronologicalParts,
-      formatted: formatAge(chronologicalParts, params.ageFormat),
+      formatted: formatAge(chronologicalParts),
     },
     corrected: {
+      parts: correctedParts,
       ...correctedParts,
-      formatted: correctedVisible
-        ? formatAge(correctedParts, params.ageFormat)
-        : null,
+      formatted: correctedVisible ? formatAge(correctedParts) : null,
       visible: correctedVisible,
     },
-    daysSinceBirth: daysBetweenUtc(birth, target),
+    gestational: {
+      weeks: gestationalWeeks,
+      days: gestationalDays,
+      formatted: gestationalVisible ? formatGestational(gestationalWeeks, gestationalDays) : null,
+      visible: gestationalVisible,
+    },
+    flags: {
+      isPreterm,
+      showMode,
+    },
+    daysSinceBirth,
   };
 };
 
@@ -213,18 +227,13 @@ export const monthKey = (date: Date): string => {
 };
 
 const startOfCalendarGrid = (anchor: Date): Date => {
-  const firstDay = new Date(
-    anchor.getFullYear(),
-    anchor.getMonth(),
-    1
-  );
+  const firstDay = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
   const startDay = firstDay.getDay();
   const startDate = new Date(firstDay);
   startDate.setDate(firstDay.getDate() - startDay);
   return startDate;
 };
 
-// birthDate / dueDate は UserProfile 由来の値を受け取り、UserSettings には含めない。
 export const buildCalendarMonthView = ({
   anchorDate,
   settings,
@@ -239,11 +248,7 @@ export const buildCalendarMonthView = ({
   achievementCountsByDay?: Record<string, number>;
 }): CalendarMonthView => {
   const startDate = startOfCalendarGrid(anchorDate);
-  const firstDay = new Date(
-    anchorDate.getFullYear(),
-    anchorDate.getMonth(),
-    1
-  );
+  const firstDay = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1);
   const startDay = firstDay.getDay();
   const daysInCurrentMonth = daysInMonth(anchorDate.getFullYear(), anchorDate.getMonth() + 1);
   const totalCells = startDay + daysInCurrentMonth;
@@ -277,7 +282,7 @@ export const buildCalendarMonthView = ({
     const chronologicalChanged =
       ageInfo &&
       previousAgeInfo &&
-      totalMonths(ageInfo.chronological) === totalMonths(previousAgeInfo.chronological) + 1;
+      totalMonthsFromParts(ageInfo.chronological) === totalMonthsFromParts(previousAgeInfo.chronological) + 1;
 
     const correctedVisible = Boolean(ageInfo?.corrected.visible && ageInfo.corrected.formatted);
     const previousCorrectedVisible = Boolean(
@@ -286,7 +291,7 @@ export const buildCalendarMonthView = ({
     const correctedChanged =
       correctedVisible &&
       previousCorrectedVisible &&
-      totalMonths(ageInfo.corrected) === totalMonths(previousAgeInfo!.corrected) + 1;
+      totalMonthsFromParts(ageInfo!.corrected) === totalMonthsFromParts(previousAgeInfo!.corrected) + 1;
 
     let calendarAgeLabel =
       ageInfo && (chronologicalChanged || correctedChanged)

@@ -85,8 +85,11 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose, useModal 
               {ageInfo ? (
                 <View style={styles.ageBlock}>
                   <Text style={styles.age}>暦: {ageInfo.chronological.formatted}</Text>
+                  {ageInfo.flags.showMode === "gestational" && ageInfo.gestational.formatted ? (
+                    <Text style={styles.age}>在胎: {ageInfo.gestational.formatted}</Text>
+                  ) : null}
                   {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
-                    <Text style={styles.age}>修: {ageInfo.corrected.formatted}</Text>
+                    <Text style={styles.age}>修正: {ageInfo.corrected.formatted}</Text>
                   ) : null}
                   {user?.settings.showDaysSinceBirth ? (
                     <Text style={styles.age}>生後日数: {ageInfo.daysSinceBirth}日目</Text>
