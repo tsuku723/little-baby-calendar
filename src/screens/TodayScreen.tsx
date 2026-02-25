@@ -269,12 +269,13 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
               <View style={styles.exportPhotoFrame}>
                 {latestPhotoPath ? <Image source={{ uri: latestPhotoPath }} style={styles.exportPhoto} resizeMode="cover" /> : <View style={styles.exportPhotoPlaceholder} />}
               </View>
-              <Image
-                source={EXPORT_DECORATION_IMAGE}
-                style={styles.exportDecorationOverlay}
-                resizeMode="contain"
-                pointerEvents="none"
-              />
+              <View style={styles.exportDecorationOverlay} pointerEvents="none">
+                <Image
+                  source={EXPORT_DECORATION_IMAGE}
+                  style={styles.exportDecorationImage}
+                  resizeMode="contain"
+                />
+              </View>
               <View style={styles.exportDateBlock}>
                 <Text style={styles.exportDateText} numberOfLines={1} ellipsizeMode="clip">
                   {exportDisplayDate}
@@ -528,6 +529,9 @@ const styles = StyleSheet.create({
   exportDecorationOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
+  },
+  exportDecorationImage: {
+    ...StyleSheet.absoluteFillObject,
   },
   exportDateBlock: {
     position: "absolute",

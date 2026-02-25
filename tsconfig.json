@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2019",
-    "module": "commonjs",
+    "module": "esnext",
     "strict": true,
     "jsx": "react-native",
     "esModuleInterop": true,
@@ -20,7 +20,10 @@
     "__tests__"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "__tests__/legacy/**",
+    ".tmp-test/**",
+    "node_modules/**"
   ],
   "extends": "expo/tsconfig.base"
 }

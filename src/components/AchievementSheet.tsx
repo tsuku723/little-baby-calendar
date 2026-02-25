@@ -104,7 +104,7 @@ const AchievementSheet: React.FC<Props> = ({ isoDay, visible, onClose, useModal 
                   <AchievementItem
                     key={item.id}
                     item={item}
-                    onEdit={setEditingId}
+                    onEdit={(item) => setEditingId(item.id)}
                     onDelete={(ach) => remove(ach.id, ach.date)}
                   />
                 ))}
