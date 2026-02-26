@@ -158,7 +158,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             ) : todayAgeInfo.corrected.visible && todayAgeInfo.corrected.formatted ? (
               <Text style={styles.headerChronological}>
                 {todayAgeInfo.chronological.formatted}
-                <Text style={styles.headerCorrectedSubtle}>（修正 {todayAgeInfo.corrected.formatted}）</Text>
+                <Text style={styles.headerChronological}>（修正 {todayAgeInfo.corrected.formatted}）</Text>
               </Text>
             ) : (
               <Text style={styles.headerChronological}>{todayAgeInfo.chronological.formatted}</Text>
@@ -262,12 +262,6 @@ const styles = StyleSheet.create({
   headerCorrected: {
     fontSize: 14,
     color: COLORS.accentMain,
-    fontFamily: "ZenMaruGothic-Regular",
-    textAlign: "center",
-  },
-  headerCorrectedSubtle: {
-    fontSize: 14,
-    color: COLORS.surface,
     fontFamily: "ZenMaruGothic-Regular",
     textAlign: "center",
   },
