@@ -71,7 +71,7 @@ const onDue = calculateAgeInfo({
   ageFormat: "md",
 });
 assert.equal(onDue.corrected.visible, true);
-assert.equal(onDue.corrected.formatted, "0才0ヶ月0日");
+assert.equal(onDue.corrected.formatted, "0ヶ月0日");
 assert.equal(onDue.gestational.visible, false);
 
 assert.equal(shouldShowDaysText(false, onDue.daysSinceBirth), null);

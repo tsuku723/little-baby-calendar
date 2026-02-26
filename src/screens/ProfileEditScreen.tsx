@@ -58,7 +58,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
     if (existing) return { ...existing.settings };
     return {
       showCorrectedUntilMonths: 24,
-      ageFormat: "md",
+      ageFormat: "ymd",
       showDaysSinceBirth: true,
       lastViewedMonth: null,
     };
@@ -104,7 +104,7 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
       setFormState(createEmptyForm());
       setDraftSettings({
         showCorrectedUntilMonths: 24,
-        ageFormat: "md",
+        ageFormat: "ymd",
         showDaysSinceBirth: true,
         lastViewedMonth: null,
       });
@@ -273,6 +273,29 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
                       styles.optionLabel,
                       draftSettings.showCorrectedUntilMonths === option.value && styles.optionLabelSelected,
                     ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+
+          <View style={styles.field}>
+            <Text style={styles.label}>月齢表記</Text>
+            <View style={styles.optionRow}>
+              {[
+                { label: "才ヶ月日", value: "ymd" },
+                { label: "ヶ月日", value: "md" },
+              ].map((option) => (
+                <Pressable
+                  key={option.value}
+                  style={[styles.optionButton, draftSettings.ageFormat === option.value && styles.optionButtonSelected]}
+                  onPress={() => setDraftSettings((prev) => ({ ...prev, ageFormat: option.value as UserSettings["ageFormat"] }))}
+                >
+                  <Text
+                    style={[styles.optionLabel, draftSettings.ageFormat === option.value && styles.optionLabelSelected]}
                   >
                     {option.label}
                   </Text>

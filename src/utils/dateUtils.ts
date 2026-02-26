@@ -118,8 +118,13 @@ const diffYmdAnchored = (start: Date, end: Date): AgeParts => {
   };
 };
 
-const formatAge = (parts: AgeParts): string =>
-  `${parts.years}才${parts.months}ヶ月${parts.days}日`;
+const formatAge = (parts: AgeParts, ageFormat: AgeFormat): string => {
+  if (ageFormat === "md") {
+    const totalMonths = parts.years * 12 + parts.months;
+    return `${totalMonths}ヶ月${parts.days}日`;
+  }
+  return `${parts.years}才${parts.months}ヶ月${parts.days}日`;
+};
 
 const totalMonthsFromParts = (parts: { years: number; months: number }): number =>
   parts.years * 12 + parts.months;
@@ -130,7 +135,10 @@ export const formatCalendarAgeLabel = (
   isCorrected: boolean
 ): string => {
   const labelPrefix = isCorrected ? "修正 " : "暦 ";
-  return `${labelPrefix}${totalMonthsFromParts(parts)}ヶ月`;
+  if (_ageFormat === "md") {
+    return `${labelPrefix}${totalMonthsFromParts(parts)}ヶ月`;
+  }
+  return `${labelPrefix}${parts.years}才${parts.months}ヶ月`;
 };
 
 const formatGestational = (weeks: number, days: number): string => `${weeks}週${days}日`;
@@ -198,12 +206,12 @@ export const calculateAgeInfo = (params: {
     chronological: {
       parts: chronologicalParts,
       ...chronologicalParts,
-      formatted: formatAge(chronologicalParts),
+      formatted: formatAge(chronologicalParts, params.ageFormat),
     },
     corrected: {
       parts: correctedParts,
       ...correctedParts,
-      formatted: correctedVisible ? formatAge(correctedParts) : null,
+      formatted: correctedVisible ? formatAge(correctedParts, params.ageFormat) : null,
       visible: correctedVisible,
     },
     gestational: {
@@ -279,10 +287,10 @@ export const buildCalendarMonthView = ({
           })
         : null;
 
+    const isBirthDay = Boolean(birthDate && iso === birthDate);
     const chronologicalChanged =
-      ageInfo &&
-      previousAgeInfo &&
-      totalMonthsFromParts(ageInfo.chronological) === totalMonthsFromParts(previousAgeInfo.chronological) + 1;
+      Boolean(ageInfo && previousAgeInfo &&
+      totalMonthsFromParts(ageInfo.chronological) === totalMonthsFromParts(previousAgeInfo.chronological) + 1) || isBirthDay;
 
     const correctedVisible = Boolean(ageInfo?.corrected.visible && ageInfo.corrected.formatted);
     const previousCorrectedVisible = Boolean(
@@ -293,14 +301,26 @@ export const buildCalendarMonthView = ({
       previousCorrectedVisible &&
       totalMonthsFromParts(ageInfo!.corrected) === totalMonthsFromParts(previousAgeInfo!.corrected) + 1;
 
+    const gestationalVisible = Boolean(ageInfo?.gestational.visible && ageInfo.gestational.formatted);
+    const previousGestationalVisible = Boolean(
+      previousAgeInfo?.gestational.visible && previousAgeInfo.gestational.formatted
+    );
+    const gestationalChanged =
+      gestationalVisible &&
+      previousGestationalVisible &&
+      ageInfo!.gestational.weeks === previousAgeInfo!.gestational.weeks + 1;
+
     let calendarAgeLabel =
-      ageInfo && (chronologicalChanged || correctedChanged)
+      ageInfo && (chronologicalChanged || correctedChanged || gestationalChanged)
         ? {
             chronological: chronologicalChanged
               ? formatCalendarAgeLabel(ageInfo.chronological, settings.ageFormat, false)
               : undefined,
             corrected: correctedChanged
               ? formatCalendarAgeLabel(ageInfo.corrected, settings.ageFormat, true)
+              : undefined,
+            gestational: gestationalChanged
+              ? `在胎 ${ageInfo.gestational.formatted}`
               : undefined,
           }
         : null;
