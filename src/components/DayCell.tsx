@@ -15,44 +15,64 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const isDimmed = !day.isCurrentMonth;
   const dateNumber = parseInt(day.date.slice(-2), 10);
 
+  const rawChrono = day.calendarAgeLabel?.chronological;
+  const chronologicalLabel =
+    rawChrono != null
+      ? rawChrono.replace(/^暦\s*/, "").replace(/^月齢\s*/, "")
+      : null;
+
   const correctedLabel = day.calendarAgeLabel?.corrected ?? null;
   const gestationalLabel = day.calendarAgeLabel?.gestational ?? null;
-  const chronologicalLabel = day.calendarAgeLabel?.chronological ?? null;
-  const primaryLabel = gestationalLabel ?? correctedLabel;
-  const hasBothLabels = Boolean(primaryLabel && chronologicalLabel);
 
-  const topLabel = primaryLabel ?? chronologicalLabel;
-  const topStyle = topLabel ? ((gestationalLabel || correctedLabel) ? styles.corrected : styles.age) : styles.hidden;
-  const bottomLabel = hasBothLabels ? chronologicalLabel : null;
+  const normalizedChronologicalLabel = chronologicalLabel === "" ? null : chronologicalLabel;
+  const normalizedCorrectedLabel = correctedLabel === "" ? null : correctedLabel;
+  const normalizedGestationalLabel = gestationalLabel === "" ? null : gestationalLabel;
+
+  let topLabel: string | null = normalizedChronologicalLabel;
+  let topStickerStyle = styles.ageStickerChronological;
+  let topTextStyle = styles.ageTextChronological;
+  let bottomLabel: string | null = null;
+  let bottomStickerStyle = styles.ageStickerChronological;
+  let bottomTextStyle = styles.ageTextChronological;
+
+  if (normalizedGestationalLabel != null) {
+    topLabel = normalizedGestationalLabel;
+    topStickerStyle = styles.ageStickerGestational;
+    topTextStyle = styles.ageTextGestational;
+    bottomLabel = normalizedChronologicalLabel;
+    bottomStickerStyle = styles.ageStickerChronological;
+    bottomTextStyle = styles.ageTextChronological;
+  } else if (normalizedCorrectedLabel != null) {
+    topLabel = normalizedChronologicalLabel;
+    topStickerStyle = styles.ageStickerChronological;
+    topTextStyle = styles.ageTextChronological;
+    bottomLabel = normalizedCorrectedLabel;
+    bottomStickerStyle = styles.ageStickerCorrected;
+    bottomTextStyle = styles.ageTextCorrected;
+  }
 
   const hasAchievements = day.achievementCount > 0;
-  const showAgeLabel = Boolean(day.calendarAgeLabel);
 
   const renderAgeLine = (
     text: string | null,
     baseStyle: object,
-    useSticker: boolean,
-    stickerStyle?: object,
-    textColorStyle?: object
+    stickerStyle: object,
+    textColorStyle: object
   ) => {
-    const shouldDim = Boolean(text) && baseStyle !== styles.hidden;
+    const normalizedText = text === "" ? null : text;
+    const shouldDim = normalizedText != null && baseStyle !== styles.hidden;
     const label = (
       <Text style={[baseStyle, textColorStyle, shouldDim && isDimmed && styles.ageDimmed]}>
-        {text ?? " "}
+        {normalizedText ?? " "}
       </Text>
     );
 
-    if (!useSticker || !text || baseStyle === styles.hidden) {
+    if (normalizedText == null || baseStyle === styles.hidden) {
       return label;
     }
 
     return <View style={[styles.ageSticker, stickerStyle]}>{label}</View>;
   };
-
-  const topStickerStyle = (correctedLabel || gestationalLabel)
-    ? styles.ageStickerCorrected
-    : styles.ageStickerActual;
-  const topTextStyle = (correctedLabel || gestationalLabel) ? styles.ageTextCorrected : styles.ageTextActual;
 
   return (
     <TouchableOpacity
@@ -81,19 +101,13 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
       <View style={styles.contentArea}>
         {day.isCurrentMonth ? (
           <>
-            {renderAgeLine(topLabel, topStyle, showAgeLabel, topStickerStyle, topTextStyle)}
-            {renderAgeLine(
-              bottomLabel,
-              hasBothLabels ? styles.ageWeak : styles.hidden,
-              showAgeLabel,
-              styles.ageStickerActual,
-              styles.ageTextActual
-            )}
+            {renderAgeLine(topLabel, topLabel != null ? styles.age : styles.hidden, topStickerStyle, topTextStyle)}
+            {renderAgeLine(bottomLabel, bottomLabel != null ? styles.ageWeak : styles.hidden, bottomStickerStyle, bottomTextStyle)}
           </>
         ) : (
           <>
-            {renderAgeLine(null, styles.hidden, false)}
-            {renderAgeLine(null, styles.hidden, false)}
+            {renderAgeLine(null, styles.hidden, styles.ageStickerChronological, styles.ageTextChronological)}
+            {renderAgeLine(null, styles.hidden, styles.ageStickerChronological, styles.ageTextChronological)}
           </>
         )}
       </View>
@@ -129,9 +143,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   datePill: {
- paddingLeft: 3,
-  paddingRight: 5,
-      paddingVertical: 2,
+    paddingLeft: 3,
+    paddingRight: 5,
+    paddingVertical: 2,
     borderRadius: 10,
   },
   datePillToday: {
@@ -161,11 +175,6 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
 
-  corrected: {
-    fontSize: 10,
-    color: COLORS.accentMain,
-  },
-
   ageWeak: {
     fontSize: 10,
     color: COLORS.textSecondary,
@@ -175,27 +184,34 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   ageSticker: {
-    backgroundColor: "rgba(255, 200, 223, 0.96)",
     borderRadius: 8,
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
     paddingVertical: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
-  ageStickerCorrected: {
-    backgroundColor: "rgba(243, 160, 138, 0.35)",
+  ageStickerChronological: {
+    backgroundColor: COLORS.ageBadgeChronologicalBg,
   },
-  ageStickerActual: {
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
+  ageStickerCorrected: {
+    backgroundColor: COLORS.ageBadgeCorrectedBg,
+  },
+  ageStickerGestational: {
+    backgroundColor: COLORS.ageBadgeGestationalBg,
+  },
+  ageTextChronological: {
+    color: COLORS.ageBadgeText,
+    fontSize: 10,
+    fontWeight: "600",
   },
   ageTextCorrected: {
-    color: COLORS.accentSub,
+    color: COLORS.ageBadgeText,
+    fontSize: 10,
+    fontWeight: "600",
   },
-  ageTextActual: {
-    color: COLORS.textSecondary,
+  ageTextGestational: {
+    color: COLORS.ageBadgeText,
+    fontSize: 10,
+    fontWeight: "600",
   },
 
   recordIcon: {

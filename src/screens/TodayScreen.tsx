@@ -213,19 +213,16 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
           <View style={styles.ageBlock}>
             {ageInfo.flags.showMode === "gestational" && ageInfo.gestational.visible && ageInfo.gestational.formatted ? (
               <View style={styles.ageRow}>
-                <Text style={styles.ageLabel}>在胎:</Text>
-                <Text style={styles.ageValue}>{ageInfo.gestational.formatted}</Text>
-                <Text style={styles.ageNote}>（暦: {ageInfo.chronological.formatted}）</Text>
+                <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
+                <Text style={styles.ageNote}>（在胎 {ageInfo.gestational.formatted}）</Text>
               </View>
             ) : ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
               <View style={styles.ageRow}>
-                <Text style={styles.ageLabel}>修正:</Text>
-                <Text style={styles.ageValue}>{ageInfo.corrected.formatted}</Text>
-                <Text style={styles.ageNote}>（暦: {ageInfo.chronological.formatted}）</Text>
+                <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
+                <Text style={styles.ageNote}>（修正 {ageInfo.corrected.formatted}）</Text>
               </View>
             ) : (
               <View style={styles.ageRow}>
-                <Text style={styles.ageLabel}>月齢:</Text>
                 <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
               </View>
             )}
@@ -285,16 +282,16 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
               <View style={styles.exportAgeBlock}>
                 {ageInfo?.flags.showMode === "gestational" && ageInfo.gestational.formatted ? (
                   <>
-                    <Text style={styles.exportChronologicalAge}>在胎 {ageInfo.gestational.formatted}</Text>
-                    <Text style={styles.exportCorrectedAge}>（暦 {ageInfo.chronological.formatted}）</Text>
+                    <Text style={styles.exportChronologicalAge}>{ageInfo.chronological.formatted}</Text>
+                    <Text style={styles.exportCorrectedAge}>（在胎 {ageInfo.gestational.formatted}）</Text>
                   </>
                 ) : ageInfo?.corrected.visible && ageInfo.corrected.formatted ? (
                   <>
-                    <Text style={styles.exportChronologicalAge}>修正 {ageInfo.corrected.formatted}</Text>
-                    <Text style={styles.exportCorrectedAge}>（暦 {ageInfo.chronological.formatted}）</Text>
+                    <Text style={styles.exportChronologicalAge}>{ageInfo.chronological.formatted}</Text>
+                    <Text style={styles.exportCorrectedAge}>（修正 {ageInfo.corrected.formatted}）</Text>
                   </>
                 ) : (
-                  <Text style={styles.exportChronologicalAge}>月齢 {ageInfo?.chronological.formatted ?? "-"}</Text>
+                  <Text style={styles.exportChronologicalAge}>{ageInfo?.chronological.formatted ?? "-"}</Text>
                 )}
               </View>
 

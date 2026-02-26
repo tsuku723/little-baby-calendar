@@ -151,17 +151,17 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
         {todayAgeInfo ? (
           <View style={styles.headerAgeBlock}>
             {todayAgeInfo.flags.showMode === "gestational" && todayAgeInfo.gestational.formatted ? (
-              <Text style={styles.headerCorrected}>
-                在胎 {todayAgeInfo.gestational.formatted}
-                <Text style={styles.headerChronological}>（暦 {todayAgeInfo.chronological.formatted}）</Text>
+              <Text style={styles.headerChronological}>
+                {todayAgeInfo.chronological.formatted}
+                <Text style={styles.headerCorrected}>（在胎 {todayAgeInfo.gestational.formatted}）</Text>
               </Text>
             ) : todayAgeInfo.corrected.visible && todayAgeInfo.corrected.formatted ? (
-              <Text style={styles.headerCorrected}>
-                修正 {todayAgeInfo.corrected.formatted}
-                <Text style={styles.headerChronological}>（暦 {todayAgeInfo.chronological.formatted}）</Text>
+              <Text style={styles.headerChronological}>
+                {todayAgeInfo.chronological.formatted}
+                <Text style={styles.headerCorrected}>（修正 {todayAgeInfo.corrected.formatted}）</Text>
               </Text>
             ) : (
-              <Text style={styles.headerChronological}>月齢 {todayAgeInfo.chronological.formatted}</Text>
+              <Text style={styles.headerChronological}>{todayAgeInfo.chronological.formatted}</Text>
             )}
             {showDaysSinceBirth ? <Text style={styles.headerDays}>生まれてから{todayAgeInfo.daysSinceBirth}日目</Text> : null}
           </View>
