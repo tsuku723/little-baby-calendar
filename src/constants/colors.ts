@@ -31,7 +31,7 @@ export const COLORS = {
 
   // Calendar age badges
   ageBadgeCorrectedBg: "#F2A48A",
-  ageBadgeChronologicalBg: "#4E6F66",
+  ageBadgeChronologicalBg: "#BFDCCF",
   ageBadgeText: "#FFFFFF",
 
   // Weekdays
