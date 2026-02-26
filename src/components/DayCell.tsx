@@ -18,15 +18,8 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const correctedLabel = day.calendarAgeLabel?.corrected ?? null;
   const gestationalLabel = day.calendarAgeLabel?.gestational ?? null;
   const chronologicalLabel = day.calendarAgeLabel?.chronological ?? null;
-  const primaryLabel = gestationalLabel ?? correctedLabel;
-  const hasBothLabels = Boolean(primaryLabel && chronologicalLabel);
-
-  const topLabel = primaryLabel ?? chronologicalLabel;
-  const topStyle = topLabel ? ((gestationalLabel || correctedLabel) ? styles.corrected : styles.age) : styles.hidden;
-  const bottomLabel = hasBothLabels ? chronologicalLabel : null;
 
   const hasAchievements = day.achievementCount > 0;
-  const showAgeLabel = Boolean(day.calendarAgeLabel);
 
   const renderAgeLine = (
     text: string | null,
@@ -49,10 +42,17 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
     return <View style={[styles.ageSticker, stickerStyle]}>{label}</View>;
   };
 
-  const topStickerStyle = (correctedLabel || gestationalLabel)
-    ? styles.ageStickerCorrected
-    : styles.ageStickerActual;
-  const topTextStyle = (correctedLabel || gestationalLabel) ? styles.ageTextCorrected : styles.ageTextActual;
+  const topLabel = gestationalLabel ?? chronologicalLabel;
+  const topStyle = topLabel ? (gestationalLabel ? styles.corrected : styles.age) : styles.hidden;
+
+  const bottomLabel = gestationalLabel
+    ? chronologicalLabel
+    : correctedLabel;
+  const bottomStyle = gestationalLabel
+    ? styles.ageWeak
+    : correctedLabel
+      ? styles.corrected
+      : styles.hidden;
 
   return (
     <TouchableOpacity
@@ -81,13 +81,13 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
       <View style={styles.contentArea}>
         {day.isCurrentMonth ? (
           <>
-            {renderAgeLine(topLabel, topStyle, showAgeLabel, topStickerStyle, topTextStyle)}
+            {renderAgeLine(topLabel, topStyle, Boolean(gestationalLabel), styles.ageStickerCorrected, styles.ageTextCorrected)}
             {renderAgeLine(
               bottomLabel,
-              hasBothLabels ? styles.ageWeak : styles.hidden,
-              showAgeLabel,
-              styles.ageStickerActual,
-              styles.ageTextActual
+              bottomStyle,
+              Boolean(correctedLabel),
+              correctedLabel ? styles.ageStickerCorrected : styles.ageStickerActual,
+              correctedLabel ? styles.ageTextCorrected : styles.ageTextActual
             )}
           </>
         ) : (
@@ -129,9 +129,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   datePill: {
- paddingLeft: 3,
-  paddingRight: 5,
-      paddingVertical: 2,
+    paddingLeft: 3,
+    paddingRight: 5,
+    paddingVertical: 2,
     borderRadius: 10,
   },
   datePillToday: {
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   ageStickerCorrected: {
-    backgroundColor: "rgba(243, 160, 138, 0.35)",
+    backgroundColor: "rgba(233, 122, 96, 0.35)",
   },
   ageStickerActual: {
     backgroundColor: "rgba(0, 0, 0, 0.05)",

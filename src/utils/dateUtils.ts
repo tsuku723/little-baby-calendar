@@ -134,7 +134,7 @@ export const formatCalendarAgeLabel = (
   _ageFormat: AgeFormat,
   isCorrected: boolean
 ): string => {
-  const labelPrefix = isCorrected ? "修正 " : "暦 ";
+  const labelPrefix = isCorrected ? "修正 " : "";
   if (_ageFormat === "md") {
     return `${labelPrefix}${totalMonthsFromParts(parts)}ヶ月`;
   }

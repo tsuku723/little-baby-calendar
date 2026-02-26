@@ -18,15 +18,15 @@ export const COLORS = {
   textSecondary: "#8B8278",
 
   // Accents
-  accentMain: "#F2A48A",
-  accentSub: "#F6C1CC",
+  accentMain: "#E97A60",
+  accentSub: "#F5B0C0",
   highlightToday: "#CFE6D6",
   headerBackground: "#BFDCCF",
   /**
    * Floating Action Button の背景色。
-   * 既存の accentMain (#F2A48A) と同じ値を使う。
+   * 既存の accentMain (#E97A60) と同じ値を使う。
    */
-  fabBackground: "#F2A48A",
+  fabBackground: "#E97A60",
   optionSelectedBorder: "#8BBBA5",
 
   // Weekdays
