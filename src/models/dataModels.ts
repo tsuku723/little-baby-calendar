@@ -56,17 +56,37 @@ export type DailyRecord = {
 
 export type AgeInfo = {
   chronological: {
+    parts: {
+      years: number;
+      months: number;
+      days: number;
+    };
     years: number;
     months: number;
     days: number;
     formatted: string;
   };
   corrected: {
+    parts: {
+      years: number;
+      months: number;
+      days: number;
+    };
     years: number;
     months: number;
     days: number;
     formatted: string | null;
     visible: boolean;
+  };
+  gestational: {
+    weeks: number;
+    days: number;
+    formatted: string | null;
+    visible: boolean;
+  };
+  flags: {
+    isPreterm: boolean;
+    showMode: "chronologicalOnly" | "gestational" | "corrected";
   };
   daysSinceBirth: number;
 };
@@ -83,6 +103,7 @@ export type CalendarDay = {
   calendarAgeLabel: {
     chronological?: string;
     corrected?: string;
+    gestational?: string;
   } | null;
 
   achievementCount: number;

@@ -25,7 +25,7 @@ import { useActiveUser } from "@/state/AppStateContext";
 import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
 import { useDateViewContext } from "@/state/DateViewContext";
 import { clampComment, remainingChars } from "@/utils/text";
-import { safeParseIsoLocal, toIsoDateString } from "@/utils/dateUtils";
+import { safeParseIsoLocal, toIsoDateString, toUtcDateOnly } from "@/utils/dateUtils";
 import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync } from "@/utils/photo";
 import { RECORD_TITLE_CANDIDATES } from "./recordTitleCandidates";
 import { COLORS } from "@/constants/colors";
@@ -118,6 +118,10 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     closeDatePicker();
   };
 
+  const setDateToToday = () => {
+    setRecordDate(toUtcDateOnly(new Date()));
+  };
+
   // 候補選択時のハンドリング
   const handleSelectCandidate = (candidate: string) => {
     setTitle(candidate);
@@ -207,7 +211,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       const ok = window.confirm("この記録を削除します。よろしいですか？");
       if (!ok) return;
       const targetStack = from === "list" ? "RecordListStack" : "CalendarStack";
-      navigation.replace("MainTabs", { screen: targetStack });
+      (navigation as any).replace("MainTabs", { screen: targetStack });
       remove(editingRecord.id, editingRecord.date).catch((error) => {
         console.error("Failed to delete record", error);
         window.alert("削除に失敗しました。時間をおいて再度お試しください。");
@@ -222,7 +226,7 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         style: "destructive",
         onPress: async () => {
           const targetStack = from === "list" ? "RecordListStack" : "CalendarStack";
-          navigation.replace("MainTabs", { screen: targetStack });
+          (navigation as any).replace("MainTabs", { screen: targetStack });
           try {
             await remove(editingRecord.id, editingRecord.date);
           } catch (error) {
@@ -291,6 +295,9 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           >
             <Text style={styles.dateRowLabel}>日付</Text>
             <Text style={styles.dateRowValue}>{toIsoDateString(recordDate)} ▼</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.todayButton} onPress={setDateToToday} accessibilityRole="button">
+            <Text style={styles.todayButtonText}>今日へ</Text>
           </TouchableOpacity>
         </View>
 
@@ -515,6 +522,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textPrimary,
     fontWeight: "700",
+  },
+  todayButton: {
+    marginTop: 8,
+    alignSelf: "flex-end",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+  },
+  todayButtonText: {
+    fontSize: 13,
+    color: COLORS.textPrimary,
+    fontWeight: "600",
   },
   textarea: {
     minHeight: 140,

@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "node scripts/run-age-tests.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/zen-maru-gothic": "^0.2.3",

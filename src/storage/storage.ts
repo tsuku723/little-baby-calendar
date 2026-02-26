@@ -11,7 +11,7 @@ export const STORAGE_KEYS = {
 // 設定は画面表示に関するもののみを保持する。出生情報はプロフィールで管理する。
 const DEFAULT_SETTINGS: UserSettings = {
   showCorrectedUntilMonths: 24,
-  ageFormat: "md",
+  ageFormat: "ymd",
   showDaysSinceBirth: true,
   lastViewedMonth: null,
 };

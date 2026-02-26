@@ -11,7 +11,7 @@ export {
 
 export const DEFAULT_SETTINGS: import("../models/dataModels").UserSettings = {
   showCorrectedUntilMonths: 24,
-  ageFormat: "md",
+  ageFormat: "ymd",
   showDaysSinceBirth: true,
   lastViewedMonth: null,
 };
