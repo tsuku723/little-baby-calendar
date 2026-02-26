@@ -18,16 +18,21 @@ export const COLORS = {
   textSecondary: "#8B8278",
 
   // Accents
-  accentMain: "#E97A60",
-  accentSub: "#F5B0C0",
+  accentMain: "#F2A48A",
+  accentSub: "#F6C1CC",
   highlightToday: "#CFE6D6",
   headerBackground: "#BFDCCF",
   /**
    * Floating Action Button の背景色。
-   * 既存の accentMain (#E97A60) と同じ値を使う。
+   * 既存の accentMain (#F2A48A) と同じ値を使う。
    */
-  fabBackground: "#E97A60",
+  fabBackground: "#F2A48A",
   optionSelectedBorder: "#8BBBA5",
+
+  // Calendar age badges
+  ageBadgeCorrectedBg: "#F2A48A",
+  ageBadgeChronologicalBg: "#4E6F66",
+  ageBadgeText: "#FFFFFF",
 
   // Weekdays
   sunday: "#E7A3A3",
