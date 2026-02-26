@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { calculateAgeInfo, formatCalendarAgeLabel } from "../src/utils/dateUtils";
+import { buildCalendarMonthView, calculateAgeInfo, formatCalendarAgeLabel } from "../src/utils/dateUtils";
 
 const hasNegativeSign = (value: string) => value.includes("-");
 
@@ -87,3 +87,17 @@ assert.equal(
   "修正 3ヶ月"
 );
 
+const shortBeforeDueMonth = buildCalendarMonthView({
+  anchorDate: new Date(2025, 1, 1),
+  settings: {
+    showCorrectedUntilMonths: null,
+    ageFormat: "md",
+    showDaysSinceBirth: true,
+    lastViewedMonth: null,
+  },
+  birthDate: "2025-01-01",
+  dueDate: "2025-02-02",
+});
+
+const feb1 = shortBeforeDueMonth.days.find((day) => day.date === "2025-02-01");
+assert.equal(Boolean(feb1?.calendarAgeLabel?.gestational), true);

@@ -267,6 +267,7 @@ export const buildCalendarMonthView = ({
   const hasValidBirthDate = Boolean(birthDate) && isIsoDateString(birthDate);
   const normalizedDueDate = dueDate && isIsoDateString(dueDate) ? dueDate : null;
   let previousAgeInfo: AgeInfo | null = null;
+  let hasShownGestationalInCurrentMonth = false;
 
   for (let offset = 0; offset < cellCount; offset += 1) {
     const date = new Date(startDate);
@@ -309,9 +310,11 @@ export const buildCalendarMonthView = ({
       gestationalVisible &&
       previousGestationalVisible &&
       ageInfo!.gestational.weeks === previousAgeInfo!.gestational.weeks + 1;
+    const firstGestationalInCurrentMonth =
+      isCurrentMonth && gestationalVisible && !hasShownGestationalInCurrentMonth;
 
     let calendarAgeLabel =
-      ageInfo && (chronologicalChanged || correctedChanged || gestationalChanged)
+      ageInfo && (chronologicalChanged || correctedChanged || gestationalChanged || firstGestationalInCurrentMonth)
         ? {
             chronological: chronologicalChanged
               ? formatCalendarAgeLabel(ageInfo.chronological, settings.ageFormat, false)
@@ -320,6 +323,7 @@ export const buildCalendarMonthView = ({
               ? formatCalendarAgeLabel(ageInfo.corrected, settings.ageFormat, true)
               : undefined,
             gestational: gestationalChanged
+              || firstGestationalInCurrentMonth
               ? `在胎 ${ageInfo.gestational.formatted}`
               : undefined,
           }
@@ -340,6 +344,9 @@ export const buildCalendarMonthView = ({
     });
 
     previousAgeInfo = ageInfo;
+    if (isCurrentMonth && gestationalVisible) {
+      hasShownGestationalInCurrentMonth = true;
+    }
   }
 
   return {
