@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { calculateAgeInfo, formatCalendarAgeLabel } from "../src/utils/dateUtils";
+import { buildCalendarMonthView, calculateAgeInfo } from "../src/utils/dateUtils";
 
 const hasNegativeSign = (value: string) => value.includes("-");
 
@@ -75,6 +75,33 @@ assert.equal(onDue.corrected.formatted, "0ヶ月0日");
 assert.equal(onDue.gestational.visible, false);
 
 assert.equal(shouldShowDaysText(false, onDue.daysSinceBirth), null);
+
+
+const settings = {
+  ageFormat: "md" as const,
+  showCorrectedUntilMonths: null,
+  showDaysSinceBirth: false,
+  lastViewedMonth: null,
+};
+
+const februaryView = buildCalendarMonthView({
+  anchorDate: new Date(2025, 1, 1),
+  settings,
+  birthDate: "2025-01-01",
+  dueDate: "2025-03-01",
+});
+const februaryFirst = februaryView.days.find((day) => day.date === "2025-02-01");
+assert.equal(februaryFirst?.calendarAgeLabel?.chronological, "暦 1ヶ月");
+
+const marchView = buildCalendarMonthView({
+  anchorDate: new Date(2025, 2, 1),
+  settings,
+  birthDate: "2025-01-01",
+  dueDate: "2025-03-01",
+});
+const marchFirst = marchView.days.find((day) => day.date === "2025-03-01");
+assert.equal(marchFirst?.calendarAgeLabel?.chronological, "暦 2ヶ月");
+assert.equal(marchFirst?.calendarAgeLabel?.corrected, "修正 0ヶ月");
 
 console.log("age.dateUtils tests passed");
 
