@@ -266,6 +266,7 @@ export const buildCalendarMonthView = ({
   const days: CalendarDay[] = [];
   const hasValidBirthDate = Boolean(birthDate) && isIsoDateString(birthDate);
   const normalizedDueDate = dueDate && isIsoDateString(dueDate) ? dueDate : null;
+  let previousAgeInfo: AgeInfo | null = null;
 
   for (let offset = 0; offset < cellCount; offset += 1) {
     const date = new Date(startDate);
@@ -288,17 +289,26 @@ export const buildCalendarMonthView = ({
 
     const isBirthDay = Boolean(birthDate && iso === birthDate);
     const chronologicalChanged =
-      Boolean(ageInfo && ageInfo.chronological.days === 0) || isBirthDay;
+      Boolean(ageInfo && previousAgeInfo &&
+      totalMonthsFromParts(ageInfo.chronological) === totalMonthsFromParts(previousAgeInfo.chronological) + 1) || isBirthDay;
 
     const correctedVisible = Boolean(ageInfo?.corrected.visible && ageInfo.corrected.formatted);
+    const previousCorrectedVisible = Boolean(
+      previousAgeInfo?.corrected.visible && previousAgeInfo.corrected.formatted
+    );
     const correctedChanged =
       correctedVisible &&
-      ageInfo!.corrected.days === 0;
+      previousCorrectedVisible &&
+      totalMonthsFromParts(ageInfo!.corrected) === totalMonthsFromParts(previousAgeInfo!.corrected) + 1;
 
     const gestationalVisible = Boolean(ageInfo?.gestational.visible && ageInfo.gestational.formatted);
+    const previousGestationalVisible = Boolean(
+      previousAgeInfo?.gestational.visible && previousAgeInfo.gestational.formatted
+    );
     const gestationalChanged =
       gestationalVisible &&
-      ageInfo!.gestational.days === 0;
+      previousGestationalVisible &&
+      ageInfo!.gestational.weeks === previousAgeInfo!.gestational.weeks + 1;
 
     let calendarAgeLabel =
       ageInfo && (chronologicalChanged || correctedChanged || gestationalChanged)
@@ -329,6 +339,7 @@ export const buildCalendarMonthView = ({
       hasAchievements: (achievementCountsByDay?.[iso] ?? 0) > 0,
     });
 
+    previousAgeInfo = ageInfo;
   }
 
   return {
