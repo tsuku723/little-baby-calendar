@@ -104,3 +104,13 @@ assert.equal(marchFirst?.calendarAgeLabel?.chronological, "暦 2ヶ月");
 assert.equal(marchFirst?.calendarAgeLabel?.corrected, "修正 0ヶ月");
 
 console.log("age.dateUtils tests passed");
+
+assert.equal(
+  formatCalendarAgeLabel({ years: 0, months: 3 }, "md", false),
+  "3ヶ月"
+);
+assert.equal(
+  formatCalendarAgeLabel({ years: 0, months: 3 }, "md", true),
+  "修正 3ヶ月"
+);
+
