@@ -18,8 +18,15 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const correctedLabel = day.calendarAgeLabel?.corrected ?? null;
   const gestationalLabel = day.calendarAgeLabel?.gestational ?? null;
   const chronologicalLabel = day.calendarAgeLabel?.chronological ?? null;
+  const primaryLabel = gestationalLabel ?? correctedLabel;
+  const hasBothLabels = Boolean(primaryLabel && chronologicalLabel);
+
+  const topLabel = primaryLabel ?? chronologicalLabel;
+  const topStyle = topLabel ? ((gestationalLabel || correctedLabel) ? styles.corrected : styles.age) : styles.hidden;
+  const bottomLabel = hasBothLabels ? chronologicalLabel : null;
 
   const hasAchievements = day.achievementCount > 0;
+  const showAgeLabel = Boolean(day.calendarAgeLabel);
 
   const renderAgeLine = (
     text: string | null,
@@ -42,29 +49,30 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
     return <View style={[styles.ageSticker, stickerStyle]}>{label}</View>;
   };
 
-  const topLabel = gestationalLabel ?? chronologicalLabel;
-  const topStyle = topLabel ? (gestationalLabel ? styles.corrected : styles.age) : styles.hidden;
-
-  const bottomLabel = gestationalLabel ? chronologicalLabel : correctedLabel;
-  const bottomStyle = gestationalLabel ? styles.ageWeak : correctedLabel ? styles.corrected : styles.hidden;
-
-  const topUseSticker = Boolean(topLabel) && !gestationalLabel;
-  const topStickerStyle = styles.ageStickerChronological;
-  const topTextStyle = styles.ageTextChronological;
-
-  const bottomUseSticker = Boolean(bottomLabel);
-  const bottomStickerStyle = gestationalLabel ? styles.ageStickerChronological : styles.ageStickerCorrected;
-  const bottomTextStyle = gestationalLabel ? styles.ageTextChronological : styles.ageTextCorrected;
+  const topStickerStyle = (correctedLabel || gestationalLabel)
+    ? styles.ageStickerCorrected
+    : styles.ageStickerActual;
+  const topTextStyle = (correctedLabel || gestationalLabel) ? styles.ageTextCorrected : styles.ageTextActual;
 
   return (
     <TouchableOpacity
       accessibilityRole="button"
       onPress={() => onPress(day.date)}
-      style={[styles.container, isDimmed && styles.containerDimmed, day.isToday && styles.today]}
+      style={[
+        styles.container,
+        isDimmed && styles.containerDimmed,
+        day.isToday && styles.today,
+      ]}
     >
       <View style={styles.dateArea}>
         <View style={[styles.datePill, day.isToday && styles.datePillToday]}>
-          <Text style={[styles.dateLabel, day.isToday && styles.dateLabelToday, isDimmed && styles.dateDimmed]}>
+          <Text
+            style={[
+              styles.dateLabel,
+              day.isToday && styles.dateLabelToday,
+              isDimmed && styles.dateDimmed,
+            ]}
+          >
             {dateNumber}
           </Text>
         </View>
@@ -73,8 +81,14 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
       <View style={styles.contentArea}>
         {day.isCurrentMonth ? (
           <>
-            {renderAgeLine(topLabel, topStyle, topUseSticker, topStickerStyle, topTextStyle)}
-            {renderAgeLine(bottomLabel, bottomStyle, bottomUseSticker, bottomStickerStyle, bottomTextStyle)}
+            {renderAgeLine(topLabel, topStyle, showAgeLabel, topStickerStyle, topTextStyle)}
+            {renderAgeLine(
+              bottomLabel,
+              hasBothLabels ? styles.ageWeak : styles.hidden,
+              showAgeLabel,
+              styles.ageStickerActual,
+              styles.ageTextActual
+            )}
           </>
         ) : (
           <>
@@ -115,9 +129,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   datePill: {
-    paddingLeft: 3,
-    paddingRight: 5,
-    paddingVertical: 2,
+ paddingLeft: 3,
+  paddingRight: 5,
+      paddingVertical: 2,
     borderRadius: 10,
   },
   datePillToday: {
@@ -158,27 +172,30 @@ const styles = StyleSheet.create({
   },
 
   ageDimmed: {
-    opacity: 0.8,
+    color: COLORS.textSecondary,
   },
   ageSticker: {
-    borderRadius: 9,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    marginVertical: 1,
+    backgroundColor: "rgba(255, 200, 223, 0.96)",
+    borderRadius: 8,
+    paddingHorizontal: 3,
+    paddingVertical: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   ageStickerCorrected: {
-    backgroundColor: COLORS.ageBadgeCorrectedBg,
+    backgroundColor: "rgba(243, 160, 138, 0.35)",
   },
-  ageStickerChronological: {
-    backgroundColor: COLORS.ageBadgeChronologicalBg,
+  ageStickerActual: {
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
   },
   ageTextCorrected: {
-    color: COLORS.ageBadgeText,
-    fontWeight: "600",
+    color: COLORS.accentSub,
   },
-  ageTextChronological: {
-    color: COLORS.ageBadgeText,
-    fontWeight: "600",
+  ageTextActual: {
+    color: COLORS.textSecondary,
   },
 
   recordIcon: {

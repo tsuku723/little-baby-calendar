@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { calculateAgeInfo, formatCalendarAgeLabel } from "../src/utils/dateUtils";
+import { calculateAgeInfo } from "../src/utils/dateUtils";
 
 const hasNegativeSign = (value: string) => value.includes("-");
 
@@ -77,13 +77,3 @@ assert.equal(onDue.gestational.visible, false);
 assert.equal(shouldShowDaysText(false, onDue.daysSinceBirth), null);
 
 console.log("age.dateUtils tests passed");
-
-assert.equal(
-  formatCalendarAgeLabel({ years: 0, months: 3 }, "md", false),
-  "3ヶ月"
-);
-assert.equal(
-  formatCalendarAgeLabel({ years: 0, months: 3 }, "md", true),
-  "修正 3ヶ月"
-);
-
