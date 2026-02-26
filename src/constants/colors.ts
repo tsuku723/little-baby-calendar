@@ -20,6 +20,7 @@ export const COLORS = {
   // Accents
   accentMain: "#F2A48A",
   accentSub: "#F6C1CC",
+  accentStrong: "#D97A57",
   highlightToday: "#CFE6D6",
   headerBackground: "#BFDCCF",
   /**

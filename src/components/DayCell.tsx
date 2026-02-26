@@ -18,12 +18,26 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const correctedLabel = day.calendarAgeLabel?.corrected ?? null;
   const gestationalLabel = day.calendarAgeLabel?.gestational ?? null;
   const chronologicalLabel = day.calendarAgeLabel?.chronological ?? null;
-  const primaryLabel = gestationalLabel ?? correctedLabel;
-  const hasBothLabels = Boolean(primaryLabel && chronologicalLabel);
+  const isBirthdayCorrectedLabel = correctedLabel?.startsWith("修正0歳0ヵ月") ?? false;
+  const shouldPrioritizeChronological = Boolean(
+    chronologicalLabel && correctedLabel && !gestationalLabel && !isBirthdayCorrectedLabel
+  );
 
-  const topLabel = primaryLabel ?? chronologicalLabel;
-  const topStyle = topLabel ? ((gestationalLabel || correctedLabel) ? styles.corrected : styles.age) : styles.hidden;
-  const bottomLabel = hasBothLabels ? chronologicalLabel : null;
+  const topLabel = gestationalLabel
+    ? gestationalLabel
+    : shouldPrioritizeChronological
+      ? chronologicalLabel
+      : correctedLabel ?? chronologicalLabel;
+  const topStyle = topLabel
+    ? (gestationalLabel
+      ? styles.corrected
+      : shouldPrioritizeChronological
+        ? styles.agePrimary
+        : correctedLabel
+          ? styles.corrected
+          : styles.age)
+    : styles.hidden;
+  const bottomLabel = shouldPrioritizeChronological ? `(${correctedLabel})` : null;
 
   const hasAchievements = day.achievementCount > 0;
   const showAgeLabel = Boolean(day.calendarAgeLabel);
@@ -49,10 +63,20 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
     return <View style={[styles.ageSticker, stickerStyle]}>{label}</View>;
   };
 
-  const topStickerStyle = (correctedLabel || gestationalLabel)
+  const topStickerStyle = gestationalLabel
     ? styles.ageStickerCorrected
-    : styles.ageStickerActual;
-  const topTextStyle = (correctedLabel || gestationalLabel) ? styles.ageTextCorrected : styles.ageTextActual;
+    : shouldPrioritizeChronological
+      ? styles.ageStickerPrimary
+      : correctedLabel
+        ? styles.ageStickerCorrected
+        : styles.ageStickerActual;
+  const topTextStyle = gestationalLabel
+    ? styles.ageTextCorrected
+    : shouldPrioritizeChronological
+      ? styles.ageTextPrimary
+      : correctedLabel
+        ? styles.ageTextCorrected
+        : styles.ageTextActual;
 
   return (
     <TouchableOpacity
@@ -84,10 +108,10 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
             {renderAgeLine(topLabel, topStyle, showAgeLabel, topStickerStyle, topTextStyle)}
             {renderAgeLine(
               bottomLabel,
-              hasBothLabels ? styles.ageWeak : styles.hidden,
+              bottomLabel ? styles.ageSubtle : styles.hidden,
               showAgeLabel,
-              styles.ageStickerActual,
-              styles.ageTextActual
+              styles.ageStickerSubtle,
+              styles.ageTextSubtle
             )}
           </>
         ) : (
@@ -160,6 +184,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.textPrimary,
   },
+  agePrimary: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
 
   corrected: {
     fontSize: 10,
@@ -168,6 +197,10 @@ const styles = StyleSheet.create({
 
   ageWeak: {
     fontSize: 10,
+    color: COLORS.textSecondary,
+  },
+  ageSubtle: {
+    fontSize: 9,
     color: COLORS.textSecondary,
   },
 
@@ -191,10 +224,24 @@ const styles = StyleSheet.create({
   ageStickerActual: {
     backgroundColor: "rgba(0, 0, 0, 0.05)",
   },
+  ageStickerPrimary: {
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.08)",
+  },
+  ageStickerSubtle: {
+    backgroundColor: "rgba(0, 0, 0, 0.035)",
+  },
   ageTextCorrected: {
     color: COLORS.accentSub,
   },
+  ageTextPrimary: {
+    color: COLORS.accentStrong,
+  },
   ageTextActual: {
+    color: COLORS.textSecondary,
+  },
+  ageTextSubtle: {
     color: COLORS.textSecondary,
   },
 
