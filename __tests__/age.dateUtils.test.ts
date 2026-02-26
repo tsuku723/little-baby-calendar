@@ -101,3 +101,35 @@ const shortBeforeDueMonth = buildCalendarMonthView({
 
 const feb1 = shortBeforeDueMonth.days.find((day) => day.date === "2025-02-01");
 assert.equal(Boolean(feb1?.calendarAgeLabel?.gestational), true);
+
+const janBeforeDueMonth = buildCalendarMonthView({
+  anchorDate: new Date(2025, 0, 1),
+  settings: {
+    showCorrectedUntilMonths: null,
+    ageFormat: "md",
+    showDaysSinceBirth: true,
+    lastViewedMonth: null,
+  },
+  birthDate: "2025-01-01",
+  dueDate: "2025-03-01",
+});
+const janGestationalDays = janBeforeDueMonth.days.filter(
+  (day) => day.isCurrentMonth && Boolean(day.calendarAgeLabel?.gestational)
+);
+assert.equal(janGestationalDays.length > 0, true);
+
+const decBeforeDueMonth = buildCalendarMonthView({
+  anchorDate: new Date(2025, 11, 1),
+  settings: {
+    showCorrectedUntilMonths: null,
+    ageFormat: "md",
+    showDaysSinceBirth: true,
+    lastViewedMonth: null,
+  },
+  birthDate: "2025-11-11",
+  dueDate: "2026-01-11",
+});
+const decGestationalDays = decBeforeDueMonth.days.filter(
+  (day) => day.isCurrentMonth && Boolean(day.calendarAgeLabel?.gestational)
+);
+assert.equal(decGestationalDays.length > 0, true);
