@@ -56,6 +56,16 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const bottomStickerStyle = gestationalLabel ? styles.ageStickerChronological : styles.ageStickerCorrected;
   const bottomTextStyle = gestationalLabel ? styles.ageTextChronological : styles.ageTextCorrected;
 
+  if (__DEV__ && day.isCurrentMonth && gestationalLabel) {
+    console.log("[DayCell] render gestational label", {
+      date: day.date,
+      gestationalLabel,
+      chronologicalLabel,
+      correctedLabel,
+      showMode: day.ageInfo?.flags.showMode ?? null,
+    });
+  }
+
   return (
     <TouchableOpacity
       accessibilityRole="button"

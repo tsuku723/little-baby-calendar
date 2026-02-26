@@ -139,6 +139,26 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     [anchorDate]
   );
 
+  useEffect(() => {
+    if (!__DEV__) return;
+
+    const gestationalDays = monthView.days.filter(
+      (day) => day.isCurrentMonth && Boolean(day.calendarAgeLabel?.gestational)
+    );
+
+    console.log("[CalendarScreen] gestational label debug", {
+      anchorMonth: monthLabel,
+      birthDate: user?.birthDate ?? null,
+      dueDate: user?.dueDate ?? null,
+      gestationalLabelCount: gestationalDays.length,
+      sample: gestationalDays.slice(0, 5).map((day) => ({
+        date: day.date,
+        label: day.calendarAgeLabel?.gestational ?? null,
+        showMode: day.ageInfo?.flags.showMode ?? null,
+      })),
+    });
+  }, [monthLabel, monthView.days, user?.birthDate, user?.dueDate]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.backgroundLayer} pointerEvents="none" accessible={false}>
