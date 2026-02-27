@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-import { calculateAgeInfo } from "../src/utils/dateUtils";
+import { buildCalendarMonthView, calculateAgeInfo } from "../src/utils/dateUtils";
 
 const hasNegativeSign = (value: string) => value.includes("-");
 
@@ -77,3 +77,53 @@ assert.equal(onDue.gestational.visible, false);
 assert.equal(shouldShowDaysText(false, onDue.daysSinceBirth), null);
 
 console.log("age.dateUtils tests passed");
+
+
+const pretermSettings = {
+  ageFormat: "md" as const,
+  showCorrectedUntilMonths: null,
+  showDaysSinceBirth: true,
+  lastViewedMonth: null,
+};
+
+const februaryView = buildCalendarMonthView({
+  anchorDate: new Date(2025, 1, 1),
+  settings: pretermSettings,
+  birthDate: "2025-01-01",
+  dueDate: "2025-03-01",
+});
+const feb1 = februaryView.days.find((day) => day.date === "2025-02-01");
+assert.ok(feb1);
+assert.equal(feb1?.calendarAgeLabel?.chronological != null, true);
+
+const marchView = buildCalendarMonthView({
+  anchorDate: new Date(2025, 2, 1),
+  settings: pretermSettings,
+  birthDate: "2025-01-01",
+  dueDate: "2025-03-01",
+});
+const mar1 = marchView.days.find((day) => day.date === "2025-03-01");
+assert.ok(mar1);
+assert.equal(mar1?.calendarAgeLabel?.chronological != null, true);
+assert.equal(mar1?.calendarAgeLabel?.corrected != null, true);
+
+const dueDayAgeInfo = calculateAgeInfo({
+  targetDate: "2025-03-01",
+  birthDate: "2025-01-01",
+  dueDate: "2025-03-01",
+  showCorrectedUntilMonths: null,
+  ageFormat: "md",
+});
+assert.equal(dueDayAgeInfo.corrected.visible, true);
+assert.equal(dueDayAgeInfo.corrected.formatted, "0ヶ月0日");
+
+const nonPretermView = buildCalendarMonthView({
+  anchorDate: new Date(2025, 11, 1),
+  settings: pretermSettings,
+  birthDate: "2025-11-11",
+  dueDate: "2026-01-10",
+});
+const dec11 = nonPretermView.days.find((day) => day.date === "2025-12-11");
+assert.ok(dec11);
+assert.equal(dec11?.calendarAgeLabel?.chronological != null, true);
+assert.equal(dec11?.calendarAgeLabel?.corrected == null, true);

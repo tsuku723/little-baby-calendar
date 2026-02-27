@@ -292,23 +292,22 @@ export const buildCalendarMonthView = ({
       Boolean(ageInfo && previousAgeInfo &&
       totalMonthsFromParts(ageInfo.chronological) === totalMonthsFromParts(previousAgeInfo.chronological) + 1) || isBirthDay;
 
-    const correctedVisible = Boolean(ageInfo?.corrected.visible && ageInfo.corrected.formatted);
-    const previousCorrectedVisible = Boolean(
-      previousAgeInfo?.corrected.visible && previousAgeInfo.corrected.formatted
-    );
+    const correctedVisible = ageInfo?.corrected.visible === true && ageInfo.corrected.formatted != null;
+    const previousCorrectedVisible =
+      previousAgeInfo?.corrected.visible === true && previousAgeInfo.corrected.formatted != null;
     const correctedChanged =
       correctedVisible &&
-      previousCorrectedVisible &&
-      totalMonthsFromParts(ageInfo!.corrected) === totalMonthsFromParts(previousAgeInfo!.corrected) + 1;
+      ((previousCorrectedVisible &&
+        totalMonthsFromParts(ageInfo!.corrected) === totalMonthsFromParts(previousAgeInfo!.corrected) + 1) ||
+        !previousCorrectedVisible);
 
-    const gestationalVisible = Boolean(ageInfo?.gestational.visible && ageInfo.gestational.formatted);
-    const previousGestationalVisible = Boolean(
-      previousAgeInfo?.gestational.visible && previousAgeInfo.gestational.formatted
-    );
+    const gestationalVisible = ageInfo?.gestational.visible === true && ageInfo.gestational.formatted != null;
+    const previousGestationalVisible =
+      previousAgeInfo?.gestational.visible === true && previousAgeInfo.gestational.formatted != null;
     const gestationalChanged =
       gestationalVisible &&
-      previousGestationalVisible &&
-      ageInfo!.gestational.weeks === previousAgeInfo!.gestational.weeks + 1;
+      ((previousGestationalVisible && ageInfo!.gestational.weeks === previousAgeInfo!.gestational.weeks + 1) ||
+        !previousGestationalVisible);
 
     let calendarAgeLabel =
       ageInfo && (chronologicalChanged || correctedChanged || gestationalChanged)
@@ -340,6 +339,26 @@ export const buildCalendarMonthView = ({
     });
 
     previousAgeInfo = ageInfo;
+  }
+
+  const monthDays = days.filter((day) => day.isCurrentMonth);
+  const hasChronologicalLabelInMonth = monthDays.some(
+    (day) => day.calendarAgeLabel?.chronological != null
+  );
+
+  if (!hasChronologicalLabelInMonth) {
+    const fallbackDay = monthDays.find((day) => day.ageInfo != null);
+    if (fallbackDay?.ageInfo) {
+      const fallbackChronologicalLabel = formatCalendarAgeLabel(
+        fallbackDay.ageInfo.chronological,
+        settings.ageFormat,
+        false
+      );
+      fallbackDay.calendarAgeLabel = {
+        ...(fallbackDay.calendarAgeLabel ?? {}),
+        chronological: fallbackChronologicalLabel,
+      };
+    }
   }
 
   return {
