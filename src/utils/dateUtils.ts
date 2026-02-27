@@ -340,7 +340,7 @@ export const buildCalendarMonthView = ({
               : undefined,
             corrected: correctedChanged
               ? (() => {
-                  const correctedDisplayMonths = Math.max(correctedCurrentTotalMonths - 1, 0);
+                  const correctedDisplayMonths = Math.max(correctedCurrentTotalMonths, 0);
                   return formatCalendarAgeLabel(
                     toYearMonthFromTotalMonths(correctedDisplayMonths),
                     settings.ageFormat,

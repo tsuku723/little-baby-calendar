@@ -146,6 +146,9 @@ const preDueView = buildCalendarMonthView({
 const jan9 = preDueView.days.find((day) => day.date === "2026-01-09");
 assert.ok(jan9);
 assert.equal(jan9?.calendarAgeLabel?.corrected == null, true);
+const jan10 = preDueView.days.find((day) => day.date === "2026-01-10");
+assert.ok(jan10);
+assert.equal(jan10?.calendarAgeLabel?.corrected, "修正 0才0ヶ月");
 
 const correctedFebView = buildCalendarMonthView({
   anchorDate: new Date(2026, 1, 1),
@@ -155,7 +158,7 @@ const correctedFebView = buildCalendarMonthView({
 });
 const feb10 = correctedFebView.days.find((day) => day.date === "2026-02-10");
 assert.ok(feb10);
-assert.equal(feb10?.calendarAgeLabel?.corrected, "修正 0才0ヶ月");
+assert.equal(feb10?.calendarAgeLabel?.corrected, "修正 0才1ヶ月");
 const correctedFeb1 = correctedFebView.days.find((day) => day.date === "2026-02-01");
 assert.ok(correctedFeb1);
 assert.equal(correctedFeb1?.calendarAgeLabel?.corrected == null, true);
@@ -168,7 +171,7 @@ const correctedMarView = buildCalendarMonthView({
 });
 const mar10 = correctedMarView.days.find((day) => day.date === "2026-03-10");
 assert.ok(mar10);
-assert.equal(mar10?.calendarAgeLabel?.corrected, "修正 0才1ヶ月");
+assert.equal(mar10?.calendarAgeLabel?.corrected, "修正 0才2ヶ月");
 const correctedMar1 = correctedMarView.days.find((day) => day.date === "2026-03-01");
 assert.ok(correctedMar1);
 assert.equal(correctedMar1?.calendarAgeLabel?.corrected == null, true);
@@ -181,7 +184,7 @@ const correctedNovView = buildCalendarMonthView({
 });
 const nov10 = correctedNovView.days.find((day) => day.date === "2026-11-10");
 assert.ok(nov10);
-assert.equal(nov10?.calendarAgeLabel?.corrected, "修正 0才9ヶ月");
+assert.equal(nov10?.calendarAgeLabel?.corrected, "修正 0才10ヶ月");
 
 const preBirthView = buildCalendarMonthView({
   anchorDate: new Date(2025, 10, 1),
