@@ -271,6 +271,7 @@ export const buildCalendarMonthView = ({
   const days: CalendarDay[] = [];
   const hasValidBirthDate = Boolean(birthDate) && isIsoDateString(birthDate);
   const normalizedDueDate = dueDate && isIsoDateString(dueDate) ? dueDate : null;
+  const dueDayOfMonth = normalizedDueDate ? normalizeToUtcDate(normalizedDueDate).getDate() : null;
   let previousAgeInfo: AgeInfo | null = null;
 
   for (let offset = 0; offset < cellCount; offset += 1) {
@@ -298,18 +299,14 @@ export const buildCalendarMonthView = ({
       totalMonthsFromParts(ageInfo.chronological) === totalMonthsFromParts(previousAgeInfo.chronological) + 1) || isBirthDay;
 
     const correctedVisible = ageInfo?.corrected.visible === true && ageInfo.corrected.formatted != null;
-    const previousCorrectedVisible =
-      previousAgeInfo?.corrected.visible === true && previousAgeInfo.corrected.formatted != null;
     const correctedCurrentTotalMonths = correctedVisible ? totalMonthsFromParts(ageInfo!.corrected) : -1;
-    const correctedPreviousTotalMonths = previousCorrectedVisible
-      ? totalMonthsFromParts(previousAgeInfo!.corrected)
-      : -1;
-    // 修正月齢ラベルは「予定日ベースで1か月進んだ日」にのみ表示する。
-    // 例: due=1/10 の場合、2/10 に「修正 0ヶ月」、3/10 に「修正 1ヶ月」。
-    const correctedChanged =
-      correctedVisible &&
-      previousCorrectedVisible &&
-      correctedCurrentTotalMonths === correctedPreviousTotalMonths + 1;
+    const daysInTargetMonth = daysInMonth(date.getFullYear(), date.getMonth() + 1);
+    const isDueAnniversary =
+      dueDayOfMonth != null &&
+      (date.getDate() === dueDayOfMonth ||
+        (dueDayOfMonth > daysInTargetMonth && date.getDate() === daysInTargetMonth));
+    // 修正月齢ラベルは月初ではなく、予定日の日付オフセットに揃えて表示する。
+    const correctedChanged = correctedVisible && isDueAnniversary;
 
     const gestationalVisible = ageInfo?.gestational.visible === true && ageInfo.gestational.formatted != null;
     const previousGestationalVisible =
@@ -326,11 +323,14 @@ export const buildCalendarMonthView = ({
               ? formatCalendarAgeLabel(ageInfo.chronological, settings.ageFormat, false)
               : undefined,
             corrected: correctedChanged
-              ? formatCalendarAgeLabel(
-                  toYearMonthFromTotalMonths(correctedCurrentTotalMonths - 1),
-                  settings.ageFormat,
-                  true
-                )
+              ? (() => {
+                  const displayTotalMonths = Math.max(correctedCurrentTotalMonths - 1, 0);
+                  return formatCalendarAgeLabel(
+                    toYearMonthFromTotalMonths(displayTotalMonths),
+                    settings.ageFormat,
+                    true
+                  );
+                })()
               : undefined,
             gestational: gestationalChanged
               ? `在胎 ${ageInfo.gestational.formatted}`

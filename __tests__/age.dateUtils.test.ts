@@ -105,7 +105,7 @@ const marchView = buildCalendarMonthView({
 const mar1 = marchView.days.find((day) => day.date === "2025-03-01");
 assert.ok(mar1);
 assert.equal(mar1?.calendarAgeLabel?.chronological != null, true);
-assert.equal(mar1?.calendarAgeLabel?.corrected == null, true);
+assert.equal(mar1?.calendarAgeLabel?.corrected, "修正 0ヶ月");
 
 const dueDayAgeInfo = calculateAgeInfo({
   targetDate: "2025-03-01",
