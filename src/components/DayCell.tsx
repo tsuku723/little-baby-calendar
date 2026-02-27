@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { CalendarDay } from "@/models/dataModels";
 import { COLORS } from "@/constants/colors";
+import { normalizeAgeLabelText, stripChronologicalPrefix } from "@/utils/ageLabelNormalization";
 
 interface Props {
   day: CalendarDay;
@@ -16,22 +17,19 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const dateNumber = parseInt(day.date.slice(-2), 10);
 
   const rawChrono = day.calendarAgeLabel?.chronological;
-  const chronologicalLabel =
-    rawChrono != null
-      ? rawChrono.replace(/^暦\s*/, "").replace(/^月齢\s*/, "")
-      : null;
+  const chronologicalLabel = stripChronologicalPrefix(rawChrono);
 
   const correctedLabel = day.calendarAgeLabel?.corrected ?? null;
   const gestationalLabel = day.calendarAgeLabel?.gestational ?? null;
 
-  const normalizedChronologicalLabel = chronologicalLabel === "" ? null : chronologicalLabel;
-  const normalizedCorrectedLabel = correctedLabel === "" ? null : correctedLabel;
-  const normalizedGestationalLabel = gestationalLabel === "" ? null : gestationalLabel;
+  const normalizedChronologicalLabel = normalizeAgeLabelText(chronologicalLabel);
+  const normalizedCorrectedLabel = normalizeAgeLabelText(correctedLabel);
+  const normalizedGestationalLabel = normalizeAgeLabelText(gestationalLabel);
 
-  let topLabel: string | null = normalizedChronologicalLabel;
+  let topLabel: string | number | null = normalizedChronologicalLabel;
   let topStickerStyle = styles.ageStickerChronological;
   let topTextStyle = styles.ageTextChronological;
-  let bottomLabel: string | null = null;
+  let bottomLabel: string | number | null = null;
   let bottomStickerStyle = styles.ageStickerChronological;
   let bottomTextStyle = styles.ageTextChronological;
 
@@ -54,16 +52,16 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   const hasAchievements = day.achievementCount > 0;
 
   const renderAgeLine = (
-    text: string | null,
+    text: string | number | null,
     baseStyle: object,
     stickerStyle: object,
     textColorStyle: object
   ) => {
-    const normalizedText = text === "" ? null : text;
+    const normalizedText = normalizeAgeLabelText(text);
     const shouldDim = normalizedText != null && baseStyle !== styles.hidden;
     const label = (
       <Text style={[baseStyle, textColorStyle, shouldDim && isDimmed && styles.ageDimmed]}>
-        {normalizedText ?? " "}
+        {normalizedText != null ? String(normalizedText) : " "}
       </Text>
     );
 
