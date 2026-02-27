@@ -136,6 +136,17 @@ const dueOffsetSettings = {
   lastViewedMonth: null,
 };
 
+
+const preDueView = buildCalendarMonthView({
+  anchorDate: new Date(2026, 0, 1),
+  settings: dueOffsetSettings,
+  birthDate: "2025-11-11",
+  dueDate: "2026-01-10",
+});
+const jan9 = preDueView.days.find((day) => day.date === "2026-01-09");
+assert.ok(jan9);
+assert.equal(jan9?.calendarAgeLabel?.corrected == null, true);
+
 const correctedFebView = buildCalendarMonthView({
   anchorDate: new Date(2026, 1, 1),
   settings: dueOffsetSettings,

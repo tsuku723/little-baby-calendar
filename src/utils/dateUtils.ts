@@ -272,6 +272,18 @@ export const buildCalendarMonthView = ({
   const hasValidBirthDate = Boolean(birthDate) && isIsoDateString(birthDate);
   const normalizedDueDate = dueDate && isIsoDateString(dueDate) ? dueDate : null;
   const dueDayOfMonth = normalizedDueDate ? normalizeToUtcDate(normalizedDueDate).getDate() : null;
+  const birthToDueTotalMonths =
+    hasValidBirthDate && normalizedDueDate
+      ? totalMonthsFromParts(
+          calculateAgeInfo({
+            targetDate: normalizedDueDate,
+            birthDate: birthDate as string,
+            dueDate: null,
+            showCorrectedUntilMonths: settings.showCorrectedUntilMonths,
+            ageFormat: settings.ageFormat,
+          }).chronological
+        )
+      : null;
   let previousAgeInfo: AgeInfo | null = null;
 
   for (let offset = 0; offset < cellCount; offset += 1) {
@@ -299,13 +311,17 @@ export const buildCalendarMonthView = ({
       totalMonthsFromParts(ageInfo.chronological) === totalMonthsFromParts(previousAgeInfo.chronological) + 1) || isBirthDay;
 
     const correctedVisible = ageInfo?.corrected.visible === true && ageInfo.corrected.formatted != null;
-    const correctedCurrentTotalMonths = correctedVisible ? totalMonthsFromParts(ageInfo!.corrected) : -1;
+    const chronologicalTotalMonths = ageInfo ? totalMonthsFromParts(ageInfo.chronological) : -1;
+    const correctedCurrentTotalMonths =
+      correctedVisible && birthToDueTotalMonths != null
+        ? chronologicalTotalMonths - birthToDueTotalMonths
+        : -1;
     const daysInTargetMonth = daysInMonth(date.getFullYear(), date.getMonth() + 1);
     const isDueAnniversary =
       dueDayOfMonth != null &&
       (date.getDate() === dueDayOfMonth ||
         (dueDayOfMonth > daysInTargetMonth && date.getDate() === daysInTargetMonth));
-    // 修正月齢ラベルは月初ではなく、予定日の日付オフセットに揃えて表示する。
+    // 修正月齢ラベルは月初ではなく、予定日と同じ日付（なければ月末）にのみ表示する。
     const correctedChanged = correctedVisible && isDueAnniversary;
 
     const gestationalVisible = ageInfo?.gestational.visible === true && ageInfo.gestational.formatted != null;
@@ -324,9 +340,9 @@ export const buildCalendarMonthView = ({
               : undefined,
             corrected: correctedChanged
               ? (() => {
-                  const displayTotalMonths = Math.max(correctedCurrentTotalMonths - 1, 0);
+                  const correctedDisplayMonths = Math.max(correctedCurrentTotalMonths - 1, 0);
                   return formatCalendarAgeLabel(
-                    toYearMonthFromTotalMonths(displayTotalMonths),
+                    toYearMonthFromTotalMonths(correctedDisplayMonths),
                     settings.ageFormat,
                     true
                   );
