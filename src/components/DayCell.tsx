@@ -34,12 +34,11 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   let bottomTextStyle = styles.ageTextChronological;
 
   if (normalizedGestationalLabel != null) {
+    // 誕生日前（在胎表示期間）は暦月齢を出さない。
     topLabel = normalizedGestationalLabel;
     topStickerStyle = styles.ageStickerGestational;
     topTextStyle = styles.ageTextGestational;
-    bottomLabel = normalizedChronologicalLabel;
-    bottomStickerStyle = styles.ageStickerChronological;
-    bottomTextStyle = styles.ageTextChronological;
+    bottomLabel = null;
   } else if (normalizedCorrectedLabel != null) {
     topLabel = normalizedChronologicalLabel;
     topStickerStyle = styles.ageStickerChronological;

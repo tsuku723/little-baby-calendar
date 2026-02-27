@@ -129,6 +129,11 @@ const formatAge = (parts: AgeParts, ageFormat: AgeFormat): string => {
 const totalMonthsFromParts = (parts: { years: number; months: number }): number =>
   parts.years * 12 + parts.months;
 
+const toYearMonthFromTotalMonths = (totalMonths: number): { years: number; months: number } => ({
+  years: Math.floor(totalMonths / 12),
+  months: totalMonths % 12,
+});
+
 export const formatCalendarAgeLabel = (
   parts: { years: number; months: number },
   _ageFormat: AgeFormat,
@@ -295,11 +300,16 @@ export const buildCalendarMonthView = ({
     const correctedVisible = ageInfo?.corrected.visible === true && ageInfo.corrected.formatted != null;
     const previousCorrectedVisible =
       previousAgeInfo?.corrected.visible === true && previousAgeInfo.corrected.formatted != null;
+    const correctedCurrentTotalMonths = correctedVisible ? totalMonthsFromParts(ageInfo!.corrected) : -1;
+    const correctedPreviousTotalMonths = previousCorrectedVisible
+      ? totalMonthsFromParts(previousAgeInfo!.corrected)
+      : -1;
+    // 修正月齢ラベルは「予定日ベースで1か月進んだ日」にのみ表示する。
+    // 例: due=1/10 の場合、2/10 に「修正 0ヶ月」、3/10 に「修正 1ヶ月」。
     const correctedChanged =
       correctedVisible &&
-      ((previousCorrectedVisible &&
-        totalMonthsFromParts(ageInfo!.corrected) === totalMonthsFromParts(previousAgeInfo!.corrected) + 1) ||
-        !previousCorrectedVisible);
+      previousCorrectedVisible &&
+      correctedCurrentTotalMonths === correctedPreviousTotalMonths + 1;
 
     const gestationalVisible = ageInfo?.gestational.visible === true && ageInfo.gestational.formatted != null;
     const previousGestationalVisible =
@@ -316,7 +326,11 @@ export const buildCalendarMonthView = ({
               ? formatCalendarAgeLabel(ageInfo.chronological, settings.ageFormat, false)
               : undefined,
             corrected: correctedChanged
-              ? formatCalendarAgeLabel(ageInfo.corrected, settings.ageFormat, true)
+              ? formatCalendarAgeLabel(
+                  toYearMonthFromTotalMonths(correctedCurrentTotalMonths - 1),
+                  settings.ageFormat,
+                  true
+                )
               : undefined,
             gestational: gestationalChanged
               ? `在胎 ${ageInfo.gestational.formatted}`
@@ -347,7 +361,8 @@ export const buildCalendarMonthView = ({
   );
 
   if (!hasChronologicalLabelInMonth) {
-    const fallbackDay = monthDays.find((day) => day.ageInfo != null);
+    // 誕生日前のセルに暦月齢を補完表示しないため、birthDate 以降のセルのみ対象にする。
+    const fallbackDay = monthDays.find((day) => day.ageInfo != null && (birthDate == null || day.date >= birthDate));
     if (fallbackDay?.ageInfo) {
       const fallbackChronologicalLabel = formatCalendarAgeLabel(
         fallbackDay.ageInfo.chronological,
