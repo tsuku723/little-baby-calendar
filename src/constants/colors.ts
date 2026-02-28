@@ -29,6 +29,12 @@ export const COLORS = {
   fabBackground: "#F2A48A",
   optionSelectedBorder: "#8BBBA5",
 
+  // Age badge colors
+  ageBadgeChronologicalBg: "#8BBBA5",
+  ageBadgeCorrectedBg: "#F2A48A",
+  ageBadgeGestationalBg: "#F2A48A",
+  ageBadgeText: "#FFFFFF",
+
   // Weekdays
   sunday: "#E7A3A3",
   saturday: "#A9C4E4",

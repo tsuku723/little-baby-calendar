@@ -51,7 +51,7 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.title}>記録が見つかりません</Text>
           <Button
             title={from === "list" ? "記録一覧に戻る" : "今日に戻る"}
-            onPress={() => navigation.replace("MainTabs", { screen: targetStack })}
+            onPress={() => (navigation as any).replace("MainTabs", { screen: targetStack })}
           />
         </View>
       </SafeAreaView>

@@ -140,7 +140,7 @@ const migrateLegacyState = async (): Promise<AppState | null> => {
     dueDate: legacySettings?.dueDate ?? null,
     settings: {
       showCorrectedUntilMonths: legacySettings?.showCorrectedUntilMonths ?? 24,
-      ageFormat: legacySettings?.ageFormat ?? "md",
+      ageFormat: legacySettings?.ageFormat ?? "ymd",
       showDaysSinceBirth: legacySettings?.showDaysSinceBirth ?? true,
       lastViewedMonth: legacySettings?.lastViewedMonth ?? null,
     },
