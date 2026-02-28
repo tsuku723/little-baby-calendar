@@ -1,4 +1,4 @@
-﻿/**
+/**
  * NOTE:
  * データエクスポート機能は MVP では一旦見送る。
  *
@@ -12,6 +12,7 @@
 import React, { useCallback } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { SettingsStackParamList } from "@/navigation";
@@ -20,6 +21,21 @@ import { useAppState } from "@/state/AppStateContext";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
+
+type SupportRoute =
+  | "About"
+  | "PrivacyPolicy"
+  | "Terms"
+  | "OpenSourceLicenses"
+  | "Contact";
+
+const supportMenus: Array<{ label: string; route: SupportRoute }> = [
+  { label: "このアプリについて", route: "About" },
+  { label: "プライバシーポリシー", route: "PrivacyPolicy" },
+  { label: "利用規約", route: "Terms" },
+  { label: "オープンソースライセンス", route: "OpenSourceLicenses" },
+  { label: "お問い合わせ", route: "Contact" },
+];
 
 const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { state, setActiveUser } = useAppState();
@@ -73,6 +89,26 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
 
         <Text style={styles.notice}>※出生情報はプロフィール編集画面でのみ入力できます。</Text>
         <Text style={styles.notice}>※このアプリの記録は、この端末の中だけに保存されます。</Text>
+
+        <View style={styles.supportSection}>
+          <Text style={styles.label}>サポート</Text>
+          <View style={styles.supportMenuContainer}>
+            {supportMenus.map((menu, index) => {
+              const isLast = index === supportMenus.length - 1;
+              return (
+                <TouchableOpacity
+                  key={menu.route}
+                  style={[styles.supportMenuRow, isLast && styles.supportMenuRowLast]}
+                  onPress={() => navigation.navigate(menu.route)}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.supportMenuLabel}>{menu.label}</Text>
+                  <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -168,6 +204,33 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cellDimmed,
     padding: 12,
     borderRadius: 8,
+  },
+  supportSection: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  supportMenuContainer: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: "hidden",
+  },
+  supportMenuRow: {
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.border,
+  },
+  supportMenuRowLast: {
+    borderBottomWidth: 0,
+  },
+  supportMenuLabel: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
   },
 });
 
