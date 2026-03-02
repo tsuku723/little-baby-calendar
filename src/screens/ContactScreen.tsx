@@ -1,9 +1,11 @@
 import React, { useCallback } from "react";
-import { Alert, Linking, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { Alert, Linking, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 
+import AppText from "@/components/AppText";
+import { LEGAL_META } from "@/content/legal/ja";
 import { COLORS } from "@/constants/colors";
 
-const SUPPORT_EMAIL = "support@example.com";
+const SUPPORT_EMAIL = LEGAL_META.contactEmail;
 
 const ContactScreen: React.FC = () => {
   const handlePressEmail = useCallback(async () => {
@@ -22,9 +24,19 @@ const ContactScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.text}>準備中。後で本文を差し替えます。</Text>
+        <AppText style={styles.description}>
+          ご意見・ご不明点がございましたら、以下のメールアドレスまでご連絡ください。
+        </AppText>
+        <View style={styles.emailCard}>
+          <AppText style={styles.emailLabel} weight="medium">
+            メールアドレス
+          </AppText>
+          <AppText style={styles.emailValue}>{SUPPORT_EMAIL}</AppText>
+        </View>
         <TouchableOpacity style={styles.button} onPress={handlePressEmail} accessibilityRole="button">
-          <Text style={styles.buttonText}>メールでお問い合わせ</Text>
+          <AppText style={styles.buttonText} weight="medium">
+            メールを起動する
+          </AppText>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -40,10 +52,27 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 16,
   },
-  text: {
+  description: {
     fontSize: 16,
     color: COLORS.textPrimary,
-    lineHeight: 24,
+    lineHeight: 28,
+  },
+  emailCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    padding: 16,
+    gap: 8,
+  },
+  emailLabel: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  emailValue: {
+    fontSize: 18,
+    color: COLORS.textPrimary,
+    lineHeight: 28,
   },
   button: {
     borderRadius: 12,
@@ -57,7 +86,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     color: COLORS.textPrimary,
-    fontWeight: "700",
   },
 });
 

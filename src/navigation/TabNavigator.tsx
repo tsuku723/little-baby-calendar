@@ -42,7 +42,24 @@ const RecordListStackNavigator: React.FC = () => (
 );
 
 const SettingsStackNavigator: React.FC = () => (
-  <SettingsStack.Navigator initialRouteName="Settings" screenOptions={{ headerShown: false }}>
+  <SettingsStack.Navigator
+    initialRouteName="Settings"
+    screenOptions={{
+      headerShown: false,
+      headerStyle: {
+        backgroundColor: COLORS.headerBackground,
+      },
+      headerShadowVisible: false,
+      headerTintColor: COLORS.textPrimary,
+      headerTitleStyle: {
+        color: COLORS.textPrimary,
+      },
+      headerBackButtonDisplayMode: "minimal",
+      contentStyle: {
+        backgroundColor: COLORS.background,
+      },
+    }}
+  >
     <SettingsStack.Screen name="Settings" component={SettingsScreen} />
     <SettingsStack.Screen name="ProfileEdit" component={ProfileEditScreen} />
     <SettingsStack.Screen name="ProfileManager" component={ProfileManagerScreen} />
