@@ -8,11 +8,18 @@ import { normalizeAgeLabelText, stripChronologicalPrefix } from "@/utils/ageLabe
 interface Props {
   day: CalendarDay;
   onPress: (iso: string) => void;
+  gridPos?: {
+    rowIndex: number;
+    colIndex: number;
+    isLastRow: boolean;
+    isLastCol: boolean;
+  };
 }
 
 const CELL_HEIGHT = 80;
+const HAIR = StyleSheet.hairlineWidth;
 
-const DayCell: React.FC<Props> = ({ day, onPress }) => {
+const DayCell: React.FC<Props> = ({ day, onPress, gridPos }) => {
   const isDimmed = !day.isCurrentMonth;
   const dateNumber = parseInt(day.date.slice(-2), 10);
 
@@ -49,6 +56,11 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
   }
 
   const hasAchievements = day.achievementCount > 0;
+  const borderStyle = {
+    borderRightWidth: gridPos?.isLastCol ? 0 : HAIR,
+    borderBottomWidth: gridPos?.isLastRow ? 0 : HAIR,
+    borderColor: COLORS.border,
+  };
 
   const renderAgeLine = (
     text: string | number | null,
@@ -77,6 +89,7 @@ const DayCell: React.FC<Props> = ({ day, onPress }) => {
       onPress={() => onPress(day.date)}
       style={[
         styles.container,
+        borderStyle,
         isDimmed && styles.containerDimmed,
         day.isToday && styles.today,
       ]}
@@ -116,11 +129,9 @@ const styles = StyleSheet.create({
   container: {
     height: CELL_HEIGHT,
     flex: 1,
-    borderRadius: 10,
-    marginHorizontal: 2,
-    marginVertical: 2,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    borderRadius: 0,
+    marginHorizontal: 0,
+    marginVertical: 0,
     backgroundColor: COLORS.cellCurrent,
     overflow: "hidden",
   },
@@ -128,8 +139,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cellDimmed,
   },
   today: {
-    borderWidth: 2,
-    borderColor: COLORS.highlightToday,
     backgroundColor: COLORS.highlightToday,
   },
   dateArea: {
