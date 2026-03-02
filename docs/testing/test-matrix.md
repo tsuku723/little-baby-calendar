@@ -13,10 +13,10 @@
 | `src/utils/text.ts` | `remainingChars`, `clampComment`, `normalizeSearchText` | `__tests__/text.utils.jest.test.ts` | ✅ |
 | `src/services/achievementService.ts` | `cleanupReplacedPhotoAsync`, `removeAchievementPhotoAsync` | `__tests__/achievementService.jest.test.ts` | ✅ |
 | `src/storage/storage.ts` | `loadUserSettings`, `loadAchievements` | `__tests__/storage.jest.test.ts` | ✅ |
-| `src/utils/photo.ts` | `pickAndSavePhotoAsync`, `ensureFileExistsAsync`, `deleteIfExistsAsync` | （未追加: Expo FileSystem/ImagePicker 依存のため unit 対象外） | ⛔ |
-| `src/state/AppStateContext.tsx` | `AppStateProvider`, `useAppState`, `useActiveUser`, `useAchievements` | （未追加: provider 統合挙動が中心） | ⛔ |
-| `src/state/AchievementsContext.tsx` | `AchievementsProvider`, `useAchievements` | （未追加: provider 統合挙動が中心） | ⛔ |
-| `src/state/DateViewContext.tsx` | `DateViewProvider`, `useDateViewContext` | （未追加: provider 統合挙動が中心） | ⛔ |
+| `src/utils/photo.ts` | `pickAndSavePhotoAsync`, `ensureFileExistsAsync`, `deleteIfExistsAsync` | `__tests__/photo.utils.jest.test.ts` | ✅ |
+| `src/state/AppStateContext.tsx` | `AppStateProvider`, `useAppState`, `useActiveUser`, `useAchievements` | `__tests__/AppStateContext.jest.test.tsx` | ✅ |
+| `src/state/AchievementsContext.tsx` | `AchievementsProvider`, `useAchievements` | `__tests__/AchievementsContext.jest.test.tsx` | ✅ |
+| `src/state/DateViewContext.tsx` | `DateViewProvider`, `useDateViewContext` | `__tests__/DateViewContext.jest.test.tsx` | ✅ |
 
 ### 非関数 export（補助）
 - 型・interface export: `src/models/dataModels.ts`, `src/navigation/types.ts`, `src/state/*` など。
@@ -35,7 +35,11 @@
 | TS-UI-001 | DayCell 表示分岐 + onPress | — | — | ✅ | 対象外 | `__tests__/DayCell.ui.jest.test.tsx` |
 | TS-STATE-001 | 写真差し替え/削除の副作用制御 | ✅ | ✅ | — | 対象外 | `__tests__/achievementService.jest.test.ts` |
 | TS-DATA-001 | 設定/実績の永続化・移行 | ✅ | ✅ | — | 対象外 | `__tests__/storage.jest.test.ts` |
+| TS-PHOTO-001 | 写真選択/保存・存在確認・削除 | ✅ | ✅ | — | 対象外 | `__tests__/photo.utils.jest.test.ts` |
+| TS-STATE-002 | AppState load/migrate/profile/active 制御 | ✅ | ✅ | — | 対象外 | `__tests__/AppStateContext.jest.test.tsx` |
+| TS-STATE-003 | AchievementsContext upsert/remove 分岐 | ✅ | ✅ | — | 対象外 | `__tests__/AchievementsContext.jest.test.tsx` |
+| TS-STATE-004 | DateViewContext selectedDate/today 制御 | ✅ | — | ✅ | 対象外 | `__tests__/DateViewContext.jest.test.tsx` |
 
 ## 現状サマリ
-- 最優先対象（`buildCalendarMonthView`、日付境界、修正月齢、DayCellイベント、STATE/DATA 副作用）を Jest 29 系 unit/integration 相当で追加。
+- 旧 ⛔ 対象（`photo.ts` / `AppStateContext` / `AchievementsContext` / `DateViewContext`）を Jest テスト追加で ✅ 化。
 - 既存 `legacy` テストは `jest.config.js` の ignore 設定に従い対象外のまま維持。

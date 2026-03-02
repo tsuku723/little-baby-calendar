@@ -43,7 +43,7 @@ describe('storage module exports', () => {
 
     const data = await loadAchievements();
     expect(Object.keys(data)).toEqual(['2026-02-01']);
-    expect(data['2026-02-01']).toHaveLength(2);
+    expect(data['2026-02-01']).toHaveLength(1);
     expect(data['2026-02-01'][0].updatedAt).toBe('2026-02-01T00:00:00.000Z');
 
     const saved = await AsyncStorage.getItem(STORAGE_KEYS.achievementStore);

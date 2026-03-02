@@ -1,0 +1,111 @@
+jest.mock('expo-file-system/legacy', () => ({
+  documentDirectory: 'file:///doc/',
+  getInfoAsync: jest.fn(),
+  makeDirectoryAsync: jest.fn(),
+  moveAsync: jest.fn(),
+  deleteAsync: jest.fn(),
+}));
+
+jest.mock('expo-image-picker', () => ({
+  requestMediaLibraryPermissionsAsync: jest.fn(),
+  launchImageLibraryAsync: jest.fn(),
+  MediaTypeOptions: { Images: 'Images' },
+}));
+
+jest.mock('expo-image-manipulator', () => ({
+  manipulateAsync: jest.fn(),
+  SaveFormat: { JPEG: 'jpeg' },
+}));
+
+import * as FileSystem from 'expo-file-system/legacy';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+
+import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync } from '../src/utils/photo';
+
+describe('photo utils', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('pickAndSavePhotoAsync returns null and warns when permission denied', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: false });
+
+    await expect(pickAndSavePhotoAsync()).resolves.toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith('Media library permission denied');
+  });
+
+  test('pickAndSavePhotoAsync returns null when picker canceled', async () => {
+    (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({ canceled: true, assets: [] });
+
+    await expect(pickAndSavePhotoAsync()).resolves.toBeNull();
+    expect(ImageManipulator.manipulateAsync).not.toHaveBeenCalled();
+  });
+
+  test('pickAndSavePhotoAsync resizes, creates dir, moves file, and returns destination', async () => {
+    (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///tmp/src.png', width: 3200, height: 1600 }],
+    });
+    (ImageManipulator.manipulateAsync as jest.Mock).mockResolvedValue({ uri: 'file:///tmp/out.jpg' });
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: false });
+
+    const result = await pickAndSavePhotoAsync();
+
+    expect(ImageManipulator.manipulateAsync).toHaveBeenCalledWith(
+      'file:///tmp/src.png',
+      [{ resize: { width: 1600 } }],
+      { compress: 0.75, format: 'jpeg' }
+    );
+    expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith('file:///doc/achievement-photos/', { intermediates: true });
+    expect(FileSystem.moveAsync).toHaveBeenCalledTimes(1);
+    const arg = (FileSystem.moveAsync as jest.Mock).mock.calls[0][0];
+    expect(arg.from).toBe('file:///tmp/out.jpg');
+    expect(arg.to.startsWith('file:///doc/achievement-photos/achievement-')).toBe(true);
+    expect(arg.to.endsWith('.jpg')).toBe(true);
+    expect(result).toBe(arg.to);
+  });
+
+  test('ensureFileExistsAsync returns null for empty path', async () => {
+    await expect(ensureFileExistsAsync(undefined)).resolves.toBeNull();
+    await expect(ensureFileExistsAsync(null)).resolves.toBeNull();
+    expect(FileSystem.getInfoAsync).not.toHaveBeenCalled();
+  });
+
+  test('ensureFileExistsAsync returns null when file does not exist', async () => {
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: false });
+    await expect(ensureFileExistsAsync('/x.jpg')).resolves.toBeNull();
+  });
+
+  test('ensureFileExistsAsync warns and returns null when fs check throws', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    (FileSystem.getInfoAsync as jest.Mock).mockRejectedValue(new Error('boom'));
+
+    await expect(ensureFileExistsAsync('/x.jpg')).resolves.toBeNull();
+    expect(warnSpy).toHaveBeenCalled();
+  });
+
+  test('deleteIfExistsAsync does nothing for empty path', async () => {
+    await deleteIfExistsAsync(undefined);
+    await deleteIfExistsAsync(null);
+    expect(FileSystem.getInfoAsync).not.toHaveBeenCalled();
+    expect(FileSystem.deleteAsync).not.toHaveBeenCalled();
+  });
+
+  test('deleteIfExistsAsync deletes when file exists', async () => {
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: true });
+    await deleteIfExistsAsync('/x.jpg');
+    expect(FileSystem.deleteAsync).toHaveBeenCalledWith('/x.jpg', { idempotent: true });
+  });
+
+  test('deleteIfExistsAsync warns when fs check throws', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    (FileSystem.getInfoAsync as jest.Mock).mockRejectedValue(new Error('nope'));
+
+    await expect(deleteIfExistsAsync('/x.jpg')).resolves.toBeUndefined();
+    expect(warnSpy).toHaveBeenCalled();
+  });
+});

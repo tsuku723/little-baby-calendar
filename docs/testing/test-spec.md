@@ -90,3 +90,54 @@
   4. 移行時は `createdAt` / `updatedAt` 欠損を現在時刻で補完する。
 - テスト:
   - `__tests__/storage.jest.test.ts`
+
+## TS-PHOTO-001 写真ユーティリティ（選択/保存/存在確認/削除）
+- 対象関数: `pickAndSavePhotoAsync`, `ensureFileExistsAsync`, `deleteIfExistsAsync`
+- 実装根拠: `src/utils/photo.ts`
+- 実装上の挙動:
+  1. `pickAndSavePhotoAsync` はメディア権限が拒否されると warn して `null` を返す。
+  2. 画像選択が cancel または `assets` なしなら `null` を返す。
+  3. 画像選択成功時、長辺が 1600px 超過なら `calculateResize` により resize action が渡される。
+  4. 保存先ディレクトリがなければ作成し、`achievement-*.jpg` 名で `moveAsync` して destination を返す。
+  5. `ensureFileExistsAsync` は path 未指定で `null`、例外時も warn して `null`。
+  6. `deleteIfExistsAsync` は path 未指定なら no-op、存在時のみ `idempotent: true` で削除し、例外時は warn のみ。
+- テスト:
+  - `__tests__/photo.utils.jest.test.ts`
+
+## TS-STATE-002 AppState（ロード/移行/ユーザー操作）
+- 対象関数: `AppStateProvider`, `useAppState`, `useActiveUser`, `useAchievements`
+- 実装根拠: `src/state/AppStateContext.tsx`
+- 実装上の挙動:
+  1. `useAppState` は provider 外で使用すると throw する。
+  2. 初期化時は `APP_STATE_KEY` を優先ロードし、JSON parse 成功時は `ensureStateIntegrity` 後に `loading=false` になる。
+  3. `addUser` は users へ追加し、`achievements[userId]=[]` を作る。`activeUserId` が null のとき新規 user を active にする。
+  4. `setActiveUser` は存在しない userId を渡すと state を変更しない。
+  5. `deleteUser` は削除対象が active の場合、残存 users の先頭へ切り替え、空なら null。
+  6. legacy キーがある場合 `loadUserSettings/loadAchievements` で migratedState を組み立て、legacy key 削除と APP_STATE 保存を行う。
+- テスト:
+  - `__tests__/AppStateContext.jest.test.tsx`
+
+## TS-STATE-003 AchievementsContext（upsert/remove）
+- 対象関数: `AchievementsProvider`, `useAchievements`
+- 実装根拠: `src/state/AchievementsContext.tsx`
+- 実装上の挙動:
+  1. `useAchievements` は provider 外で使用すると throw する。
+  2. `upsert` は active user 不在なら warn して終了する。
+  3. `upsert` は `payload.date` が ISO でない場合 error して終了する。
+  4. 新規保存時は `addAchievement`、既存更新時は `updateAchievement` を使い分ける。
+  5. `payload.photoPath === null` は「写真削除」を意味し、保存値は `undefined` になる。
+  6. 保存処理後は `cleanupReplacedPhotoAsync(previousPhotoPath, payload.photoPath)` を呼ぶ。
+  7. `remove` は active user 不在なら warn。対象に `photoPath` があれば `removeAchievementPhotoAsync` を呼ぶ。
+- テスト:
+  - `__tests__/AchievementsContext.jest.test.tsx`
+
+## TS-STATE-004 DateViewContext（日付選択状態）
+- 対象関数: `DateViewProvider`, `useDateViewContext`
+- 実装根拠: `src/state/DateViewContext.tsx`
+- 実装上の挙動:
+  1. `useDateViewContext` は provider 外で使用すると throw する。
+  2. provider 初期化時、`today` と `selectedDate` は `toUtcDateOnly` で正規化された同値になる。
+  3. `selectDateFromCalendar` は入力日付を正規化して `selectedDate` を更新する。
+  4. `resetToToday` は `new Date(today)` を用いるため、同時刻値だが別インスタンスで `selectedDate` を更新する。
+- テスト:
+  - `__tests__/DateViewContext.jest.test.tsx`
