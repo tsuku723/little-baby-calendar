@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "node scripts/run-age-tests.mjs"
+    "test": "node scripts/run-age-tests.mjs",
+    "test:unit": "jest"
   },
   "dependencies": {
     "@expo-google-fonts/zen-maru-gothic": "^0.2.3",
@@ -42,7 +43,11 @@
     "babel-preset-expo": "~54.0.9",
     "baseline-browser-mapping": "^2.9.15",
     "typescript": "~5.9.2",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "jest": "^30.0.0",
+    "jest-expo": "~54.0.13",
+    "@types/jest": "^30.0.0",
+    "@testing-library/react-native": "^13.0.0"
   },
   "private": true
 }
