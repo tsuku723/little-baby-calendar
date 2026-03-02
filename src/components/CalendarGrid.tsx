@@ -28,7 +28,12 @@ const CalendarGrid: React.FC<Props> = ({ days, onPressDay }) => {
               key={day.date}
               day={day}
               onPress={onPressDay}
-              gridPos={{ rowIndex, colIndex }}
+              gridPos={{
+                rowIndex,
+                colIndex,
+                isLastRow: rowIndex === rows.length - 1,
+                isLastCol: colIndex === 6,
+              }}
             />
           ))}
         </View>

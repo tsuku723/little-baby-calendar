@@ -11,6 +11,8 @@ interface Props {
   gridPos?: {
     rowIndex: number;
     colIndex: number;
+    isLastRow: boolean;
+    isLastCol: boolean;
   };
 }
 
@@ -55,8 +57,8 @@ const DayCell: React.FC<Props> = ({ day, onPress, gridPos }) => {
 
   const hasAchievements = day.achievementCount > 0;
   const borderStyle = {
-    borderRightWidth: gridPos?.colIndex === 6 ? 0 : HAIR,
-    borderBottomWidth: gridPos?.rowIndex === 5 ? 0 : HAIR,
+    borderRightWidth: gridPos?.isLastCol ? 0 : HAIR,
+    borderBottomWidth: gridPos?.isLastRow ? 0 : HAIR,
     borderColor: COLORS.border,
   };
 
@@ -137,8 +139,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cellDimmed,
   },
   today: {
-    borderWidth: 2,
-    borderColor: COLORS.highlightToday,
     backgroundColor: COLORS.highlightToday,
   },
   dateArea: {
