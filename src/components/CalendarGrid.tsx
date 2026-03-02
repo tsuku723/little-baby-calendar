@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 
+import { COLORS } from "@/constants/colors";
 import DayCell from "@/components/DayCell";
 import { CalendarDay } from "@/models/dataModels";
 
@@ -20,10 +21,15 @@ const CalendarGrid: React.FC<Props> = ({ days, onPressDay }) => {
 
   return (
     <View style={[styles.container, { flex: 1 }]}>
-      {rows.map((row, idx) => (
-        <View key={idx} style={styles.row}>
-          {row.map((day) => (
-            <DayCell key={day.date} day={day} onPress={onPressDay} />
+      {rows.map((row, rowIndex) => (
+        <View key={rowIndex} style={styles.row}>
+          {row.map((day, colIndex) => (
+            <DayCell
+              key={day.date}
+              day={day}
+              onPress={onPressDay}
+              gridPos={{ rowIndex, colIndex }}
+            />
           ))}
         </View>
       ))}
@@ -35,6 +41,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 0,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.border,
   },
   row: {
     flexDirection: "row",
