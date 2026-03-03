@@ -141,3 +141,61 @@
   4. `resetToToday` は `new Date(today)` を用いるため、同時刻値だが別インスタンスで `selectedDate` を更新する。
 - テスト:
   - `__tests__/DateViewContext.jest.test.tsx`
+
+## TS-CONTENT-001 法務コンテンツ定数
+- 対象: `LEGAL_META`, `ABOUT_TEXT_JA`, `TERMS_TEXT_JA`, `PRIVACY_POLICY_TEXT_JA`
+- 実装根拠: `src/content/legal/ja.ts`
+- 実装上の挙動:
+  1. `LEGAL_META` はアプリ名・運営者・連絡先・発効日・バージョン表記を固定値として公開する。
+  2. `ABOUT_TEXT_JA` / `TERMS_TEXT_JA` / `PRIVACY_POLICY_TEXT_JA` は Markdown 文字列として公開される。
+  3. 文面にはそれぞれ見出し (`# ...`) と問い合わせ導線が含まれる。
+- テスト:
+  - `__tests__/models.types.content.jest.test.ts`
+
+## TS-MODEL-001 既定設定定数
+- 対象: `DEFAULT_SETTINGS`
+- 実装根拠: `src/types/models.ts`
+- 実装上の挙動:
+  1. `DEFAULT_SETTINGS` は `showCorrectedUntilMonths: 24`, `ageFormat: "ymd"`, `showDaysSinceBirth: true`, `lastViewedMonth: null` を返す。
+  2. `UserSettings` 型の既定値として利用される。
+- テスト:
+  - `__tests__/models.types.content.jest.test.ts`
+
+## TS-DATA-002 storage.ts の追加分岐（例外・legacy object・不正map）
+- 対象関数: `loadAchievements`
+- 実装根拠: `src/storage/storage.ts`
+- 実装上の挙動:
+  1. `input.achievements` 配列形式（legacy object）でも `AchievementStore` へ移行する。
+  2. 移行保存 (`saveJson`) が失敗すると warn を出して例外を再throwする。
+  3. map 形式でも value が配列でない不正入力は `isMapFormat=false` 判定となり、空データ扱いで保存される。
+- テスト:
+  - `__tests__/storage.jest.test.ts`
+
+## TS-STATE-005 AppState の例外/整合性分岐
+- 対象関数: `AppStateProvider`, `useAppState`
+- 実装根拠: `src/state/AppStateContext.tsx`
+- 実装上の挙動:
+  1. `APP_STATE_KEY` のJSONパース失敗時は warn の上で初期状態へフォールバックする。
+  2. `ensureStateIntegrity` は不正 `activeUserId` を先頭ユーザーIDへ補正し、`achievements[user.id]` 未定義なら空配列を補完する。
+  3. `updateUser` は `settings` を shallow merge し、`id` は不変のまま保持する。
+  4. 永続化失敗時 (`persistState`) は warn のみでUI状態更新は継続する。
+- テスト:
+  - `__tests__/AppStateContext.jest.test.tsx`
+
+## TS-UI-002 App / Navigator / 法務スクリーンの最小UI検証
+- 対象: `App`, `Navigator`, `AboutScreen`, `TermsScreen`, `PrivacyPolicyScreen`
+- 実装根拠: `src/App.tsx`, `src/navigation/index.tsx`, `src/screens/AboutScreen.tsx`, `src/screens/TermsScreen.tsx`, `src/screens/PrivacyPolicyScreen.tsx`
+- 実装上の挙動:
+  1. `App` は `useFonts` が false の間 `null` を返し、true のとき Provider チェーンを返す。
+  2. `Navigator` は `NavigationContainer` に `COLORS` を反映したthemeを渡し、`DateViewProvider` と `RootNavigator` を内包する。
+  3. 各法務スクリーンは対応する法務本文 (`ABOUT_TEXT_JA`/`TERMS_TEXT_JA`/`PRIVACY_POLICY_TEXT_JA`) を `LegalTextScreen` へ渡す。
+- テスト:
+  - `__tests__/app.navigation.ui.jest.test.tsx`
+
+## TS-BOOT-001 エントリポイント登録
+- 対象: `index.ts`
+- 実装根拠: `index.ts`
+- 実装上の挙動:
+  1. `registerRootComponent(App)` が起動時に実行される。
+- テスト:
+  - `__tests__/app.navigation.ui.jest.test.tsx`

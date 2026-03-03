@@ -17,11 +17,19 @@
 | `src/state/AppStateContext.tsx` | `AppStateProvider`, `useAppState`, `useActiveUser`, `useAchievements` | `__tests__/AppStateContext.jest.test.tsx` | ✅ |
 | `src/state/AchievementsContext.tsx` | `AchievementsProvider`, `useAchievements` | `__tests__/AchievementsContext.jest.test.tsx` | ✅ |
 | `src/state/DateViewContext.tsx` | `DateViewProvider`, `useDateViewContext` | `__tests__/DateViewContext.jest.test.tsx` | ✅ |
+| `src/types/models.ts` | `DEFAULT_SETTINGS` | `__tests__/models.types.content.jest.test.ts` | ✅ |
+| `src/content/legal/ja.ts` | `LEGAL_META`, `ABOUT_TEXT_JA`, `TERMS_TEXT_JA`, `PRIVACY_POLICY_TEXT_JA` | `__tests__/models.types.content.jest.test.ts` | ✅ |
+| `src/navigation/index.tsx` | `Navigator (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
+| `src/App.tsx` | `App (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
+| `src/screens/AboutScreen.tsx` | `AboutScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
+| `src/screens/TermsScreen.tsx` | `TermsScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
+| `src/screens/PrivacyPolicyScreen.tsx` | `PrivacyPolicyScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
 
 ### 非関数 export（補助）
 - 型・interface export: `src/models/dataModels.ts`, `src/navigation/types.ts`, `src/state/*` など。
-- 定数 export: `src/constants/colors.ts`, `src/content/legal/ja.ts`, `src/types/models.ts` の `DEFAULT_SETTINGS` など。
-- `export default` の画面/コンポーネントは UI テスト最小方針のため今回の完全網羅対象外。
+- 定数 export: `src/constants/colors.ts`, `src/content/legal/ja.ts`, `src/types/models.ts` の `DEFAULT_SETTINGS`。
+- `src/models/dataModels.ts` は型定義専用モジュールのため、`src/types/models.ts` の既定値定数を経由して利用整合性を担保。
+- `export default` の画面/コンポーネントは UI テスト最小方針で段階的に追加。
 
 ## 仕様 × テストレベル
 
@@ -39,7 +47,15 @@
 | TS-STATE-002 | AppState load/migrate/profile/active 制御 | ✅ | ✅ | — | 対象外 | `__tests__/AppStateContext.jest.test.tsx` |
 | TS-STATE-003 | AchievementsContext upsert/remove 分岐 | ✅ | ✅ | — | 対象外 | `__tests__/AchievementsContext.jest.test.tsx` |
 | TS-STATE-004 | DateViewContext selectedDate/today 制御 | ✅ | — | ✅ | 対象外 | `__tests__/DateViewContext.jest.test.tsx` |
+| TS-DATA-002 | storage.ts 例外/legacy object/不正map分岐 | ✅ | ✅ | — | 対象外 | `__tests__/storage.jest.test.ts` |
+| TS-STATE-005 | AppState parse失敗/整合性補正/persist失敗分岐 | ✅ | ✅ | — | 対象外 | `__tests__/AppStateContext.jest.test.tsx` |
+| TS-UI-002 | App・Navigator・法務Screenの最小表示分岐 | ✅ | — | ✅ | 対象外 | `__tests__/app.navigation.ui.jest.test.tsx` |
+| TS-BOOT-001 | index.ts の registerRootComponent 呼び出し | ✅ | — | — | 対象外 | `__tests__/app.navigation.ui.jest.test.tsx` |
+| TS-CONTENT-001 | 法務文面・メタデータの公開定数 | ✅ | — | — | 対象外 | `__tests__/models.types.content.jest.test.ts` |
+| TS-MODEL-001 | 既定ユーザー設定定数（types/models） | ✅ | — | — | 対象外 | `__tests__/models.types.content.jest.test.ts` |
 
 ## 現状サマリ
 - 旧 ⛔ 対象（`photo.ts` / `AppStateContext` / `AchievementsContext` / `DateViewContext`）を Jest テスト追加で ✅ 化。
 - 既存 `legacy` テストは `jest.config.js` の ignore 設定に従い対象外のまま維持。
+
+- Phase C で `src/navigation/index.tsx`, `src/App.tsx`, `index.ts`, `src/screens/AboutScreen.tsx`, `src/screens/TermsScreen.tsx`, `src/screens/PrivacyPolicyScreen.tsx` を最小UI検証へ追加。

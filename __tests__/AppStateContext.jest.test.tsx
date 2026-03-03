@@ -234,4 +234,106 @@ describe('AppStateContext', () => {
     await waitFor(() => expect(achievementCount).toBe(1));
     expect(activeUserName).toBe('A');
   });
+
+  test('broken APP_STATE_KEY falls back to empty state', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    mockGetItem
+      .mockResolvedValueOnce('{broken-json') // APP_STATE_KEY
+      .mockResolvedValueOnce(null) // legacy settings
+      .mockResolvedValueOnce(null); // legacy achievements
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    const Probe = () => {
+      captured = useAppState();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    expect(captured?.state.users).toEqual([]);
+    expect(captured?.state.activeUserId).toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith('Failed to parse AppState; resetting', expect.any(Error));
+  });
+
+  test('ensureStateIntegrity fixes invalid active user and missing achievements map', async () => {
+    mockGetItem.mockResolvedValueOnce(
+      JSON.stringify({
+        users: [{ id: 'u1', name: 'A', birthDate: '2025-01-01', dueDate: null, settings, createdAt: 't' }],
+        activeUserId: 'missing-user',
+        achievements: {},
+      })
+    );
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    const Probe = () => {
+      captured = useAppState();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    expect(captured?.state.activeUserId).toBe('u1');
+    expect(captured?.state.achievements.u1).toEqual([]);
+  });
+
+  test('updateUser merges nested settings and keeps id', async () => {
+    mockGetItem.mockResolvedValueOnce(
+      JSON.stringify({
+        users: [{ id: 'u1', name: 'A', birthDate: '2025-01-01', dueDate: null, settings, createdAt: 't' }],
+        activeUserId: 'u1',
+        achievements: { u1: [] },
+      })
+    );
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    const Probe = () => {
+      captured = useAppState();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    await act(async () => {
+      await captured!.updateUser('u1', {
+        name: 'Updated',
+        settings: { ageFormat: 'md' },
+      });
+    });
+
+    expect(captured!.state.users[0].id).toBe('u1');
+    expect(captured!.state.users[0].name).toBe('Updated');
+    expect(captured!.state.users[0].settings.ageFormat).toBe('md');
+    expect(captured!.state.users[0].settings.showDaysSinceBirth).toBe(true);
+  });
+
+  test('persist warning is emitted when AsyncStorage.setItem fails', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    mockGetItem.mockResolvedValueOnce(null).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+    mockSetItem.mockRejectedValueOnce(new Error('persist-failure'));
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    const Probe = () => {
+      captured = useAppState();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    await act(async () => {
+      await captured!.addUser({
+        name: 'Baby',
+        birthDate: '2025-01-01',
+        dueDate: null,
+        settings,
+      });
+    });
+
+    await waitFor(() => {
+      expect(warnSpy).toHaveBeenCalledWith('Failed to persist AppState', expect.any(Error));
+    });
+  });
 });
