@@ -22,7 +22,9 @@ describe('Phase D zero-coverage modules', () => {
     expect(() => require('../App')).toThrow('mock-src-app-load-failed');
   });
 
-  test('navigation type alias sample keeps expected route literals (boundary)', () => {
+  test('navigation type alias sample is a compile-time guard for RootStackParamList', () => {
+    // このテストの主目的は RootStackParamList の型整合を維持すること。
+    // sample が型チェックを通ることで、主要 route パラメータの契約崩れを検知する。
     const sample: RootStackParamList = {
       MainTabs: undefined,
       RecordInput: { recordId: 'r1', isoDate: '2025-01-01', from: 'today' },
