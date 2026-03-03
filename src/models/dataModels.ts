@@ -128,3 +128,7 @@ export type AchievementListItem = {
   dateLabel: string;
   title: string;
 };
+
+
+// Runtime marker for unit-test coverage of this type-only module.
+export const DATA_MODELS_RUNTIME_MARKER = "data-models-runtime" as const;

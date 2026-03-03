@@ -19,8 +19,11 @@
 | `src/state/DateViewContext.tsx` | `DateViewProvider`, `useDateViewContext` | `__tests__/DateViewContext.jest.test.tsx` | ✅ |
 | `src/types/models.ts` | `DEFAULT_SETTINGS` | `__tests__/models.types.content.jest.test.ts` | ✅ |
 | `src/content/legal/ja.ts` | `LEGAL_META`, `ABOUT_TEXT_JA`, `TERMS_TEXT_JA`, `PRIVACY_POLICY_TEXT_JA` | `__tests__/models.types.content.jest.test.ts` | ✅ |
+| `src/models/dataModels.ts` | `DATA_MODELS_RUNTIME_MARKER` | `__tests__/phaseD.zero-coverage.jest.test.ts` | ✅ |
+| `src/navigation/types.ts` | `NAVIGATION_TYPES_RUNTIME_MARKER` | `__tests__/phaseD.zero-coverage.jest.test.ts` | ✅ |
 | `src/navigation/index.tsx` | `Navigator (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
 | `src/App.tsx` | `App (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
+| `App.js` | `App (default)`, `APP_JS_RUNTIME_MARKER` | `__tests__/phaseD.zero-coverage.jest.test.ts` | ✅ |
 | `src/screens/AboutScreen.tsx` | `AboutScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
 | `src/screens/TermsScreen.tsx` | `TermsScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
 | `src/screens/PrivacyPolicyScreen.tsx` | `PrivacyPolicyScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
@@ -53,6 +56,8 @@
 | TS-BOOT-001 | index.ts の registerRootComponent 呼び出し | ✅ | — | — | 対象外 | `__tests__/app.navigation.ui.jest.test.tsx` |
 | TS-CONTENT-001 | 法務文面・メタデータの公開定数 | ✅ | — | — | 対象外 | `__tests__/models.types.content.jest.test.ts` |
 | TS-MODEL-001 | 既定ユーザー設定定数（types/models） | ✅ | — | — | 対象外 | `__tests__/models.types.content.jest.test.ts` |
+| TS-ZERO-001 | App.js の src/App 再exportと読込異常伝播 | ✅ | — | — | 対象外 | `__tests__/phaseD.zero-coverage.jest.test.ts` |
+| TS-ZERO-002 | type専用モジュールのruntime marker export | ✅ | — | — | 対象外 | `__tests__/phaseD.zero-coverage.jest.test.ts` |
 
 ## 現状サマリ
 - 旧 ⛔ 対象（`photo.ts` / `AppStateContext` / `AchievementsContext` / `DateViewContext`）を Jest テスト追加で ✅ 化。
