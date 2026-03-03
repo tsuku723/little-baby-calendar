@@ -50,7 +50,3 @@ export type TabParamList = {
   RecordListStack: NavigatorScreenParams<RecordListStackParamList>;
   SettingsStack: NavigatorScreenParams<SettingsStackParamList>;
 };
-
-
-// Runtime marker for unit-test coverage of this type-only module.
-export const NAVIGATION_TYPES_RUNTIME_MARKER = "navigation-types-runtime" as const;

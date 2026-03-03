@@ -202,20 +202,19 @@
 
 
 ## TS-ZERO-001 App.js の再exportと異常伝播
-- 対象: `App.js` default export, `APP_JS_RUNTIME_MARKER`
+- 対象: `App.js` default export
 - 実装根拠: `App.js`
 - 実装上の挙動:
   1. `./src/App` の default export をそのまま re-export する。
-  2. `APP_JS_RUNTIME_MARKER` は固定文字列 `"app-js-runtime"` を返す。
-  3. `./src/App` のロードで例外が発生した場合、その例外は捕捉されず呼び出し元へ伝播する。
+  2. `./src/App` のロードで例外が発生した場合、その例外は捕捉されず呼び出し元へ伝播する。
 - テスト:
   - `__tests__/phaseD.zero-coverage.jest.test.ts`
 
-## TS-ZERO-002 type専用モジュールのruntime marker
-- 対象: `DATA_MODELS_RUNTIME_MARKER`, `NAVIGATION_TYPES_RUNTIME_MARKER`
-- 実装根拠: `src/models/dataModels.ts`, `src/navigation/types.ts`
+## TS-ZERO-002 type-only モジュールの coverage 除外
+- 対象: `src/models/dataModels.ts`, `src/navigation/types.ts`
+- 実装根拠: `src/models/dataModels.ts`, `src/navigation/types.ts`, `jest.config.js`
 - 実装上の挙動:
-  1. type-only モジュールに runtime marker 定数を公開し、Jest 実行時にモジュール評価可能であることを保証する。
-  2. 既存の型 export 群の利用を壊さず、marker は副作用を持たない固定文字列である。
-- テスト:
-  - `__tests__/phaseD.zero-coverage.jest.test.ts`
+  1. 両ファイルは型定義のみで runtime 実行コードを持たない。
+  2. runtime marker のような本番コード混入を避けるため、coverage 設定で除外して運用する。
+- テスト/確認:
+  - `npm run test:unit -- --coverage` の出力で対象ファイルが一覧から除外されることを確認
