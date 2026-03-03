@@ -1,16 +1,45 @@
 # テスト網羅性マトリクス
 
-| 仕様ID | 仕様項目 | Unit | Integration | UI | E2E | テストファイル |
+## Phase 0: export インベントリ（src 配下）
+
+> 抽出コマンド: `rg "^export (async )?(function|const|let|class) |^export \{.*\}|^export default" src --line-number`
+
+### 関数 export（主対象）
+
+| モジュール | export 関数 | 既存/追加テスト | カバー状況 |
+|---|---|---|---|
+| `src/utils/dateUtils.ts` | `isIsoDateString`, `normalizeToUtcDate`, `safeParseIsoLocal`, `toUtcDateOnly`, `toIsoDateString`, `todayIsoDate`, `formatCalendarAgeLabel`, `daysBetweenUtc`, `calculateAgeInfo`, `monthKey`, `buildCalendarMonthView` | `__tests__/age.dateUtils.jest.test.ts`, `__tests__/dateUtils.full.jest.test.ts` | ✅ |
+| `src/utils/ageLabelNormalization.ts` | `stripChronologicalPrefix`, `normalizeAgeLabelText` | `__tests__/ageLabelNormalization.jest.test.ts` | ✅ |
+| `src/utils/text.ts` | `remainingChars`, `clampComment`, `normalizeSearchText` | `__tests__/text.utils.jest.test.ts` | ✅ |
+| `src/services/achievementService.ts` | `cleanupReplacedPhotoAsync`, `removeAchievementPhotoAsync` | `__tests__/achievementService.jest.test.ts` | ✅ |
+| `src/storage/storage.ts` | `loadUserSettings`, `loadAchievements` | `__tests__/storage.jest.test.ts` | ✅ |
+| `src/utils/photo.ts` | `pickAndSavePhotoAsync`, `ensureFileExistsAsync`, `deleteIfExistsAsync` | `__tests__/photo.utils.jest.test.ts` | ✅ |
+| `src/state/AppStateContext.tsx` | `AppStateProvider`, `useAppState`, `useActiveUser`, `useAchievements` | `__tests__/AppStateContext.jest.test.tsx` | ✅ |
+| `src/state/AchievementsContext.tsx` | `AchievementsProvider`, `useAchievements` | `__tests__/AchievementsContext.jest.test.tsx` | ✅ |
+| `src/state/DateViewContext.tsx` | `DateViewProvider`, `useDateViewContext` | `__tests__/DateViewContext.jest.test.tsx` | ✅ |
+
+### 非関数 export（補助）
+- 型・interface export: `src/models/dataModels.ts`, `src/navigation/types.ts`, `src/state/*` など。
+- 定数 export: `src/constants/colors.ts`, `src/content/legal/ja.ts`, `src/types/models.ts` の `DEFAULT_SETTINGS` など。
+- `export default` の画面/コンポーネントは UI テスト最小方針のため今回の完全網羅対象外。
+
+## 仕様 × テストレベル
+
+| 仕様ID | 仕様項目 | Unit | Integration (Jest) | UI (min) | E2E | テストファイル |
 |---|---|---:|---:|---:|---:|---|
-| TS-AGE-001 | 年齢情報計算（暦/修正/在胎） | ✅ |  |  |  | `__tests__/age.dateUtils.jest.test.ts` |
-| TS-AGE-002 | カレンダー月ビュー生成 | ✅ |  |  |  | `__tests__/age.dateUtils.jest.test.ts` |
-| TS-TEXT-001 | 年齢ラベル正規化 | ✅ |  |  |  | `__tests__/ageLabelNormalization.jest.test.ts` |
-| TS-TEXT-002 | テキスト補助（文字数・検索正規化） | ✅ |  |  |  | `__tests__/text.utils.test.ts` |
-| TS-UI-001 | 日セル表示ルール |  |  | ✅ |  | `__tests__/DayCell.ui.test.tsx` |
-| TS-STATE-001 | 実績写真の差し替え・削除 |  |  |  |  | 未実装 |
-| TS-DATA-001 | ストレージ読み出しと実績移行 |  | ✅(legacy) |  |  | `__tests__/legacy/services.test.ts` |
+| TS-AGE-001 | 年齢情報計算（暦/修正/在胎） | ✅ | — | — | 対象外 | `__tests__/age.dateUtils.jest.test.ts`, `__tests__/dateUtils.full.jest.test.ts` |
+| TS-AGE-002 | カレンダー月ビュー生成（buildCalendarMonthView） | ✅ | — | — | 対象外 | `__tests__/age.dateUtils.jest.test.ts`, `__tests__/dateUtils.full.jest.test.ts` |
+| TS-AGE-003 | 日付ユーティリティ（ISO/日差/月キー） | ✅ | — | — | 対象外 | `__tests__/dateUtils.full.jest.test.ts` |
+| TS-TEXT-001 | 年齢ラベル正規化 | ✅ | — | ✅ | 対象外 | `__tests__/ageLabelNormalization.jest.test.ts`, `__tests__/DayCell.ui.jest.test.tsx` |
+| TS-TEXT-002 | テキスト補助（文字数・検索正規化） | ✅ | — | — | 対象外 | `__tests__/text.utils.jest.test.ts` |
+| TS-UI-001 | DayCell 表示分岐 + onPress | — | — | ✅ | 対象外 | `__tests__/DayCell.ui.jest.test.tsx` |
+| TS-STATE-001 | 写真差し替え/削除の副作用制御 | ✅ | ✅ | — | 対象外 | `__tests__/achievementService.jest.test.ts` |
+| TS-DATA-001 | 設定/実績の永続化・移行 | ✅ | ✅ | — | 対象外 | `__tests__/storage.jest.test.ts` |
+| TS-PHOTO-001 | 写真選択/保存・存在確認・削除 | ✅ | ✅ | — | 対象外 | `__tests__/photo.utils.jest.test.ts` |
+| TS-STATE-002 | AppState load/migrate/profile/active 制御 | ✅ | ✅ | — | 対象外 | `__tests__/AppStateContext.jest.test.tsx` |
+| TS-STATE-003 | AchievementsContext upsert/remove 分岐 | ✅ | ✅ | — | 対象外 | `__tests__/AchievementsContext.jest.test.tsx` |
+| TS-STATE-004 | DateViewContext selectedDate/today 制御 | ✅ | — | ✅ | 対象外 | `__tests__/DateViewContext.jest.test.tsx` |
 
 ## 現状サマリ
-- High 優先の純ロジック（年齢計算・文字列正規化・文字数処理）を Unit 化。
-- 重要画面の最小 UI として `DayCell` 表示ルールを追加。
-- 既存 legacy テストは Jest 対象外にして参照のみ（`__tests__/legacy/`）。
+- 旧 ⛔ 対象（`photo.ts` / `AppStateContext` / `AchievementsContext` / `DateViewContext`）を Jest テスト追加で ✅ 化。
+- 既存 `legacy` テストは `jest.config.js` の ignore 設定に従い対象外のまま維持。
