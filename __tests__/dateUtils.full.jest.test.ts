@@ -32,7 +32,7 @@ describe('dateUtils exported functions', () => {
   });
 
   test('safeParseIsoLocal falls back when input is invalid', () => {
-    const fallback = new Date('2026-01-31T22:00:00.000Z');
+    const fallback = new Date(2026, 0, 31, 12, 0, 0);
     expect(toIsoDateString(safeParseIsoLocal('2026-01-30', fallback))).toBe('2026-01-30');
     expect(toIsoDateString(safeParseIsoLocal('invalid', fallback))).toBe('2026-01-31');
   });
