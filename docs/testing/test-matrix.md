@@ -61,3 +61,5 @@
 - 既存 `legacy` テストは `jest.config.js` の ignore 設定に従い対象外のまま維持。
 
 - Phase C で `src/navigation/index.tsx`, `src/App.tsx`, `index.ts`, `src/screens/AboutScreen.tsx`, `src/screens/TermsScreen.tsx`, `src/screens/PrivacyPolicyScreen.tsx` を最小UI検証へ追加。
+
+- Phase E で `AppStateContext` / `storage` / `photo` / `text` / `DayCell` / `AchievementsContext` の未踏分岐を追加検証。

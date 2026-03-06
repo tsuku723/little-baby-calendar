@@ -336,4 +336,121 @@ describe('AppStateContext', () => {
       expect(warnSpy).toHaveBeenCalledWith('Failed to persist AppState', expect.any(Error));
     });
   });
+
+  test('legacy migration without settings keeps defaults and normalizes tried/unknown tags', async () => {
+    mockGetItem
+      .mockResolvedValueOnce(null) // APP_STATE_KEY
+      .mockResolvedValueOnce(null) // legacy settings
+      .mockResolvedValueOnce('{legacy-achievements}');
+
+    mockLoadAchievements.mockResolvedValue({
+      '2025-01-10': [
+        { id: 'a1', date: '2025-01-10', title: 'x', tag: 'tried' },
+        { id: 'a2', date: '2025-01-11', title: 'y', tag: 'other' },
+      ],
+    });
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    const Probe = () => {
+      captured = useAppState();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    expect(captured!.state.users[0].settings.ageFormat).toBe('ymd');
+    expect(captured!.state.achievements['uuid-fixed'][0].category).toBe('effort');
+    expect(captured!.state.achievements['uuid-fixed'][1].category).toBe('growth');
+  });
+
+  test('ensureStateIntegrity fills null users/achievements and useAchievements returns empty for missing active map', async () => {
+    mockGetItem.mockResolvedValueOnce(
+      JSON.stringify({ users: null, activeUserId: 'ghost', achievements: null })
+    );
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    let activeAchievements: ReturnType<typeof useAchievements> = [];
+    const Probe = () => {
+      captured = useAppState();
+      activeAchievements = useAchievements();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    expect(captured?.state.users).toEqual([]);
+    expect(captured?.state.achievements).toEqual({});
+    expect(activeAchievements).toEqual([]);
+  });
+
+  test('updateUser keeps non-target users unchanged', async () => {
+    mockGetItem.mockResolvedValueOnce(
+      JSON.stringify({
+        users: [
+          { id: 'u1', name: 'A', birthDate: '2025-01-01', dueDate: null, settings, createdAt: 't' },
+          { id: 'u2', name: 'B', birthDate: '2025-01-02', dueDate: null, settings, createdAt: 't' },
+        ],
+        activeUserId: 'u1',
+        achievements: { u1: [], u2: [] },
+      })
+    );
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    const Probe = () => {
+      captured = useAppState();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    await act(async () => {
+      await captured!.updateUser('u1', { name: 'Updated' });
+    });
+
+    expect(captured!.state.users.find((u) => u.id === 'u2')?.name).toBe('B');
+  });
+
+  test('add/update/delete achievement handle missing user bucket via fallback branches', async () => {
+    mockGetItem.mockResolvedValueOnce(
+      JSON.stringify({
+        users: [{ id: 'u1', name: 'A', birthDate: '2025-01-01', dueDate: null, settings, createdAt: 't' }],
+        activeUserId: 'u1',
+        achievements: { u1: [] },
+      })
+    );
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    let activeAchievements: ReturnType<typeof useAchievements> = [];
+    const Probe = () => {
+      captured = useAppState();
+      activeAchievements = useAchievements();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    await act(async () => {
+      await captured!.addAchievement('u2', {
+        id: 'a1',
+        date: '2025-01-10',
+        title: 'x',
+        createdAt: 't',
+      } as any);
+    });
+    expect(captured!.state.achievements.u2).toHaveLength(1);
+
+    await act(async () => {
+      await captured!.updateAchievement('u2', 'a1', { title: 'updated' });
+      await captured!.deleteAchievement('u2', 'a1');
+      await captured!.deleteAchievement('u3', 'none');
+    });
+
+    expect(captured!.state.achievements.u2).toEqual([]);
+    expect(activeAchievements).toEqual([]);
+  });
+
 });

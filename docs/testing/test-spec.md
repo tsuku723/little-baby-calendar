@@ -57,6 +57,9 @@
   1. code point ベースで 500 文字上限を扱う。
   2. `clampComment` は 500 超過時のみ切り詰める。
   3. `normalizeSearchText` は全角英数半角化 + lowercase + 空白圧縮を行う。
+- 追加カバー（Phase E）:
+  - `undefined` 入力時の nullish fallback 分岐。
+  - 空文字入力時の早期 return 分岐。
 - テスト:
   - `__tests__/text.utils.jest.test.ts`
 
@@ -68,6 +71,9 @@
   2. 暦ラベルは `stripChronologicalPrefix` 後に表示される。
   3. 当月外セルはラベル非表示レンダリング。
   4. タップ時に `onPress(day.date)` を呼び出す。
+- 追加カバー（Phase E）:
+  - `gridPos` の最終行/最終列で罫線幅を 0 にする分岐。
+  - `isToday` と `achievementCount>0` の表示分岐。
 - テスト:
   - `__tests__/DayCell.ui.jest.test.tsx`
 
@@ -88,6 +94,9 @@
   2. JSON パース失敗時は warn してデフォルトへフォールバックする。
   3. `loadAchievements` は array / legacy object / map を `Record<date, Achievement[]>` に移行し、正規化したキーで再保存する。
   4. 移行時は `createdAt` / `updatedAt` 欠損を現在時刻で補完する。
+- 追加カバー（Phase E）:
+  - 保存データ無し (`raw=null`) で空ストアを返す。
+  - array 形式で `date` 欠損アイテムをスキップする。
 - テスト:
   - `__tests__/storage.jest.test.ts`
 
@@ -101,6 +110,10 @@
   4. 保存先ディレクトリがなければ作成し、`achievement-*.jpg` 名で `moveAsync` して destination を返す。
   5. `ensureFileExistsAsync` は path 未指定で `null`、例外時も warn して `null`。
   6. `deleteIfExistsAsync` は path 未指定なら no-op、存在時のみ `idempotent: true` で削除し、例外時は warn のみ。
+- 追加カバー（Phase E）:
+  - 長辺が閾値以下の画像で resize action が空配列になる。
+  - 画像寸法欠損時に width=1600 の fallback resize を使う。
+  - 保存ディレクトリ既存時は `makeDirectoryAsync` を呼ばない。
 - テスト:
   - `__tests__/photo.utils.jest.test.ts`
 
@@ -114,6 +127,10 @@
   4. `setActiveUser` は存在しない userId を渡すと state を変更しない。
   5. `deleteUser` は削除対象が active の場合、残存 users の先頭へ切り替え、空なら null。
   6. legacy キーがある場合 `loadUserSettings/loadAchievements` で migratedState を組み立て、legacy key 削除と APP_STATE 保存を行う。
+- 追加カバー（Phase E）:
+  - legacy settings が無い移行で既定値を採用する。
+  - `addAchievement/updateAchievement/deleteAchievement` の user bucket fallback 分岐を通す。
+  - `users`/`achievements` が null の復元で空構造へ補正する。
 - テスト:
   - `__tests__/AppStateContext.jest.test.tsx`
 
@@ -128,6 +145,9 @@
   5. `payload.photoPath === null` は「写真削除」を意味し、保存値は `undefined` になる。
   6. 保存処理後は `cleanupReplacedPhotoAsync(previousPhotoPath, payload.photoPath)` を呼ぶ。
   7. `remove` は active user 不在なら warn。対象に `photoPath` があれば `removeAchievementPhotoAsync` を呼ぶ。
+- 追加カバー（Phase E）:
+  - `loadDay` / `loadMonth` の no-op Promise 解決分岐。
+  - `cleanupReplacedPhotoAsync` / `removeAchievementPhotoAsync` 失敗時の catch 分岐。
 - テスト:
   - `__tests__/AchievementsContext.jest.test.tsx`
 

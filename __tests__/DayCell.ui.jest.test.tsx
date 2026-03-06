@@ -60,4 +60,32 @@ describe('DayCell UI branches', () => {
     expect(queryByText('2才0ヶ月')).toBeNull();
     expect(queryByText('修正 1才11ヶ月')).toBeNull();
   });
+
+  test('applies border/today/icon branches based on props', () => {
+    const day: CalendarDay = {
+      ...baseDay,
+      isToday: true,
+      achievementCount: 2,
+      calendarAgeLabel: { chronological: '暦 1才0ヶ月', corrected: '修正 11ヶ月' },
+    };
+
+    const { getByRole, queryByText, UNSAFE_queryAllByType } = render(
+      <DayCell
+        day={day}
+        onPress={jest.fn()}
+        gridPos={{ rowIndex: 0, colIndex: 6, isLastRow: true, isLastCol: true }}
+      />
+    );
+
+    const rawStyle = getByRole('button').props.style;
+    const styleArray = Array.isArray(rawStyle) ? rawStyle : [rawStyle];
+    const merged = Object.assign({}, ...styleArray.filter(Boolean));
+    expect(merged.borderRightWidth).toBe(0);
+    expect(merged.borderBottomWidth).toBe(0);
+
+    expect(queryByText('10')).toBeTruthy();
+    expect(queryByText('修正 11ヶ月')).toBeTruthy();
+    expect(UNSAFE_queryAllByType(require('react-native').View).length).toBeGreaterThan(0);
+  });
+
 });

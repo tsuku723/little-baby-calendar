@@ -105,4 +105,22 @@ describe('storage module exports', () => {
     const data = await loadAchievements();
     expect(data).toEqual({});
   });
+
+  test('loadAchievements returns empty store when no raw data exists', async () => {
+    const data = await loadAchievements();
+    expect(data).toEqual({});
+  });
+
+  test('loadAchievements skips array entries without date key', async () => {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.achievementStore,
+      JSON.stringify([
+        { id: 'x1', title: 'missing-date' },
+      ])
+    );
+
+    const data = await loadAchievements();
+    expect(data).toEqual({});
+  });
+
 });
