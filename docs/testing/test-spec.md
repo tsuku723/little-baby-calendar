@@ -216,5 +216,7 @@
 - 実装上の挙動:
   1. 両ファイルは型定義のみで runtime 実行コードを持たない。
   2. runtime marker のような本番コード混入を避けるため、coverage 設定で除外して運用する。
+  3. 型定義の整合性は Jest ではなく `npm run typecheck` (`tsc -p tsconfig.typecheck.json --noEmit`) で担保する。
 - テスト/確認:
   - `npm run test:unit -- --coverage` の出力で対象ファイルが一覧から除外されることを確認
+  - `npm run typecheck` が成功することを確認（`typechecks/navigation-types.typecheck.ts` を含む）

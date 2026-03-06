@@ -55,7 +55,7 @@
 | TS-CONTENT-001 | 法務文面・メタデータの公開定数 | ✅ | — | — | 対象外 | `__tests__/models.types.content.jest.test.ts` |
 | TS-MODEL-001 | 既定ユーザー設定定数（types/models） | ✅ | — | — | 対象外 | `__tests__/models.types.content.jest.test.ts` |
 | TS-ZERO-001 | App.js の src/App 再exportと読込異常伝播 | ✅ | — | — | 対象外 | `__tests__/phaseD.zero-coverage.jest.test.ts` |
-| TS-ZERO-002 | type専用モジュールは coverage 対象から除外（実行可能コードなし） | — | — | — | 対象外 | `jest.config.js` |
+| TS-ZERO-002 | type専用モジュールは coverage 除外 + 型整合は typecheck で担保 | — | — | — | 対象外 | `jest.config.js`, `package.json` (`typecheck`), `typechecks/navigation-types.typecheck.ts` |
 
 ## 現状サマリ
 - 旧 ⛔ 対象（`photo.ts` / `AppStateContext` / `AchievementsContext` / `DateViewContext`）を Jest テスト追加で ✅ 化。

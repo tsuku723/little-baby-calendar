@@ -1,5 +1,3 @@
-import type { RootStackParamList } from '../src/navigation/types';
-
 describe('Phase D zero-coverage modules', () => {
   afterEach(() => {
     jest.resetModules();
@@ -22,16 +20,6 @@ describe('Phase D zero-coverage modules', () => {
     expect(() => require('../App')).toThrow('mock-src-app-load-failed');
   });
 
-  test('navigation type alias sample is a compile-time guard for RootStackParamList', () => {
-    // このテストの主目的は RootStackParamList の型整合を維持すること。
-    // sample が型チェックを通ることで、主要 route パラメータの契約崩れを検知する。
-    const sample: RootStackParamList = {
-      MainTabs: undefined,
-      RecordInput: { recordId: 'r1', isoDate: '2025-01-01', from: 'today' },
-      RecordDetail: { recordId: 'r2', from: 'list' },
-    };
-
-    expect(sample.RecordInput?.from).toBe('today');
-    expect(sample.RecordDetail?.from).toBe('list');
-  });
+  // RootStackParamList 等の型整合は runtime(Jest) ではなく
+  // `npm run typecheck` (tsc --noEmit) で担保する。
 });
