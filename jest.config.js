@@ -4,6 +4,7 @@ module.exports = {
   testPathIgnorePatterns: ['/node_modules/', '/__tests__/legacy/'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   coveragePathIgnorePatterns: [
+    '<rootDir>/App.js',
     '<rootDir>/src/models/dataModels.ts',
     '<rootDir>/src/navigation/types.ts',
   ],

@@ -21,7 +21,6 @@
 | `src/content/legal/ja.ts` | `LEGAL_META`, `ABOUT_TEXT_JA`, `TERMS_TEXT_JA`, `PRIVACY_POLICY_TEXT_JA` | `__tests__/models.types.content.jest.test.ts` | ✅ |
 | `src/navigation/index.tsx` | `Navigator (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
 | `src/App.tsx` | `App (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
-| `App.js` | `App (default)` | `__tests__/phaseD.zero-coverage.jest.test.ts` | ✅ |
 | `src/screens/AboutScreen.tsx` | `AboutScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
 | `src/screens/TermsScreen.tsx` | `TermsScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
 | `src/screens/PrivacyPolicyScreen.tsx` | `PrivacyPolicyScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
@@ -30,6 +29,7 @@
 - 型・interface export: `src/models/dataModels.ts`, `src/navigation/types.ts`, `src/state/*` など。
 - 定数 export: `src/constants/colors.ts`, `src/content/legal/ja.ts`, `src/types/models.ts` の `DEFAULT_SETTINGS`。
 - `src/models/dataModels.ts` / `src/navigation/types.ts` は type-only のため runtime 実行経路がなく、coverage から除外する。
+- `App.js` は `src/App` への単純ブリッジでロジックを持たないため、coverage から除外する。
 - `export default` の画面/コンポーネントは UI テスト最小方針で段階的に追加。
 
 ## 仕様 × テストレベル
@@ -54,8 +54,7 @@
 | TS-BOOT-001 | index.ts の registerRootComponent 呼び出し | ✅ | — | — | 対象外 | `__tests__/app.navigation.ui.jest.test.tsx` |
 | TS-CONTENT-001 | 法務文面・メタデータの公開定数 | ✅ | — | — | 対象外 | `__tests__/models.types.content.jest.test.ts` |
 | TS-MODEL-001 | 既定ユーザー設定定数（types/models） | ✅ | — | — | 対象外 | `__tests__/models.types.content.jest.test.ts` |
-| TS-ZERO-001 | App.js の src/App 再exportと読込異常伝播 | ✅ | — | — | 対象外 | `__tests__/phaseD.zero-coverage.jest.test.ts` |
-| TS-ZERO-002 | type専用モジュールは coverage 除外 + 型整合は typecheck で担保 | — | — | — | 対象外 | `jest.config.js`, `package.json` (`typecheck`), `typechecks/navigation-types.typecheck.ts` |
+| TS-ZERO-002 | type専用/ブリッジモジュールは coverage 対象から除外 | — | — | — | 対象外 | `jest.config.js`, `package.json` (`typecheck`) |
 
 ## 現状サマリ
 - 旧 ⛔ 対象（`photo.ts` / `AppStateContext` / `AchievementsContext` / `DateViewContext`）を Jest テスト追加で ✅ 化。

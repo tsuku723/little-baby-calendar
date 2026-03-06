@@ -201,16 +201,16 @@
   - `__tests__/app.navigation.ui.jest.test.tsx`
 
 
-## TS-ZERO-001 App.js の再exportと異常伝播
-- 対象: `App.js` default export
+## TS-ZERO-001 App.js はロジックなしブリッジのため coverage 除外
+- 対象: `App.js`
 - 実装根拠: `App.js`
 - 実装上の挙動:
-  1. `./src/App` の default export をそのまま re-export する。
-  2. `./src/App` のロードで例外が発生した場合、その例外は捕捉されず呼び出し元へ伝播する。
-- テスト:
-  - `__tests__/phaseD.zero-coverage.jest.test.ts`
+  1. `App.js` は `./src/App` をそのまま再exportするブリッジのみで、独自ロジックを持たない。
+  2. coverage 目的のテスト専用実装を避けるため、coverage 設定で除外して運用する。
+- テスト/確認:
+  - `npm run test:unit -- --coverage` の出力で `App.js` が一覧から除外されることを確認
 
-## TS-ZERO-002 type-only モジュールの coverage 除外
+## TS-ZERO-002 type-only モジュールの coverage 除外（方針維持）
 - 対象: `src/models/dataModels.ts`, `src/navigation/types.ts`
 - 実装根拠: `src/models/dataModels.ts`, `src/navigation/types.ts`, `jest.config.js`
 - 実装上の挙動:
