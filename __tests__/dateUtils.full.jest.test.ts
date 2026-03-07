@@ -142,4 +142,9 @@ describe('dateUtils exported functions', () => {
     expect(jan30?.calendarAgeLabel?.chronological).toBe('暦 0才0ヶ月');
     expect(jan29?.calendarAgeLabel?.chronological).toBeUndefined();
   });
+
+  test('toUtcDateOnly returns Invalid Date when input is Invalid Date', () => {
+    const invalid = toUtcDateOnly(new Date(NaN));
+    expect(Number.isNaN(invalid.getTime())).toBe(true);
+  });
 });

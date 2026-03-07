@@ -453,4 +453,95 @@ describe('AppStateContext', () => {
     expect(activeAchievements).toEqual([]);
   });
 
+  test('legacy migration with settings-only uses empty achievements fallback', async () => {
+    mockGetItem
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce('{legacy-settings}')
+      .mockResolvedValueOnce(null);
+    mockLoadUserSettings.mockResolvedValue({
+      birthDate: '2025-01-01',
+      dueDate: null,
+      showCorrectedUntilMonths: 18,
+      ageFormat: 'md',
+      showDaysSinceBirth: false,
+      lastViewedMonth: '2025-01-01',
+    });
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    const Probe = () => {
+      captured = useAppState();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    expect(captured!.state.achievements['uuid-fixed']).toEqual([]);
+    expect(mockLoadAchievements).not.toHaveBeenCalled();
+  });
+
+  test('legacy migration skips non-array lists and fills defaults for missing id/date/title', async () => {
+    mockGetItem
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce('{legacy-settings}')
+      .mockResolvedValueOnce('{legacy-achievements}');
+    mockLoadUserSettings.mockResolvedValue({ birthDate: '2025-01-01' });
+    mockLoadAchievements.mockResolvedValue({
+      '2025-01-10': { bad: true },
+      '2025-01-11': [{}],
+    });
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    const Probe = () => {
+      captured = useAppState();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    const list = captured!.state.achievements['uuid-fixed'];
+    expect(list).toHaveLength(1);
+    expect(list[0].id).toBe('uuid-fixed');
+    expect(list[0].date).toBe('');
+    expect(list[0].title).toBe('');
+  });
+
+  test('deleteUser keeps active user when deleting non-active user and updateAchievement keeps list when id not found', async () => {
+    mockGetItem.mockResolvedValueOnce(
+      JSON.stringify({
+        users: [
+          { id: 'u1', name: 'A', birthDate: '2025-01-01', dueDate: null, settings, createdAt: 't' },
+          { id: 'u2', name: 'B', birthDate: '2025-01-02', dueDate: null, settings, createdAt: 't' },
+        ],
+        activeUserId: 'u1',
+        achievements: { u1: [{ id: 'a1', date: '2025-01-10', title: 'x', createdAt: 't' }], u2: [] },
+      })
+    );
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    let activeAchievements: ReturnType<typeof useAchievements> = [];
+    const Probe = () => {
+      captured = useAppState();
+      activeAchievements = useAchievements();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    await act(async () => {
+      await captured!.deleteUser('u2');
+      await captured!.updateAchievement('u1', 'missing', { title: 'ignored' });
+      await captured!.deleteAchievement('u1', 'missing');
+      await captured!.setActiveUser('u2');
+    });
+
+    expect(captured!.state.activeUserId).toBe('u1');
+    expect(captured!.state.achievements.u1).toHaveLength(1);
+    expect(activeAchievements).toHaveLength(1);
+
+    expect(captured!.state.activeUserId).toBe('u1');
+  });
+
 });

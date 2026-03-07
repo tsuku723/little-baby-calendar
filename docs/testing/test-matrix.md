@@ -38,7 +38,7 @@
 |---|---|---:|---:|---:|---:|---|
 | TS-AGE-001 | 年齢情報計算（暦/修正/在胎） | ✅ | — | — | 対象外 | `__tests__/age.dateUtils.jest.test.ts`, `__tests__/dateUtils.full.jest.test.ts` |
 | TS-AGE-002 | カレンダー月ビュー生成（buildCalendarMonthView） | ✅ | — | — | 対象外 | `__tests__/age.dateUtils.jest.test.ts`, `__tests__/dateUtils.full.jest.test.ts` |
-| TS-AGE-003 | 日付ユーティリティ（ISO/日差/月キー） | ✅ | — | — | 対象外 | `__tests__/dateUtils.full.jest.test.ts` |
+| TS-AGE-003 | 日付ユーティリティ（ISO/日差/月キー/Invalid Date） | ✅ | — | — | 対象外 | `__tests__/dateUtils.full.jest.test.ts` |
 | TS-TEXT-001 | 年齢ラベル正規化 | ✅ | — | ✅ | 対象外 | `__tests__/ageLabelNormalization.jest.test.ts`, `__tests__/DayCell.ui.jest.test.tsx` |
 | TS-TEXT-002 | テキスト補助（文字数・検索正規化） | ✅ | — | — | 対象外 | `__tests__/text.utils.jest.test.ts` |
 | TS-UI-001 | DayCell 表示分岐 + onPress | — | — | ✅ | 対象外 | `__tests__/DayCell.ui.jest.test.tsx` |
@@ -62,4 +62,4 @@
 
 - Phase C で `src/navigation/index.tsx`, `src/App.tsx`, `index.ts`, `src/screens/AboutScreen.tsx`, `src/screens/TermsScreen.tsx`, `src/screens/PrivacyPolicyScreen.tsx` を最小UI検証へ追加。
 
-- Phase E で `AppStateContext` / `storage` / `photo` / `text` / `DayCell` / `AchievementsContext` の未踏分岐を追加検証。
+- Phase E/F で `AppStateContext` / `storage` / `photo` / `text` / `DayCell` / `AchievementsContext` / `ageLabelNormalization` / `dateUtils` の未踏分岐を追加検証。

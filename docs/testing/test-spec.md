@@ -37,6 +37,7 @@
   3. `toIsoDateString` は `Invalid Date` を受けると throw する。
   4. `daysBetweenUtc` は負値を返さず 0 に丸める。
   5. `formatCalendarAgeLabel` は `ageFormat` に応じて `暦`/`修正` 接頭辞を付与する。
+  6. `toUtcDateOnly` は `Invalid Date` 入力を受けた場合 `Invalid Date` を返す。
 - テスト:
   - `__tests__/dateUtils.full.jest.test.ts`
 
@@ -71,9 +72,10 @@
   2. 暦ラベルは `stripChronologicalPrefix` 後に表示される。
   3. 当月外セルはラベル非表示レンダリング。
   4. タップ時に `onPress(day.date)` を呼び出す。
-- 追加カバー（Phase E）:
+- 追加カバー（Phase E/F）:
   - `gridPos` の最終行/最終列で罫線幅を 0 にする分岐。
   - `isToday` と `achievementCount>0` の表示分岐。
+  - 当月セルで `calendarAgeLabel=null` のとき空ラベル2行を表示する分岐。
 - テスト:
   - `__tests__/DayCell.ui.jest.test.tsx`
 
@@ -94,9 +96,10 @@
   2. JSON パース失敗時は warn してデフォルトへフォールバックする。
   3. `loadAchievements` は array / legacy object / map を `Record<date, Achievement[]>` に移行し、正規化したキーで再保存する。
   4. 移行時は `createdAt` / `updatedAt` 欠損を現在時刻で補完する。
-- 追加カバー（Phase E）:
+- 追加カバー（Phase E/F）:
   - 保存データ無し (`raw=null`) で空ストアを返す。
   - array 形式で `date` 欠損アイテムをスキップする。
+  - map 形式でも `date` 欠損で正規化後空配列になるキーを保存対象から除外する。
 - テスト:
   - `__tests__/storage.jest.test.ts`
 
@@ -240,3 +243,6 @@
 - テスト/確認:
   - `npm run test:unit -- --coverage` の出力で対象ファイルが一覧から除外されることを確認
   - `npm run typecheck` が成功することを確認（`typechecks/navigation-types.typecheck.ts` を含む）
+
+
+- Phase F で対象ファイルの残分岐を列挙し、実装挙動に基づく最小ケースを追加。

@@ -88,4 +88,19 @@ describe('DayCell UI branches', () => {
     expect(UNSAFE_queryAllByType(require('react-native').View).length).toBeGreaterThan(0);
   });
 
+  test('renders blank age lines for current-month day without age labels', () => {
+    const { queryAllByText } = render(
+      <DayCell
+        day={{
+          ...baseDay,
+          isCurrentMonth: true,
+          calendarAgeLabel: null,
+        }}
+        onPress={jest.fn()}
+      />
+    );
+
+    expect(queryAllByText(' ')).toHaveLength(2);
+  });
+
 });

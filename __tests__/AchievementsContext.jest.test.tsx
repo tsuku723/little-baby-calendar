@@ -255,4 +255,60 @@ describe('AchievementsContext', () => {
     expect(errorSpy).toHaveBeenCalledWith('remove failed:', expect.any(Error));
   });
 
+  test('derives empty activeAchievements/monthCounts when active bucket is missing and remove skips photo cleanup without photoPath', async () => {
+    let appCtx: ReturnType<typeof useAppState> | null = null;
+    let achCtx: ReturnType<typeof useAchievements> | null = null;
+
+    const Probe = () => {
+      appCtx = useAppState();
+      achCtx = useAchievements();
+      return <Text>ok</Text>;
+    };
+
+    render(
+      <AppStateProvider>
+        <AchievementsProvider>
+          <Probe />
+        </AchievementsProvider>
+      </AppStateProvider>
+    );
+
+    await waitFor(() => expect(appCtx?.loading).toBe(false));
+
+    await act(async () => {
+      await appCtx!.addUser({ name: 'Baby', birthDate: '2025-01-01', dueDate: null, settings, id: 'u1' });
+      await appCtx!.setActiveUser('u1');
+      await appCtx!.addAchievement('u2', {
+        id: 'cross-month-1',
+        date: '2026-01-10',
+        title: 'x',
+        createdAt: 't',
+      } as any);
+      await appCtx!.addAchievement('u2', {
+        id: 'cross-month-2',
+        date: '2026-02-11',
+        title: 'y',
+        createdAt: 't',
+      } as any);
+    });
+
+    expect(achCtx!.store).toEqual({});
+    expect(achCtx!.monthCounts).toEqual({});
+
+    await act(async () => {
+      await appCtx!.addAchievement('u1', {
+        id: 'no-photo',
+        date: '2026-01-10',
+        title: 'no-photo',
+        createdAt: 't',
+      } as any);
+    });
+
+    await act(async () => {
+      await achCtx!.remove('no-photo', '2026-01-10');
+    });
+
+    expect(removeAchievementPhotoAsync).not.toHaveBeenCalledWith(undefined);
+  });
+
 });

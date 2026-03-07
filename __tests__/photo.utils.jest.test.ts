@@ -146,4 +146,35 @@ describe('photo utils', () => {
     );
   });
 
+  test('pickAndSavePhotoAsync uses height resize branch for portrait images', async () => {
+    (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///tmp/src-portrait.png', width: 1600, height: 3200 }],
+    });
+    (ImageManipulator.manipulateAsync as jest.Mock).mockResolvedValue({ uri: 'file:///tmp/out-portrait.jpg' });
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: true });
+
+    await pickAndSavePhotoAsync();
+
+    expect(ImageManipulator.manipulateAsync).toHaveBeenCalledWith(
+      'file:///tmp/src-portrait.png',
+      [{ resize: { height: 1600 } }],
+      { compress: 0.75, format: 'jpeg' }
+    );
+  });
+
+  test('ensureFileExistsAsync returns original path when file exists', async () => {
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: true });
+
+    await expect(ensureFileExistsAsync('/exists.jpg')).resolves.toBe('/exists.jpg');
+  });
+
+  test('deleteIfExistsAsync skips delete when file does not exist', async () => {
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: false });
+
+    await deleteIfExistsAsync('/missing.jpg');
+    expect(FileSystem.deleteAsync).not.toHaveBeenCalled();
+  });
+
 });

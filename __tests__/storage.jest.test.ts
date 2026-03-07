@@ -123,4 +123,16 @@ describe('storage module exports', () => {
     expect(data).toEqual({});
   });
 
+  test('loadAchievements skips empty normalized lists when map entry has no valid records', async () => {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.achievementStore,
+      JSON.stringify({
+        '2026-01-10': [{ title: 'missing-date' }],
+      })
+    );
+
+    const result = await loadAchievements();
+    expect(result).toEqual({});
+  });
+
 });
