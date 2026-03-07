@@ -108,4 +108,73 @@ describe('photo utils', () => {
     await expect(deleteIfExistsAsync('/x.jpg')).resolves.toBeUndefined();
     expect(warnSpy).toHaveBeenCalled();
   });
+
+  test('pickAndSavePhotoAsync uses empty resize actions when long edge is small and skips directory creation when exists', async () => {
+    (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///tmp/src-small.png', width: 1200, height: 800 }],
+    });
+    (ImageManipulator.manipulateAsync as jest.Mock).mockResolvedValue({ uri: 'file:///tmp/out-small.jpg' });
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: true });
+
+    await pickAndSavePhotoAsync();
+
+    expect(ImageManipulator.manipulateAsync).toHaveBeenCalledWith(
+      'file:///tmp/src-small.png',
+      [],
+      { compress: 0.75, format: 'jpeg' }
+    );
+    expect(FileSystem.makeDirectoryAsync).not.toHaveBeenCalled();
+  });
+
+  test('pickAndSavePhotoAsync falls back to width resize when asset dimensions are missing', async () => {
+    (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///tmp/src-no-size.png' }],
+    });
+    (ImageManipulator.manipulateAsync as jest.Mock).mockResolvedValue({ uri: 'file:///tmp/out-no-size.jpg' });
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: true });
+
+    await pickAndSavePhotoAsync();
+
+    expect(ImageManipulator.manipulateAsync).toHaveBeenCalledWith(
+      'file:///tmp/src-no-size.png',
+      [{ resize: { width: 1600 } }],
+      { compress: 0.75, format: 'jpeg' }
+    );
+  });
+
+  test('pickAndSavePhotoAsync uses height resize branch for portrait images', async () => {
+    (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///tmp/src-portrait.png', width: 1600, height: 3200 }],
+    });
+    (ImageManipulator.manipulateAsync as jest.Mock).mockResolvedValue({ uri: 'file:///tmp/out-portrait.jpg' });
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: true });
+
+    await pickAndSavePhotoAsync();
+
+    expect(ImageManipulator.manipulateAsync).toHaveBeenCalledWith(
+      'file:///tmp/src-portrait.png',
+      [{ resize: { height: 1600 } }],
+      { compress: 0.75, format: 'jpeg' }
+    );
+  });
+
+  test('ensureFileExistsAsync returns original path when file exists', async () => {
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: true });
+
+    await expect(ensureFileExistsAsync('/exists.jpg')).resolves.toBe('/exists.jpg');
+  });
+
+  test('deleteIfExistsAsync skips delete when file does not exist', async () => {
+    (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: false });
+
+    await deleteIfExistsAsync('/missing.jpg');
+    expect(FileSystem.deleteAsync).not.toHaveBeenCalled();
+  });
+
 });

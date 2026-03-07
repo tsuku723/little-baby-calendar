@@ -17,4 +17,14 @@ describe('text utils exports', () => {
     expect(normalizeSearchText(null)).toBe('');
     expect(normalizeSearchText(' ＡＢＣ　１２3  Test ')).toBe('abc 123 test');
   });
+
+  test('remainingChars and clampComment handle undefined input through nullish fallback branches', () => {
+    expect(remainingChars(undefined as unknown as string)).toBe(500);
+    expect(clampComment(undefined as unknown as string)).toBeUndefined();
+  });
+
+  test('normalizeSearchText returns empty string for empty input', () => {
+    expect(normalizeSearchText('')).toBe('');
+  });
+
 });

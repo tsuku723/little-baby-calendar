@@ -10,4 +10,10 @@ describe('age label normalization', () => {
   test('converts blank strings to null', () => {
     expect(normalizeAgeLabelText(' 　\t ')).toBeNull();
   });
+
+  test('stripChronologicalPrefix returns null for nullish values', () => {
+    expect(stripChronologicalPrefix(null)).toBeNull();
+    expect(stripChronologicalPrefix(undefined)).toBeNull();
+  });
+
 });
