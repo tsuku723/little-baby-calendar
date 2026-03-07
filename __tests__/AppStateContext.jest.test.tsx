@@ -544,4 +544,62 @@ describe('AppStateContext', () => {
     expect(captured!.state.activeUserId).toBe('u1');
   });
 
+  test('updateAchievement creates empty bucket when user achievements are missing', async () => {
+    mockGetItem.mockResolvedValueOnce(
+      JSON.stringify({
+        users: [{ id: 'u1', name: 'A', birthDate: '2025-01-01', dueDate: null, settings, createdAt: 't' }],
+        activeUserId: 'u1',
+        achievements: { u1: [] },
+      })
+    );
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    const Probe = () => {
+      captured = useAppState();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    await act(async () => {
+      await captured!.updateAchievement('u-missing', 'x', { title: 'noop' });
+    });
+
+    expect(captured!.state.achievements['u-missing']).toEqual([]);
+  });
+
+  test('useAchievements returns empty when active user points to missing bucket', async () => {
+    mockGetItem.mockResolvedValueOnce(
+      JSON.stringify({
+        users: [{ id: 'u1', name: 'A', birthDate: '2025-01-01', dueDate: null, settings, createdAt: 't' }],
+        activeUserId: 'u1',
+        achievements: { u1: [] },
+      })
+    );
+
+    let captured: ReturnType<typeof useAppState> | null = null;
+    let achievements: ReturnType<typeof useAchievements> = [];
+    const Probe = () => {
+      captured = useAppState();
+      achievements = useAchievements();
+      return <Text>ok</Text>;
+    };
+
+    render(<AppStateProvider><Probe /></AppStateProvider>);
+    await waitFor(() => expect(captured?.loading).toBe(false));
+
+    await act(async () => {
+      await captured!.addUser({ name: 'B', birthDate: '2025-01-02', dueDate: null, settings, id: 'u2' });
+      await captured!.setActiveUser('u2');
+      await captured!.deleteAchievement('u2', 'none');
+      await captured!.setActiveUser('u1');
+      await captured!.deleteUser('u1');
+      await captured!.addUser({ name: 'C', birthDate: '2025-01-03', dueDate: null, settings, id: 'u3' });
+      await captured!.setActiveUser('u3');
+    });
+
+    expect(achievements).toEqual([]);
+  });
+
 });

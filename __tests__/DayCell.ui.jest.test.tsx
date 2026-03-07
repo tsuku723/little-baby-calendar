@@ -103,4 +103,20 @@ describe('DayCell UI branches', () => {
     expect(queryAllByText(' ')).toHaveLength(2);
   });
 
+  test('non-current month keeps hidden placeholders without dimmed age sticker text', () => {
+    const { queryAllByText, queryByText } = render(
+      <DayCell
+        day={{
+          ...baseDay,
+          isCurrentMonth: false,
+          calendarAgeLabel: { chronological: '暦 1才0ヶ月' },
+        }}
+        onPress={jest.fn()}
+      />
+    );
+
+    expect(queryByText('1才0ヶ月')).toBeNull();
+    expect(queryAllByText(' ')).toHaveLength(2);
+  });
+
 });

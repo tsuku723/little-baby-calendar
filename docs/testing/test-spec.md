@@ -38,6 +38,7 @@
   4. `daysBetweenUtc` は負値を返さず 0 に丸める。
   5. `formatCalendarAgeLabel` は `ageFormat` に応じて `暦`/`修正` 接頭辞を付与する。
   6. `toUtcDateOnly` は `Invalid Date` 入力を受けた場合 `Invalid Date` を返す。
+  7. `daysBetweenUtc` は `start/end` のいずれかが `Invalid Date` の場合も 0 を返す。
 - テスト:
   - `__tests__/dateUtils.full.jest.test.ts`
 
@@ -76,6 +77,7 @@
   - `gridPos` の最終行/最終列で罫線幅を 0 にする分岐。
   - `isToday` と `achievementCount>0` の表示分岐。
   - 当月セルで `calendarAgeLabel=null` のとき空ラベル2行を表示する分岐。
+  - 当月外セルでも hidden プレースホルダ2行を返す分岐。
 - テスト:
   - `__tests__/DayCell.ui.jest.test.tsx`
 
@@ -100,6 +102,7 @@
   - 保存データ無し (`raw=null`) で空ストアを返す。
   - array 形式で `date` 欠損アイテムをスキップする。
   - map 形式でも `date` 欠損で正規化後空配列になるキーを保存対象から除外する。
+  - map 形式の空配列エントリ（`safeList.length===0`）を保存対象から除外する。
 - テスト:
   - `__tests__/storage.jest.test.ts`
 
@@ -130,9 +133,10 @@
   4. `setActiveUser` は存在しない userId を渡すと state を変更しない。
   5. `deleteUser` は削除対象が active の場合、残存 users の先頭へ切り替え、空なら null。
   6. legacy キーがある場合 `loadUserSettings/loadAchievements` で migratedState を組み立て、legacy key 削除と APP_STATE 保存を行う。
-- 追加カバー（Phase E）:
+- 追加カバー（Phase E/F+）:
   - legacy settings が無い移行で既定値を採用する。
   - `addAchievement/updateAchievement/deleteAchievement` の user bucket fallback 分岐を通す。
+  - `updateAchievement` の未存在ユーザーバケット（`?? []`）フォールバック分岐。
   - `users`/`achievements` が null の復元で空構造へ補正する。
 - テスト:
   - `__tests__/AppStateContext.jest.test.tsx`
@@ -148,8 +152,10 @@
   5. `payload.photoPath === null` は「写真削除」を意味し、保存値は `undefined` になる。
   6. 保存処理後は `cleanupReplacedPhotoAsync(previousPhotoPath, payload.photoPath)` を呼ぶ。
   7. `remove` は active user 不在なら warn。対象に `photoPath` があれば `removeAchievementPhotoAsync` を呼ぶ。
-- 追加カバー（Phase E）:
+- 追加カバー（Phase E/F+）:
   - `loadDay` / `loadMonth` の no-op Promise 解決分岐。
+  - active user bucket 欠損時の `store` / `monthCounts` フォールバック分岐。
+  - `monthCounts` の月キー初回生成と同月日次カウント集約分岐。
   - `cleanupReplacedPhotoAsync` / `removeAchievementPhotoAsync` 失敗時の catch 分岐。
 - テスト:
   - `__tests__/AchievementsContext.jest.test.tsx`

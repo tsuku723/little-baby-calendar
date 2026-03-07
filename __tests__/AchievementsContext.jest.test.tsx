@@ -311,4 +311,53 @@ describe('AchievementsContext', () => {
     expect(removeAchievementPhotoAsync).not.toHaveBeenCalledWith(undefined);
   });
 
+  test('monthCounts creates month key once and aggregates multiple day counts for active user', async () => {
+    let appCtx: ReturnType<typeof useAppState> | null = null;
+    let achCtx: ReturnType<typeof useAchievements> | null = null;
+
+    const Probe = () => {
+      appCtx = useAppState();
+      achCtx = useAchievements();
+      return <Text>ok</Text>;
+    };
+
+    render(
+      <AppStateProvider>
+        <AchievementsProvider>
+          <Probe />
+        </AchievementsProvider>
+      </AppStateProvider>
+    );
+
+    await waitFor(() => expect(appCtx?.loading).toBe(false));
+
+    await act(async () => {
+      await appCtx!.addUser({ name: 'Baby', birthDate: '2025-01-01', dueDate: null, settings, id: 'u1' });
+      await appCtx!.setActiveUser('u1');
+      await appCtx!.addAchievement('u1', {
+        id: 'a-jan-1',
+        date: '2026-01-10',
+        title: 'x',
+        createdAt: 't',
+      } as any);
+      await appCtx!.addAchievement('u1', {
+        id: 'a-jan-2',
+        date: '2026-01-10',
+        title: 'y',
+        createdAt: 't',
+      } as any);
+      await appCtx!.addAchievement('u1', {
+        id: 'a-feb-1',
+        date: '2026-02-11',
+        title: 'z',
+        createdAt: 't',
+      } as any);
+    });
+
+    expect(achCtx!.monthCounts).toEqual({
+      '2026-01': { '2026-01-10': 2 },
+      '2026-02': { '2026-02-11': 1 },
+    });
+  });
+
 });

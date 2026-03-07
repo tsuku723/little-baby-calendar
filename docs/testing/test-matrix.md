@@ -63,3 +63,5 @@
 - Phase C で `src/navigation/index.tsx`, `src/App.tsx`, `index.ts`, `src/screens/AboutScreen.tsx`, `src/screens/TermsScreen.tsx`, `src/screens/PrivacyPolicyScreen.tsx` を最小UI検証へ追加。
 
 - Phase E/F で `AppStateContext` / `storage` / `photo` / `text` / `DayCell` / `AchievementsContext` / `ageLabelNormalization` / `dateUtils` の未踏分岐を追加検証。
+
+- Phase F+ (targeted) で `DayCell` / `AchievementsContext` / `AppStateContext` / `storage` / `dateUtils` の未踏候補を狙い撃ち検証。

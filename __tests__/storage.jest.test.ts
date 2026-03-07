@@ -135,4 +135,16 @@ describe('storage module exports', () => {
     expect(result).toEqual({});
   });
 
+  test('loadAchievements skips empty map lists and does not create a date key', async () => {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.achievementStore,
+      JSON.stringify({
+        '2026-01-10': [],
+      })
+    );
+
+    const data = await loadAchievements();
+    expect(data).toEqual({});
+  });
+
 });
