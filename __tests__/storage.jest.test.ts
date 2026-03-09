@@ -51,4 +51,100 @@ describe('storage module exports', () => {
 
     nowSpy.mockRestore();
   });
+
+  test('loadAchievements migrates legacy object.achievements format', async () => {
+    const nowSpy = jest.spyOn(Date.prototype, 'toISOString').mockReturnValue('2026-03-01T00:00:00.000Z');
+
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.achievementStore,
+      JSON.stringify({
+        achievements: [
+          { id: 'b1', date: '2026-03-01', title: 'legacy-1' },
+          { id: 'b2', title: 'missing-date' },
+        ],
+      })
+    );
+
+    const data = await loadAchievements();
+    expect(Object.keys(data)).toEqual(['2026-03-01']);
+    expect(data['2026-03-01'][0]).toMatchObject({
+      id: 'b1',
+      updatedAt: '2026-03-01T00:00:00.000Z',
+    });
+
+    nowSpy.mockRestore();
+  });
+
+  test('loadAchievements throws when save on migration fails', async () => {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.achievementStore,
+      JSON.stringify({
+        '2026-03-01': [{ id: 'c1', date: '2026-03-01', title: 'ok' }],
+      })
+    );
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const setItemSpy = jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('disk-full'));
+
+    await expect(loadAchievements()).rejects.toThrow('disk-full');
+    expect(warnSpy).toHaveBeenCalledWith(
+      `Failed to save key=${STORAGE_KEYS.achievementStore}`,
+      expect.any(Error)
+    );
+
+    setItemSpy.mockRestore();
+  });
+
+  test('loadAchievements ignores malformed map entries that are not arrays', async () => {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.achievementStore,
+      JSON.stringify({
+        '2026-03-01': { id: 'z1', date: '2026-03-01', title: 'broken' },
+      })
+    );
+
+    const data = await loadAchievements();
+    expect(data).toEqual({});
+  });
+
+  test('loadAchievements returns empty store when no raw data exists', async () => {
+    const data = await loadAchievements();
+    expect(data).toEqual({});
+  });
+
+  test('loadAchievements skips array entries without date key', async () => {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.achievementStore,
+      JSON.stringify([
+        { id: 'x1', title: 'missing-date' },
+      ])
+    );
+
+    const data = await loadAchievements();
+    expect(data).toEqual({});
+  });
+
+  test('loadAchievements skips empty normalized lists when map entry has no valid records', async () => {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.achievementStore,
+      JSON.stringify({
+        '2026-01-10': [{ title: 'missing-date' }],
+      })
+    );
+
+    const result = await loadAchievements();
+    expect(result).toEqual({});
+  });
+
+  test('loadAchievements skips empty map lists and does not create a date key', async () => {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.achievementStore,
+      JSON.stringify({
+        '2026-01-10': [],
+      })
+    );
+
+    const data = await loadAchievements();
+    expect(data).toEqual({});
+  });
+
 });

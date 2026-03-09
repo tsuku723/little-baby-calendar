@@ -37,6 +37,8 @@
   3. `toIsoDateString` は `Invalid Date` を受けると throw する。
   4. `daysBetweenUtc` は負値を返さず 0 に丸める。
   5. `formatCalendarAgeLabel` は `ageFormat` に応じて `暦`/`修正` 接頭辞を付与する。
+  6. `toUtcDateOnly` は `Invalid Date` 入力を受けた場合 `Invalid Date` を返す。
+  7. `daysBetweenUtc` は `start/end` のいずれかが `Invalid Date` の場合も 0 を返す。
 - テスト:
   - `__tests__/dateUtils.full.jest.test.ts`
 
@@ -57,6 +59,9 @@
   1. code point ベースで 500 文字上限を扱う。
   2. `clampComment` は 500 超過時のみ切り詰める。
   3. `normalizeSearchText` は全角英数半角化 + lowercase + 空白圧縮を行う。
+- 追加カバー（Phase E）:
+  - `undefined` 入力時の nullish fallback 分岐。
+  - 空文字入力時の早期 return 分岐。
 - テスト:
   - `__tests__/text.utils.jest.test.ts`
 
@@ -68,6 +73,11 @@
   2. 暦ラベルは `stripChronologicalPrefix` 後に表示される。
   3. 当月外セルはラベル非表示レンダリング。
   4. タップ時に `onPress(day.date)` を呼び出す。
+- 追加カバー（Phase E/F）:
+  - `gridPos` の最終行/最終列で罫線幅を 0 にする分岐。
+  - `isToday` と `achievementCount>0` の表示分岐。
+  - 当月セルで `calendarAgeLabel=null` のとき空ラベル2行を表示する分岐。
+  - 当月外セルでも hidden プレースホルダ2行を返す分岐。
 - テスト:
   - `__tests__/DayCell.ui.jest.test.tsx`
 
@@ -88,6 +98,11 @@
   2. JSON パース失敗時は warn してデフォルトへフォールバックする。
   3. `loadAchievements` は array / legacy object / map を `Record<date, Achievement[]>` に移行し、正規化したキーで再保存する。
   4. 移行時は `createdAt` / `updatedAt` 欠損を現在時刻で補完する。
+- 追加カバー（Phase E/F）:
+  - 保存データ無し (`raw=null`) で空ストアを返す。
+  - array 形式で `date` 欠損アイテムをスキップする。
+  - map 形式でも `date` 欠損で正規化後空配列になるキーを保存対象から除外する。
+  - map 形式の空配列エントリ（`safeList.length===0`）を保存対象から除外する。
 - テスト:
   - `__tests__/storage.jest.test.ts`
 
@@ -101,6 +116,10 @@
   4. 保存先ディレクトリがなければ作成し、`achievement-*.jpg` 名で `moveAsync` して destination を返す。
   5. `ensureFileExistsAsync` は path 未指定で `null`、例外時も warn して `null`。
   6. `deleteIfExistsAsync` は path 未指定なら no-op、存在時のみ `idempotent: true` で削除し、例外時は warn のみ。
+- 追加カバー（Phase E）:
+  - 長辺が閾値以下の画像で resize action が空配列になる。
+  - 画像寸法欠損時に width=1600 の fallback resize を使う。
+  - 保存ディレクトリ既存時は `makeDirectoryAsync` を呼ばない。
 - テスト:
   - `__tests__/photo.utils.jest.test.ts`
 
@@ -114,6 +133,11 @@
   4. `setActiveUser` は存在しない userId を渡すと state を変更しない。
   5. `deleteUser` は削除対象が active の場合、残存 users の先頭へ切り替え、空なら null。
   6. legacy キーがある場合 `loadUserSettings/loadAchievements` で migratedState を組み立て、legacy key 削除と APP_STATE 保存を行う。
+- 追加カバー（Phase E/F+）:
+  - legacy settings が無い移行で既定値を採用する。
+  - `addAchievement/updateAchievement/deleteAchievement` の user bucket fallback 分岐を通す。
+  - `updateAchievement` の未存在ユーザーバケット（`?? []`）フォールバック分岐。
+  - `users`/`achievements` が null の復元で空構造へ補正する。
 - テスト:
   - `__tests__/AppStateContext.jest.test.tsx`
 
@@ -128,6 +152,12 @@
   5. `payload.photoPath === null` は「写真削除」を意味し、保存値は `undefined` になる。
   6. 保存処理後は `cleanupReplacedPhotoAsync(previousPhotoPath, payload.photoPath)` を呼ぶ。
   7. `remove` は active user 不在なら warn。対象に `photoPath` があれば `removeAchievementPhotoAsync` を呼ぶ。
+- 追加カバー（Phase E/F+）:
+  - `loadDay` / `loadMonth` の no-op Promise 解決分岐。
+  - active user bucket 欠損時の `store` / `monthCounts` フォールバック分岐。
+  - `monthCounts` の月キー初回生成と同月日次カウント集約分岐。
+  - 同月の別日エントリ投入で `if (!result[month])` の false 側（既存月）も通過する。
+  - `cleanupReplacedPhotoAsync` / `removeAchievementPhotoAsync` 失敗時の catch 分岐。
 - テスト:
   - `__tests__/AchievementsContext.jest.test.tsx`
 
@@ -141,3 +171,85 @@
   4. `resetToToday` は `new Date(today)` を用いるため、同時刻値だが別インスタンスで `selectedDate` を更新する。
 - テスト:
   - `__tests__/DateViewContext.jest.test.tsx`
+
+## TS-CONTENT-001 法務コンテンツ定数
+- 対象: `LEGAL_META`, `ABOUT_TEXT_JA`, `TERMS_TEXT_JA`, `PRIVACY_POLICY_TEXT_JA`
+- 実装根拠: `src/content/legal/ja.ts`
+- 実装上の挙動:
+  1. `LEGAL_META` はアプリ名・運営者・連絡先・発効日・バージョン表記を固定値として公開する。
+  2. `ABOUT_TEXT_JA` / `TERMS_TEXT_JA` / `PRIVACY_POLICY_TEXT_JA` は Markdown 文字列として公開される。
+  3. 文面にはそれぞれ見出し (`# ...`) と問い合わせ導線が含まれる。
+- テスト:
+  - `__tests__/models.types.content.jest.test.ts`
+
+## TS-MODEL-001 既定設定定数
+- 対象: `DEFAULT_SETTINGS`
+- 実装根拠: `src/types/models.ts`
+- 実装上の挙動:
+  1. `DEFAULT_SETTINGS` は `showCorrectedUntilMonths: 24`, `ageFormat: "ymd"`, `showDaysSinceBirth: true`, `lastViewedMonth: null` を返す。
+  2. `UserSettings` 型の既定値として利用される。
+- テスト:
+  - `__tests__/models.types.content.jest.test.ts`
+
+## TS-DATA-002 storage.ts の追加分岐（例外・legacy object・不正map）
+- 対象関数: `loadAchievements`
+- 実装根拠: `src/storage/storage.ts`
+- 実装上の挙動:
+  1. `input.achievements` 配列形式（legacy object）でも `AchievementStore` へ移行する。
+  2. 移行保存 (`saveJson`) が失敗すると warn を出して例外を再throwする。
+  3. map 形式でも value が配列でない不正入力は `isMapFormat=false` 判定となり、空データ扱いで保存される。
+- テスト:
+  - `__tests__/storage.jest.test.ts`
+
+## TS-STATE-005 AppState の例外/整合性分岐
+- 対象関数: `AppStateProvider`, `useAppState`
+- 実装根拠: `src/state/AppStateContext.tsx`
+- 実装上の挙動:
+  1. `APP_STATE_KEY` のJSONパース失敗時は warn の上で初期状態へフォールバックする。
+  2. `ensureStateIntegrity` は不正 `activeUserId` を先頭ユーザーIDへ補正し、`achievements[user.id]` 未定義なら空配列を補完する。
+  3. `updateUser` は `settings` を shallow merge し、`id` は不変のまま保持する。
+  4. 永続化失敗時 (`persistState`) は warn のみでUI状態更新は継続する。
+- テスト:
+  - `__tests__/AppStateContext.jest.test.tsx`
+
+## TS-UI-002 App / Navigator / 法務スクリーンの最小UI検証
+- 対象: `App`, `Navigator`, `AboutScreen`, `TermsScreen`, `PrivacyPolicyScreen`
+- 実装根拠: `src/App.tsx`, `src/navigation/index.tsx`, `src/screens/AboutScreen.tsx`, `src/screens/TermsScreen.tsx`, `src/screens/PrivacyPolicyScreen.tsx`
+- 実装上の挙動:
+  1. `App` は `useFonts` が false の間 `null` を返し、true のとき Provider チェーンを返す。
+  2. `Navigator` は `NavigationContainer` に `COLORS` を反映したthemeを渡し、`DateViewProvider` と `RootNavigator` を内包する。
+  3. 各法務スクリーンは対応する法務本文 (`ABOUT_TEXT_JA`/`TERMS_TEXT_JA`/`PRIVACY_POLICY_TEXT_JA`) を `LegalTextScreen` へ渡す。
+- テスト:
+  - `__tests__/app.navigation.ui.jest.test.tsx`
+
+## TS-BOOT-001 エントリポイント登録
+- 対象: `index.ts`
+- 実装根拠: `index.ts`
+- 実装上の挙動:
+  1. `registerRootComponent(App)` が起動時に実行される。
+- テスト:
+  - `__tests__/app.navigation.ui.jest.test.tsx`
+
+
+## TS-ZERO-001 App.js はロジックなしブリッジのため coverage 除外
+- 対象: `App.js`
+- 実装根拠: `App.js`
+- 実装上の挙動:
+  1. `App.js` は `./src/App` をそのまま再exportするブリッジのみで、独自ロジックを持たない。
+  2. coverage 目的のテスト専用実装を避けるため、coverage 設定で除外して運用する。
+- テスト/確認:
+  - `npm run test:unit -- --coverage` の出力で `App.js` が一覧から除外されることを確認
+
+## TS-ZERO-002 type-only モジュールの coverage 除外（方針維持）
+- 対象: `src/models/dataModels.ts`, `src/navigation/types.ts`
+- 実装根拠: `src/models/dataModels.ts`, `src/navigation/types.ts`, `jest.config.js`
+- 実装上の挙動:
+  1. 両ファイルは型定義のみで runtime 実行コードを持たない。
+  2. runtime marker のような本番コード混入を避けるため、coverage 設定で除外して運用する。
+  3. 型定義の整合性は Jest ではなく `npm run typecheck` (`tsc -p tsconfig.typecheck.json --noEmit`) で担保する。
+- テスト/確認:
+  - `npm run test:unit -- --coverage` の出力で対象ファイルが一覧から除外されることを確認
+  - `npm run typecheck` が成功することを確認（`typechecks/navigation-types.typecheck.ts` を含む）
+
+
+- Phase F で対象ファイルの残分岐を列挙し、実装挙動に基づく最小ケースを追加。

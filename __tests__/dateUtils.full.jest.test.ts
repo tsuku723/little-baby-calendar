@@ -142,4 +142,30 @@ describe('dateUtils exported functions', () => {
     expect(jan30?.calendarAgeLabel?.chronological).toBe('暦 0才0ヶ月');
     expect(jan29?.calendarAgeLabel?.chronological).toBeUndefined();
   });
+
+  test('toUtcDateOnly returns Invalid Date when input is Invalid Date', () => {
+    const invalid = toUtcDateOnly(new Date(NaN));
+    expect(Number.isNaN(invalid.getTime())).toBe(true);
+  });
+
+  test('daysBetweenUtc returns 0 when either start or end is Invalid Date', () => {
+    expect(daysBetweenUtc(new Date(NaN), new Date(2025, 0, 1))).toBe(0);
+    expect(daysBetweenUtc(new Date(2025, 0, 1), new Date(NaN))).toBe(0);
+  });
+
+  test('buildCalendarMonthView fallback injects chronological label when month has no chronological changes', () => {
+    const view = buildCalendarMonthView({
+      anchorDate: new Date(2025, 1, 1),
+      settings,
+      birthDate: '2024-12-31',
+      dueDate: null,
+    });
+
+    const currentMonthDays = view.days.filter((d) => d.isCurrentMonth);
+    const chronologicalLabels = currentMonthDays.filter((d) => d.calendarAgeLabel?.chronological != null);
+
+    expect(chronologicalLabels.length).toBeGreaterThanOrEqual(1);
+    expect(currentMonthDays.some((d) => d.date >= '2024-12-31' && d.ageInfo != null)).toBe(true);
+  });
+
 });
