@@ -65,3 +65,5 @@
 - Phase E/F で `AppStateContext` / `storage` / `photo` / `text` / `DayCell` / `AchievementsContext` / `ageLabelNormalization` / `dateUtils` の未踏分岐を追加検証。
 
 - Phase F+ (targeted) で `DayCell` / `AchievementsContext` / `AppStateContext` / `storage` / `dateUtils` の未踏候補を狙い撃ち検証。
+
+- Final targeted run: `AchievementsContext` の month 集約分岐（新規月/既存月）を追加検証。

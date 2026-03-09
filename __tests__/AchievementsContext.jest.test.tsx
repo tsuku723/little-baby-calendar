@@ -342,7 +342,7 @@ describe('AchievementsContext', () => {
       } as any);
       await appCtx!.addAchievement('u1', {
         id: 'a-jan-2',
-        date: '2026-01-10',
+        date: '2026-01-12',
         title: 'y',
         createdAt: 't',
       } as any);
@@ -355,7 +355,7 @@ describe('AchievementsContext', () => {
     });
 
     expect(achCtx!.monthCounts).toEqual({
-      '2026-01': { '2026-01-10': 2 },
+      '2026-01': { '2026-01-10': 1, '2026-01-12': 1 },
       '2026-02': { '2026-02-11': 1 },
     });
   });

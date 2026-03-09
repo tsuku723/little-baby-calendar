@@ -156,6 +156,7 @@
   - `loadDay` / `loadMonth` の no-op Promise 解決分岐。
   - active user bucket 欠損時の `store` / `monthCounts` フォールバック分岐。
   - `monthCounts` の月キー初回生成と同月日次カウント集約分岐。
+  - 同月の別日エントリ投入で `if (!result[month])` の false 側（既存月）も通過する。
   - `cleanupReplacedPhotoAsync` / `removeAchievementPhotoAsync` 失敗時の catch 分岐。
 - テスト:
   - `__tests__/AchievementsContext.jest.test.tsx`
