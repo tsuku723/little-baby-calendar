@@ -82,8 +82,8 @@ describe('AppStateContext', () => {
     render(<AppStateProvider><Probe /></AppStateProvider>);
 
     await waitFor(() => expect(captured?.loading).toBe(false));
-    expect(captured?.state.activeUserId).toBe('u1');
-    expect(captured?.state.users).toHaveLength(1);
+    expect(captured!.state.activeUserId).toBe('u1');
+    expect(captured!.state.users).toHaveLength(1);
   });
 
   test('addUser creates achievement list and sets active when null', async () => {
@@ -251,8 +251,8 @@ describe('AppStateContext', () => {
     render(<AppStateProvider><Probe /></AppStateProvider>);
     await waitFor(() => expect(captured?.loading).toBe(false));
 
-    expect(captured?.state.users).toEqual([]);
-    expect(captured?.state.activeUserId).toBeNull();
+    expect(captured!.state.users).toEqual([]);
+    expect(captured!.state.activeUserId).toBeNull();
     expect(warnSpy).toHaveBeenCalledWith('Failed to parse AppState; resetting', expect.any(Error));
   });
 
@@ -274,8 +274,8 @@ describe('AppStateContext', () => {
     render(<AppStateProvider><Probe /></AppStateProvider>);
     await waitFor(() => expect(captured?.loading).toBe(false));
 
-    expect(captured?.state.activeUserId).toBe('u1');
-    expect(captured?.state.achievements.u1).toEqual([]);
+    expect(captured!.state.activeUserId).toBe('u1');
+    expect(captured!.state.achievements.u1).toEqual([]);
   });
 
   test('updateUser merges nested settings and keeps id', async () => {
@@ -380,8 +380,8 @@ describe('AppStateContext', () => {
     render(<AppStateProvider><Probe /></AppStateProvider>);
     await waitFor(() => expect(captured?.loading).toBe(false));
 
-    expect(captured?.state.users).toEqual([]);
-    expect(captured?.state.achievements).toEqual({});
+    expect(captured!.state.users).toEqual([]);
+    expect(captured!.state.achievements).toEqual({});
     expect(activeAchievements).toEqual([]);
   });
 
