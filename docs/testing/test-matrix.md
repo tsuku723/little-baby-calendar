@@ -24,6 +24,14 @@
 | `src/screens/AboutScreen.tsx` | `AboutScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
 | `src/screens/TermsScreen.tsx` | `TermsScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
 | `src/screens/PrivacyPolicyScreen.tsx` | `PrivacyPolicyScreen (default)` | `__tests__/app.navigation.ui.jest.test.tsx` | ✅ |
+| `src/screens/CalendarScreen.tsx` | `CalendarScreen (default)` | `__tests__/CalendarScreen.ui.jest.test.tsx` | ✅ |
+| `src/screens/TodayScreen.tsx` | `TodayScreen (default)` | `__tests__/TodayScreen.ui.jest.test.tsx` | ✅ |
+| `src/screens/RecordInputScreen.tsx` | `RecordInputScreen (default)` | `__tests__/RecordInputScreen.ui.jest.test.tsx` | ✅ |
+| `src/screens/RecordDetailScreen.tsx` | `RecordDetailScreen (default)` | `__tests__/RecordDetailScreen.ui.jest.test.tsx` | ✅ |
+| `src/screens/AchievementListScreen.tsx` | `AchievementListScreen (default)` | `__tests__/AchievementListScreen.ui.jest.test.tsx` | ✅ |
+| `src/screens/SettingsScreen.tsx` | `SettingsScreen (default)` | `__tests__/SettingsScreen.ui.jest.test.tsx` | ✅ |
+| `src/screens/ProfileEditScreen.tsx` | `ProfileEditScreen (default)` | `__tests__/ProfileEditScreen.ui.jest.test.tsx` | ✅ |
+| `src/screens/ProfileManagerScreen.tsx` | `ProfileManagerScreen (default)` | `__tests__/ProfileManagerScreen.ui.jest.test.tsx` | ✅ |
 
 ### 非関数 export（補助）
 - 型・interface export: `src/models/dataModels.ts`, `src/navigation/types.ts`, `src/state/*` など。
@@ -55,6 +63,14 @@
 | TS-CONTENT-001 | 法務文面・メタデータの公開定数 | ✅ | — | — | 対象外 | `__tests__/models.types.content.jest.test.ts` |
 | TS-MODEL-001 | 既定ユーザー設定定数（types/models） | ✅ | — | — | 対象外 | `__tests__/models.types.content.jest.test.ts` |
 | TS-ZERO-002 | type専用/ブリッジモジュールは coverage 対象から除外 | — | — | — | 対象外 | `jest.config.js`, `package.json` (`typecheck`) |
+| TS-UI-003 | CalendarScreen の最小UI検証 | — | — | ✅ | 対象外 | `__tests__/CalendarScreen.ui.jest.test.tsx` |
+| TS-UI-004 | TodayScreen の最小UI検証 | — | — | ✅ | 対象外 | `__tests__/TodayScreen.ui.jest.test.tsx` |
+| TS-UI-005 | RecordInputScreen の最小UI検証 | — | — | ✅ | 対象外 | `__tests__/RecordInputScreen.ui.jest.test.tsx` |
+| TS-UI-006 | RecordDetailScreen の最小UI検証 | — | — | ✅ | 対象外 | `__tests__/RecordDetailScreen.ui.jest.test.tsx` |
+| TS-UI-007 | AchievementListScreen の最小UI検証 | — | — | ✅ | 対象外 | `__tests__/AchievementListScreen.ui.jest.test.tsx` |
+| TS-UI-008 | SettingsScreen の最小UI検証 | — | — | ✅ | 対象外 | `__tests__/SettingsScreen.ui.jest.test.tsx` |
+| TS-UI-009 | ProfileEditScreen の最小UI検証 | — | — | ✅ | 対象外 | `__tests__/ProfileEditScreen.ui.jest.test.tsx` |
+| TS-UI-010 | ProfileManagerScreen の最小UI検証 | — | — | ✅ | 対象外 | `__tests__/ProfileManagerScreen.ui.jest.test.tsx` |
 
 ## 現状サマリ
 - 旧 ⛔ 対象（`photo.ts` / `AppStateContext` / `AchievementsContext` / `DateViewContext`）を Jest テスト追加で ✅ 化。
@@ -67,3 +83,5 @@
 - Phase F+ (targeted) で `DayCell` / `AchievementsContext` / `AppStateContext` / `storage` / `dateUtils` の未踏候補を狙い撃ち検証。
 
 - Final targeted run: `AchievementsContext` の month 集約分岐（新規月/既存月）を追加検証。
+
+- Phase G で未テスト画面コンポーネント 8 画面に UI 最小テストを追加（TS-UI-003〜010）。

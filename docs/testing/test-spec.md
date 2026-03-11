@@ -253,3 +253,92 @@
 
 
 - Phase F で対象ファイルの残分岐を列挙し、実装挙動に基づく最小ケースを追加。
+
+## TS-UI-003 CalendarScreen の最小UI検証
+- 対象: `CalendarScreen`
+- 実装根拠: `src/screens/CalendarScreen.tsx`
+- 実装上の挙動:
+  1. `user=null` のとき、ヘッダーに「プロフィール未設定」を表示する。
+  2. `user` があり `birthDate` が有効なとき、名前と年齢情報を表示し `loadMonth` を呼ぶ。
+  3. `user` があり `birthDate` が空のとき、「年齢情報は設定済みのプロフィールで表示されます」を表示する。
+  4. FABボタン「＋記録」が常に描画される。
+- テスト:
+  - `__tests__/CalendarScreen.ui.jest.test.tsx`
+
+## TS-UI-004 TodayScreen の最小UI検証
+- 対象: `TodayScreen`
+- 実装根拠: `src/screens/TodayScreen.tsx`
+- 実装上の挙動:
+  1. `user=null` のとき「プロフィールを作成してください」を表示する。
+  2. `user` があり `birthDate=null` のとき「生年月日が未設定です」を表示する。
+  3. `user` があり `birthDate` 有効・記録なしのとき「今日の記録」と「気づいたことがあれば記録しよう」を表示する。
+  4. 記録があるとき、記録タイトルのカードを表示する。
+  5. `achievementsLoading=true` のとき「読み込み中...」を表示する。
+- テスト:
+  - `__tests__/TodayScreen.ui.jest.test.tsx`
+
+## TS-UI-005 RecordInputScreen の最小UI検証
+- 対象: `RecordInputScreen`
+- 実装根拠: `src/screens/RecordInputScreen.tsx`
+- 実装上の挙動:
+  1. `user=null` のとき「プロフィールを作成してください」を表示する。
+  2. 新規記録モード（`recordId` なし）のとき、フォームと「記録する」「保存」を表示し削除ボタンは表示しない。
+  3. 編集モード（`recordId` あり・store に該当レコードあり）のとき「この記録を削除」ボタンを表示する。
+- テスト:
+  - `__tests__/RecordInputScreen.ui.jest.test.tsx`
+
+## TS-UI-006 RecordDetailScreen の最小UI検証
+- 対象: `RecordDetailScreen`
+- 実装根拠: `src/screens/RecordDetailScreen.tsx`
+- 実装上の挙動:
+  1. store に該当レコードがないとき「記録が見つかりません」を表示する。
+  2. `from="list"` のとき「記録一覧に戻る」ボタンを表示する。
+  3. レコードが見つかったとき、タイトル・メモ・「編集する」ボタンを表示する。
+  4. `user=null` のとき、ヘッダーが「記録」になる。
+- テスト:
+  - `__tests__/RecordDetailScreen.ui.jest.test.tsx`
+
+## TS-UI-007 AchievementListScreen の最小UI検証
+- 対象: `AchievementListScreen`
+- 実装根拠: `src/screens/AchievementListScreen.tsx`
+- 実装上の挙動:
+  1. store が空のとき「まだ記録がありません」を表示する。
+  2. `loading=true` のとき「読み込み中...」を表示する。
+  3. store に記録があるとき、記録タイトルを表示する。
+  4. `user=null` のとき「プロフィール未設定 記録一覧」ヘッダーを表示する。
+  5. FABボタン「＋記録」が常に描画される。
+- テスト:
+  - `__tests__/AchievementListScreen.ui.jest.test.tsx`
+
+## TS-UI-008 SettingsScreen の最小UI検証
+- 対象: `SettingsScreen`
+- 実装根拠: `src/screens/SettingsScreen.tsx`
+- 実装上の挙動:
+  1. 「ベビーを選択」セクションが表示される。
+  2. ユーザーがある場合、名前と生年月日を表示する。
+  3. アクティブユーザーに「✓」マークが表示される。
+  4. サポートメニュー（このアプリについて・プライバシーポリシー・利用規約）が表示される。
+- テスト:
+  - `__tests__/SettingsScreen.ui.jest.test.tsx`
+
+## TS-UI-009 ProfileEditScreen の最小UI検証
+- 対象: `ProfileEditScreen`
+- 実装根拠: `src/screens/ProfileEditScreen.tsx`
+- 実装上の挙動:
+  1. `profileId` なしのとき「新しいこどもを追加」をヘッダーに表示する。
+  2. `profileId` ありのとき「プロフィールを編集」と「このプロフィールを削除する」ボタンを表示する。
+  3. 出生日・出産予定日フィールドと「保存」ボタンが表示される。
+  4. 修正月齢の表示上限オプション（24か月・36か月・制限なし）が表示される。
+- テスト:
+  - `__tests__/ProfileEditScreen.ui.jest.test.tsx`
+
+## TS-UI-010 ProfileManagerScreen の最小UI検証
+- 対象: `ProfileManagerScreen`
+- 実装根拠: `src/screens/ProfileManagerScreen.tsx`
+- 実装上の挙動:
+  1. ユーザーなしのとき、ガイドテキストと「新しいこどもを追加」ボタンが表示される。
+  2. ユーザーがある場合、名前・誕生日カードと「編集」ボタンを表示する。
+  3. `dueDate=null` のとき「なし」と表示する。
+  4. 複数ユーザーがある場合、全員のカードを表示する。
+- テスト:
+  - `__tests__/ProfileManagerScreen.ui.jest.test.tsx`
