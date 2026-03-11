@@ -57,7 +57,7 @@ type AppStateContextValue = {
   addUser: (input: NewUserInput) => Promise<void>;
   updateUser: (
     userId: string,
-    partial: Partial<Omit<UserProfile, "id">>
+    partial: Partial<Omit<UserProfile, "id" | "settings">> & { settings?: Partial<UserSettings> }
   ) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
   setActiveUser: (userId: string) => Promise<void>;
@@ -249,7 +249,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const updateUser = useCallback(
-    async (userId: string, partial: Partial<Omit<UserProfile, "id">>) => {
+    async (userId: string, partial: Partial<Omit<UserProfile, "id" | "settings">> & { settings?: Partial<UserSettings> }) => {
       await updateState((prev) => {
         const nextUsers = prev.users.map((user) =>
           user.id === userId
