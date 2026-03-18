@@ -198,16 +198,18 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <View style={styles.exportActionRow}>
-          <TouchableOpacity
-            style={styles.exportButton}
-            onPress={handleSaveImage}
-            accessibilityRole="button"
-          >
-            <Ionicons name="image-outline" size={18} color={COLORS.textPrimary} />
-            <Text style={styles.exportButtonText}>画像として保存</Text>
-          </TouchableOpacity>
-        </View>
+        {sortedAchievements.length > 0 && (
+          <View style={styles.exportActionRow}>
+            <TouchableOpacity
+              style={styles.exportButton}
+              onPress={handleSaveImage}
+              accessibilityRole="button"
+            >
+              <Ionicons name="image-outline" size={18} color={COLORS.textPrimary} />
+              <Text style={styles.exportButtonText}>画像として保存</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {ageInfo ? (
           <View style={styles.ageBlock}>
