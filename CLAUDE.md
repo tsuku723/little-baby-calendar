@@ -40,6 +40,18 @@ npm run typecheck   # TypeScript型チェック
 - CI/CD: GitHub Actions（typecheck + jest）で自動実行
 - E2Eは手動テスト仕様書（`docs/testing/e2e-manual-test-spec.md`）に基づき手動実施
 
+## Issue対応フロー
+Issue対応時は必ず以下の手順で進めること。
+
+1. 対象Issueに `status: in-progress` ラベルを付与
+2. ブランチ作成（fix/issue-XX-<内容>）
+3. バグ修正
+4. コミット＆プッシュ（`fix #XX` をコミットメッセージに含める）
+5. プルリクエスト作成
+6. 確認用Issue作成
+   - タイトル: `[確認待ち] #XX <バグ内容>`
+   - 本文: 修正内容、確認手順、PR番号
+
 ## 注意事項
 - 修正月齢計算ロジックは複雑なため、変更前に必ず既存テストを確認する
 - 多子対応（複数の子ども）を前提とした設計になっている
