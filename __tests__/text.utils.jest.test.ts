@@ -18,6 +18,13 @@ describe('text utils exports', () => {
     expect(normalizeSearchText(' ＡＢＣ　１２3  Test ')).toBe('abc 123 test');
   });
 
+  test('normalizeSearchText converts half-width katakana to full-width', () => {
+    expect(normalizeSearchText('ﾃｽﾄ')).toBe('テスト');
+    expect(normalizeSearchText('ﾊﾝｶｸ')).toBe('ハンカク');
+    // 半角・全角どちらで検索しても同じ結果になる
+    expect(normalizeSearchText('ﾃｽﾄ')).toBe(normalizeSearchText('テスト'));
+  });
+
   test('remainingChars and clampComment handle undefined input through nullish fallback branches', () => {
     expect(remainingChars(undefined as unknown as string)).toBe(500);
     expect(clampComment(undefined as unknown as string)).toBeUndefined();
