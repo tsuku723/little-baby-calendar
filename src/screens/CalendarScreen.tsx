@@ -55,7 +55,7 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     if (user?.settings.lastViewedMonth !== isoMonth && user?.id) {
       void updateUser(user.id, { settings: { ...user.settings, lastViewedMonth: isoMonth } });
     }
-  }, [anchorDate, loadMonth, monthKeyValue, updateUser, user]);
+  }, [anchorDate, loadMonth, monthKeyValue, updateUser, user?.id, user?.settings.lastViewedMonth]);
 
   const monthView = useMemo(
     () =>
