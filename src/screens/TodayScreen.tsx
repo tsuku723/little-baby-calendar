@@ -450,8 +450,9 @@ const styles = StyleSheet.create({
   },
   hiddenRenderer: {
     position: "absolute",
-    left: -9999,
-    top: -9999,
+    top: 0,
+    left: 0,
+    opacity: 0,
   },
   exportContainer: {
     width: 1024,
