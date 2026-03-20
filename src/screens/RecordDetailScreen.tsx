@@ -8,6 +8,7 @@ import { RootStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
+import { calculateAgeInfo } from "@/utils/dateUtils";
 import { ensureFileExistsAsync } from "@/utils/photo";
 import { COLORS } from "@/constants/colors";
 
@@ -29,6 +30,21 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     const all = Object.values(store).flat();
     return all.find((item) => item.id === recordId) ?? null;
   }, [isoDate, recordId, store]);
+
+  const ageInfo = useMemo(() => {
+    if (!user?.birthDate || !record) return null;
+    try {
+      return calculateAgeInfo({
+        targetDate: record.date,
+        birthDate: user.birthDate,
+        dueDate: user.dueDate,
+        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+        ageFormat: user.settings.ageFormat,
+      });
+    } catch {
+      return null;
+    }
+  }, [user, record]);
 
   useEffect(() => {
     let mounted = true;
@@ -83,6 +99,32 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.label}>日付</Text>
           <Text style={styles.value}>{record.date.replace(/-/g, "/")}</Text>
         </View>
+
+        {ageInfo ? (
+          <View style={styles.field}>
+            <Text style={styles.label}>月齢</Text>
+            <View style={styles.ageBlock}>
+              {ageInfo.flags.showMode === "gestational" && ageInfo.gestational.visible && ageInfo.gestational.formatted ? (
+                <View style={styles.ageRow}>
+                  <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
+                  <Text style={styles.ageNote}>（在胎 {ageInfo.gestational.formatted}）</Text>
+                </View>
+              ) : ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
+                <View style={styles.ageRow}>
+                  <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
+                  <Text style={styles.ageNote}>（修正 {ageInfo.corrected.formatted}）</Text>
+                </View>
+              ) : (
+                <View style={styles.ageRow}>
+                  <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
+                </View>
+              )}
+              {user?.settings.showDaysSinceBirth ? (
+                <Text style={styles.ageNote}>生まれてから{ageInfo.daysSinceBirth}日目</Text>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.field}>
           <Text style={styles.label}>タイトル</Text>
@@ -144,6 +186,23 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 17,
     color: COLORS.textPrimary,
+  },
+  ageBlock: {
+    gap: 4,
+  },
+  ageRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexWrap: "wrap",
+  },
+  ageValue: {
+    fontSize: 17,
+    color: COLORS.textPrimary,
+  },
+  ageNote: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
   },
   actions: {
     marginTop: 12,
