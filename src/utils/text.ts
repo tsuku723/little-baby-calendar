@@ -9,17 +9,15 @@ export const clampComment = (s: string): string => {
 };
 
 /**
- * 検索用に軽微な正規化を行う。
+ * 検索用に正規化を行う。
+ * - NFKC正規化（半角カタカナ→全角・全角英数→半角など）
  * - 英字を小文字化
- * - 全角英数を半角へ変換
  * - 連続した空白を 1 つにまとめて前後を trim
  */
 export const normalizeSearchText = (value?: string | null): string => {
   if (!value) return "";
-  const toHalfWidth = value.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (ch) =>
-    String.fromCharCode(ch.charCodeAt(0) - 0xfee0)
-  );
-  return toHalfWidth
+  return value
+    .normalize("NFKC")
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
