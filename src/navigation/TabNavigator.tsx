@@ -63,27 +63,11 @@ const SettingsStackNavigator: React.FC = () => (
     <SettingsStack.Screen name="Settings" component={SettingsScreen} />
     <SettingsStack.Screen name="ProfileEdit" component={ProfileEditScreen} />
     <SettingsStack.Screen name="ProfileManager" component={ProfileManagerScreen} />
-    <SettingsStack.Screen
-      name="About"
-      component={AboutScreen}
-      options={{ headerShown: true, title: "このアプリについて" }}
-    />
-    <SettingsStack.Screen
-      name="PrivacyPolicy"
-      component={PrivacyPolicyScreen}
-      options={{ headerShown: true, title: "プライバシーポリシー" }}
-    />
-    <SettingsStack.Screen name="Terms" component={TermsScreen} options={{ headerShown: true, title: "利用規約" }} />
-    <SettingsStack.Screen
-      name="OpenSourceLicenses"
-      component={OpenSourceLicensesScreen}
-      options={{ headerShown: true, title: "オープンソースライセンス" }}
-    />
-    <SettingsStack.Screen
-      name="Contact"
-      component={ContactScreen}
-      options={{ headerShown: true, title: "お問い合わせ" }}
-    />
+    <SettingsStack.Screen name="About" component={AboutScreen} />
+    <SettingsStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+    <SettingsStack.Screen name="Terms" component={TermsScreen} />
+    <SettingsStack.Screen name="OpenSourceLicenses" component={OpenSourceLicensesScreen} />
+    <SettingsStack.Screen name="Contact" component={ContactScreen} />
   </SettingsStack.Navigator>
 );
 
