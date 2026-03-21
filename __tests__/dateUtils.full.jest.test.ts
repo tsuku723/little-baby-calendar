@@ -139,7 +139,7 @@ describe('dateUtils exported functions', () => {
 
     const jan30 = view.days.find((d) => d.date === '2025-01-30');
     const jan29 = view.days.find((d) => d.date === '2025-01-29');
-    expect(jan30?.calendarAgeLabel?.chronological).toBe('暦 0才0ヶ月');
+    expect(jan30?.calendarAgeLabel?.chronological).toBe('誕生日');
     expect(jan29?.calendarAgeLabel?.chronological).toBeUndefined();
   });
 
