@@ -336,7 +336,7 @@ export const buildCalendarMonthView = ({
       ageInfo && (chronologicalChanged || correctedChanged || gestationalChanged)
         ? {
             chronological: chronologicalChanged
-              ? formatCalendarAgeLabel(ageInfo.chronological, settings.ageFormat, false)
+              ? (isBirthDay ? "誕生日" : formatCalendarAgeLabel(ageInfo.chronological, settings.ageFormat, false))
               : undefined,
             corrected: correctedChanged
               ? (() => {
