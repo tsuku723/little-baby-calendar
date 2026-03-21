@@ -168,7 +168,7 @@ describe('dateUtils exported functions', () => {
 
     // 出生日は在胎ラベルと暦ラベルを両方持つ
     expect(birthDay?.calendarAgeLabel?.gestational).toBe('在胎 30週0日');
-    expect(birthDay?.calendarAgeLabel?.chronological).toBe('暦 0才0ヶ月');
+    expect(birthDay?.calendarAgeLabel?.chronological).toBe('誕生日');
     // 前日は在胎ラベルなし（週が変わっていない）
     expect(dayBefore?.calendarAgeLabel?.gestational).toBeUndefined();
     // 1週後は在胎ラベルあり（週が進んだ）
