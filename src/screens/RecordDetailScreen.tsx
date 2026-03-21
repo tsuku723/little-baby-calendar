@@ -93,6 +93,7 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.headerRight} />
       </View>
       <View style={styles.container}>
+        <Text style={styles.title}>{record.title || "(タイトル未入力)"}</Text>
         <View style={styles.field}>
           <Text style={styles.label}>日付</Text>
           <Text style={styles.value}>{record.date.replace(/-/g, "/")}</Text>
