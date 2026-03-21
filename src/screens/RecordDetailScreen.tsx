@@ -93,8 +93,7 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.headerRight} />
       </View>
       <View style={styles.container}>
-        <Text style={styles.title}>記録詳細</Text>
-
+        <Text style={styles.title}>{record.title || "(タイトル未入力)"}</Text>
         <View style={styles.field}>
           <Text style={styles.label}>日付</Text>
           <Text style={styles.value}>{record.date.replace(/-/g, "/")}</Text>
@@ -125,11 +124,6 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             </View>
           </View>
         ) : null}
-
-        <View style={styles.field}>
-          <Text style={styles.label}>タイトル</Text>
-          <Text style={styles.value}>{record.title || "(タイトル未入力)"}</Text>
-        </View>
 
         {record.memo ? (
           <View style={styles.field}>
