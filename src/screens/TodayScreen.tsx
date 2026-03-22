@@ -211,7 +211,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
           </View>
         )}
 
-        {ageInfo ? (
+        {ageInfo && selectedDateIso >= user.birthDate ? (
           <View style={styles.ageBlock}>
             {ageInfo.flags.showMode === "gestational" && ageInfo.gestational.visible && ageInfo.gestational.formatted ? (
               <View style={styles.ageRow}>
