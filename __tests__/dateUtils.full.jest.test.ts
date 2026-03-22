@@ -153,6 +153,28 @@ describe('dateUtils exported functions', () => {
     expect(daysBetweenUtc(new Date(2025, 0, 1), new Date(NaN))).toBe(0);
   });
 
+  test('buildCalendarMonthView shows gestational label on birth date for preterm baby', () => {
+    // 出生日: 2025-03-10, 予定日: 2025-05-19 (70日早産 → 在胎30週0日)
+    const view = buildCalendarMonthView({
+      anchorDate: new Date(2025, 2, 1),
+      settings,
+      birthDate: '2025-03-10',
+      dueDate: '2025-05-19',
+    });
+
+    const birthDay = view.days.find((d) => d.date === '2025-03-10');
+    const dayBefore = view.days.find((d) => d.date === '2025-03-09');
+    const oneWeekLater = view.days.find((d) => d.date === '2025-03-17');
+
+    // 出生日は在胎ラベルと暦ラベルを両方持つ
+    expect(birthDay?.calendarAgeLabel?.gestational).toBe('在胎 30週0日');
+    expect(birthDay?.calendarAgeLabel?.chronological).toBe('誕生日');
+    // 前日は在胎ラベルなし（週が変わっていない）
+    expect(dayBefore?.calendarAgeLabel?.gestational).toBeUndefined();
+    // 1週後は在胎ラベルあり（週が進んだ）
+    expect(oneWeekLater?.calendarAgeLabel?.gestational).toBe('在胎 31週0日');
+  });
+
   test('buildCalendarMonthView fallback injects chronological label when month has no chronological changes', () => {
     const view = buildCalendarMonthView({
       anchorDate: new Date(2025, 1, 1),

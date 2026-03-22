@@ -330,7 +330,8 @@ export const buildCalendarMonthView = ({
     const gestationalChanged =
       gestationalVisible &&
       ((previousGestationalVisible && ageInfo!.gestational.weeks === previousAgeInfo!.gestational.weeks + 1) ||
-        !previousGestationalVisible);
+        !previousGestationalVisible ||
+        isBirthDay); // 出生日は前日と在胎週数が同じになるため強制表示
 
     let calendarAgeLabel =
       ageInfo && (chronologicalChanged || correctedChanged || gestationalChanged)
