@@ -284,13 +284,15 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
               <View style={styles.exportAgeBlock}>
                 <View style={styles.exportNameAgeRow}>
                   <Text style={styles.exportName}>{user.name}</Text>
-                  <Text style={styles.exportChronologicalAge}>{ageInfo?.chronological.formatted ?? "-"}</Text>
+                  <View style={styles.exportAgeColumn}>
+                    <Text style={styles.exportChronologicalAge}>{ageInfo?.chronological.formatted ?? "-"}</Text>
+                    {ageInfo?.flags.showMode === "gestational" && ageInfo.gestational.formatted ? (
+                      <Text style={styles.exportCorrectedAge}>（在胎 {ageInfo.gestational.formatted}）</Text>
+                    ) : ageInfo?.corrected.visible && ageInfo.corrected.formatted ? (
+                      <Text style={styles.exportCorrectedAge}>（修正 {ageInfo.corrected.formatted}）</Text>
+                    ) : null}
+                  </View>
                 </View>
-                {ageInfo?.flags.showMode === "gestational" && ageInfo.gestational.formatted ? (
-                  <Text style={styles.exportCorrectedAge}>（在胎 {ageInfo.gestational.formatted}）</Text>
-                ) : ageInfo?.corrected.visible && ageInfo.corrected.formatted ? (
-                  <Text style={styles.exportCorrectedAge}>（修正 {ageInfo.corrected.formatted}）</Text>
-                ) : null}
               </View>
 
               <View style={styles.exportRecordCard}>
@@ -498,8 +500,11 @@ const styles = StyleSheet.create({
   },
   exportNameAgeRow: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "flex-end",
     gap: 20,
+  },
+  exportAgeColumn: {
+    alignItems: "center",
   },
   exportName: {
     fontSize: 44,
