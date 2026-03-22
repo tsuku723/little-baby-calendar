@@ -18,7 +18,7 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   // 選択中ベビー名取得（ベビー名のない場合は "記録" のまま）
   const user = useActiveUser();
   const { recordId, isoDate, from } = route.params ?? {};
-  const { store } = useAchievements();
+  const { store, loading } = useAchievements();
   const [photoPath, setPhotoPath] = useState<string | null>(null);
 
   const record = useMemo(() => {
@@ -60,14 +60,14 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [record?.photoPath]);
 
   if (!record) {
-    const targetStack = from === "list" ? "RecordListStack" : "CalendarStack";
+    if (loading) return null;
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
           <Text style={styles.title}>記録が見つかりません</Text>
           <Button
-            title={from === "list" ? "記録一覧に戻る" : "今日に戻る"}
-            onPress={() => (navigation as any).replace("MainTabs", { screen: targetStack })}
+            title="戻る"
+            onPress={() => navigation.goBack()}
           />
         </View>
       </SafeAreaView>

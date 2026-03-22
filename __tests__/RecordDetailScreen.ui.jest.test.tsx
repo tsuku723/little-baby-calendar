@@ -67,7 +67,7 @@ describe('RecordDetailScreen UI (TS-UI-006)', () => {
     expect(json).toContain('記録が見つかりません');
   });
 
-  test('from=list のとき「記録一覧に戻る」ボタンを表示', async () => {
+  test('from=list のとき「戻る」ボタンを表示', async () => {
     mockStore = {};
     const route = { params: { recordId: 'nonexistent', isoDate: '2024-06-01', from: 'list' } };
     const RecordDetailScreen = require('../src/screens/RecordDetailScreen').default;
@@ -78,7 +78,7 @@ describe('RecordDetailScreen UI (TS-UI-006)', () => {
       );
     });
     const json = JSON.stringify(tree.toJSON());
-    expect(json).toContain('記録一覧に戻る');
+    expect(json).toContain('戻る');
   });
 
   test('record あり: 記録詳細を表示', async () => {
