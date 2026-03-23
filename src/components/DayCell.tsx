@@ -40,7 +40,12 @@ const DayCell: React.FC<Props> = ({ day, onPress, gridPos }) => {
   let bottomStickerStyle = styles.ageStickerChronological;
   let bottomTextStyle = styles.ageTextChronological;
 
-  if (normalizedGestationalLabel != null) {
+  if (normalizedGestationalLabel != null && normalizedChronologicalLabel != null) {
+    // 誕生日かつ在胎表示期間：「誕生日」を上、在胎週数を下に表示する。
+    bottomLabel = normalizedGestationalLabel;
+    bottomStickerStyle = styles.ageStickerGestational;
+    bottomTextStyle = styles.ageTextGestational;
+  } else if (normalizedGestationalLabel != null) {
     // 誕生日前（在胎表示期間）は暦月齢を出さない。
     topLabel = normalizedGestationalLabel;
     topStickerStyle = styles.ageStickerGestational;
