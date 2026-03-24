@@ -2,10 +2,9 @@ import React, { useCallback } from "react";
 import { Alert, Linking, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 
 import AppText from "@/components/AppText";
-import { LEGAL_META } from "@/content/legal/ja";
 import { COLORS } from "@/constants/colors";
 
-const SUPPORT_EMAIL = LEGAL_META.contactEmail;
+const SUPPORT_EMAIL = "teeda.studio@gmail.com";
 
 const ContactScreen: React.FC = () => {
   const handlePressEmail = useCallback(async () => {
