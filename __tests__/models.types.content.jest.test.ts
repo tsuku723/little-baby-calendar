@@ -31,7 +31,7 @@ describe("content/legal/ja exports", () => {
 
   it("ABOUT文面に主要セクションを含む", () => {
     expect(ABOUT_TEXT_JA).toContain("# このアプリについて");
-    expect(ABOUT_TEXT_JA).toContain("## 修正月齢について");
+    expect(ABOUT_TEXT_JA).toContain("## 修正月齢・在胎週数の計算方法について");
     expect(ABOUT_TEXT_JA).toContain(LEGAL_META.contactEmail);
   });
 
