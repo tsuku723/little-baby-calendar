@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 
-import React from "react";
-import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
