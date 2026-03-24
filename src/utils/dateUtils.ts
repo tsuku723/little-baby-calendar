@@ -199,7 +199,8 @@ export const calculateAgeInfo = (params: {
   const gestationAtTargetDays = gestationAtBirthDays + daysSinceBirth;
   const gestationalWeeks = Math.floor(gestationAtTargetDays / 7);
   const gestationalDays = gestationAtTargetDays % 7;
-  const gestationalVisible = Boolean(due) && isPreterm && isBeforeDue;
+  const gestationalVisible = Boolean(due) && isPreterm && isBeforeDue
+    && utcDateMs(target) >= utcDateMs(birth); // 出生日前は在胎非表示
 
   const showMode: AgeInfo["flags"]["showMode"] = !isPreterm
     ? "chronologicalOnly"

@@ -153,6 +153,20 @@ describe('dateUtils exported functions', () => {
     expect(daysBetweenUtc(new Date(2025, 0, 1), new Date(NaN))).toBe(0);
   });
 
+
+  test('buildCalendarMonthView shows no gestational label on cells before birth date', () => {
+    // 出生日: 2026-03-18, 予定日: 2026-05-18 → 出生前の2月はラベルなし（#89）
+    const view = buildCalendarMonthView({
+      anchorDate: new Date(2026, 1, 1), // 2月
+      settings,
+      birthDate: '2026-03-18',
+      dueDate: '2026-05-18',
+    });
+
+    const allCurrentMonth = view.days.filter((d) => d.isCurrentMonth);
+    const gestationalLabels = allCurrentMonth.filter((d) => d.calendarAgeLabel?.gestational != null);
+    expect(gestationalLabels).toHaveLength(0);
+  });
   test('buildCalendarMonthView shows gestational label on birth date for preterm baby', () => {
     // 出生日: 2025-03-10, 予定日: 2025-05-19 (70日早産 → 在胎30週0日)
     const view = buildCalendarMonthView({

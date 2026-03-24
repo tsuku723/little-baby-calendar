@@ -13,6 +13,13 @@ describe('calculateAgeInfo', () => {
     expect(beforeDue.gestational.visible).toBe(true);
     expect(onDue.corrected.formatted).toBe('0ヶ月0日');
   });
+
+  test('gestational is not visible before birth date', () => {
+    // 出生日前は在胎表示しない（#89）
+    const beforeBirth = calculateAgeInfo({ targetDate: '2026-02-01', birthDate: '2026-03-18', dueDate: '2026-05-18', showCorrectedUntilMonths: null, ageFormat: 'md' });
+    expect(beforeBirth.gestational.visible).toBe(false);
+    expect(beforeBirth.gestational.formatted).toBeNull();
+  });
 });
 
 describe('buildCalendarMonthView', () => {
