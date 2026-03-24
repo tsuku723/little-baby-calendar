@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>リトルベビーログ</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 64px 24px 64px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin: 0 0 8px;
+      color: #1a1a1a;
+    }
+    .tagline {
+      font-size: 15px;
+      color: #666;
+      margin: 0 0 48px;
+    }
+    .link-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .link-item {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #fff;
+    }
+    .link-item a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      text-decoration: none;
+      color: #1a1a1a;
+      font-size: 16px;
+    }
+    .link-item a:hover { background: #f8f8f8; border-radius: 8px; }
+    .arrow { color: #bbb; }
+    footer {
+      margin-top: 64px;
+      font-size: 12px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>リトルベビーログ</h1>
+    <p class="tagline">早産・NICU経験のある赤ちゃんの成長を記録するアプリ</p>
+
+    <ul class="link-list">
+      <li class="link-item">
+        <a href="/little-baby-calendar/about">
+          <span>このアプリについて</span>
+          <span class="arrow">›</span>
+        </a>
+      </li>
+      <li class="link-item">
+        <a href="/little-baby-calendar/terms">
+          <span>利用規約</span>
+          <span class="arrow">›</span>
+        </a>
+      </li>
+      <li class="link-item">
+        <a href="/little-baby-calendar/privacy-policy">
+          <span>プライバシーポリシー</span>
+          <span class="arrow">›</span>
+        </a>
+      </li>
+      <li class="link-item">
+        <a href="/little-baby-calendar/oss-licenses">
+          <span>オープンソースライセンス</span>
+          <span class="arrow">›</span>
+        </a>
+      </li>
+    </ul>
+
+    <footer>
+      <p>© 2026 Teeda Studio</p>
+    </footer>
+  </div>
+</body>
+</html>
