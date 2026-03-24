@@ -286,8 +286,8 @@ const ProfileEditScreen: React.FC<Props> = ({ navigation, route }) => {
             <Text style={styles.label}>月齢表記</Text>
             <View style={styles.optionRow}>
               {[
-                { label: "才ヶ月日", value: "ymd" },
-                { label: "ヶ月日", value: "md" },
+                { label: "〇才〇ヵ月〇日", value: "ymd" },
+                { label: "〇〇ヵ月〇日", value: "md" },
               ].map((option) => (
                 <Pressable
                   key={option.value}
