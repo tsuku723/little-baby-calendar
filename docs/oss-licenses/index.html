@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>オープンソースライセンス | リトルベビーログ</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+    }
+    header { margin-bottom: 40px; }
+    .app-name {
+      font-size: 13px;
+      color: #888;
+      margin: 0 0 8px;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 600;
+      margin: 0;
+      color: #1a1a1a;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.8;
+      margin: 0 0 16px;
+      color: #333;
+    }
+    .lib-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 48px;
+    }
+    .lib-item {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .lib-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      user-select: none;
+      list-style: none;
+    }
+    .lib-summary::-webkit-details-marker { display: none; }
+    .lib-summary::marker { display: none; }
+    .lib-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    .lib-license-badge {
+      font-size: 12px;
+      color: #fff;
+      background: #5a7fa8;
+      border-radius: 4px;
+      padding: 2px 8px;
+      white-space: nowrap;
+      margin-left: 12px;
+    }
+    .lib-license-badge.ofl { background: #7a8a5a; }
+    .lib-body {
+      padding: 12px 16px 16px;
+      border-top: 1px solid #eee;
+    }
+    .lib-copyright {
+      font-size: 13px;
+      color: #666;
+      margin: 0 0 12px;
+    }
+    .license-text {
+      font-size: 11px;
+      font-family: "Courier New", Courier, monospace;
+      color: #555;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      background: #f8f8f8;
+      border: 1px solid #e8e8e8;
+      border-radius: 4px;
+      padding: 12px;
+      margin: 0;
+      overflow-x: auto;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 48px 0 16px;
+      color: #1a1a1a;
+    }
+    .full-license {
+      font-size: 12px;
+      font-family: "Courier New", Courier, monospace;
+      color: #555;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      background: #f8f8f8;
+      border: 1px solid #e8e8e8;
+      border-radius: 4px;
+      padding: 16px;
+      overflow-x: auto;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 40px 0;
+    }
+    footer {
+      margin-top: 64px;
+      font-size: 12px;
+      color: #aaa;
+    }
+    nav {
+      margin-top: 8px;
+      font-size: 13px;
+    }
+    nav a {
+      color: #5a7fa8;
+      text-decoration: none;
+      margin-right: 16px;
+    }
+    nav a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <p class="app-name">リトルベビーログ</p>
+      <h1>オープンソースライセンス</h1>
+    </header>
+
+    <p>本アプリは以下のオープンソースライブラリを使用しています。各項目をクリックするとライセンス全文を確認できます。</p>
+
+    <ul class="lib-list">
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">React</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) Meta Platforms, Inc. and affiliates.</p>
+            <pre class="license-text">MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">React Native</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) Meta Platforms, Inc. and affiliates.</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">Expo</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">expo-font</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">expo-image-manipulator</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">expo-image-picker</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">expo-media-library</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">expo-status-bar</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">babel-preset-expo</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">@expo-google-fonts/zen-maru-gothic</span>
+            <span class="lib-license-badge ofl">OFL-1.1</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright 2021 The Zen Maru Gothic Project Authors</p>
+            <pre class="license-text">SIL Open Font License 1.1 — see below</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">@react-navigation/native</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2017 React Navigation Contributors</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">@react-navigation/native-stack</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2017 React Navigation Contributors</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">@react-navigation/bottom-tabs</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2017 React Navigation Contributors</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">@react-native-async-storage/async-storage</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2015-present, Facebook, Inc.</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">@react-native-community/datetimepicker</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2019 React Native Community</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">react-native-gesture-handler</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2016 Software Mansion</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">react-native-reanimated</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2016 Software Mansion</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">react-native-screens</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2018 Software Mansion</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">react-native-safe-area-context</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2019 Th3rdWave</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">react-native-view-shot</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2016 Gaëtan Renaudeau</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">react-native-get-random-values</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2019 Jason Miller</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">react-native-web</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2015-present, Nicolas Gallagher.</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">react-native-worklets</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2024 Software Mansion</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+
+      <li class="lib-item">
+        <details>
+          <summary class="lib-summary">
+            <span class="lib-name">uuid</span>
+            <span class="lib-license-badge">MIT</span>
+          </summary>
+          <div class="lib-body">
+            <p class="lib-copyright">Copyright (c) 2010-2020 Robert Kieffer and other contributors</p>
+            <pre class="license-text">MIT License — see above</pre>
+          </div>
+        </details>
+      </li>
+    </ul>
+
+    <hr>
+
+    <h2 class="section-title">MIT License 全文</h2>
+    <pre class="full-license">Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</pre>
+
+    <hr>
+
+    <h2 class="section-title">SIL Open Font License 1.1 全文</h2>
+    <pre class="full-license">This Font Software is licensed under the SIL Open Font License, Version 1.1.
+
+Copyright 2021 The Zen Maru Gothic Project Authors
+
+This license is available with a FAQ at: https://scripts.sil.org/OFL
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide development of collaborative font projects, to support the font creation efforts of academic and linguistic communities, and to provide a free and open framework in which fonts may be shared and improved in partnership with others.
+
+The OFL allows the licensed fonts to be used, studied, modified and redistributed freely as long as they are not sold by themselves. The fonts, including any derivative works, can be bundled, embedded, redistributed and/or sold with any software provided that any reserved names are not used by derivative works. The fonts and derivatives, however, cannot be released under any other type of license. The requirement for fonts to remain under this license does not apply to any document created using the fonts or their derivatives.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright Holder(s) under this license and clearly marked as such. This may include source files, build scripts and documentation.
+"Reserved Font Name" refers to any names specified as such after the copyright statement(s).
+"Original Version" refers to the collection of Font Software components as distributed by the Copyright Holder(s).
+"Modified Version" refers to any derivative made by adding to, deleting, or substituting -- in part or in whole -- any of the components of the Original Version, by changing formats or by porting the Font Software to a new environment.
+"Author" refers to any designer, engineer, programmer, technical writer or other person who contributed to the Font Software.
+
+PERMISSION & CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining a copy of the Font Software, to use, study, copy, merge, embed, modify, redistribute, and sell modified and unmodified copies of the Font Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components, in Original or Modified Versions, may be sold by itself.
+
+2) Original or Modified Versions of the Font Software may be bundled, redistributed and/or sold with any software, provided that each copy contains the above copyright notice and this license. These can be included either as stand-alone text files, human-readable headers or in the appropriate machine-readable metadata fields within text or binary files as long as those fields can be easily viewed by the user.
+
+3) No Modified Version of the Font Software may use the Reserved Font Name(s) unless explicit written permission is granted by the corresponding Copyright Holder. This restriction only applies to the primary font name as presented to the users.
+
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font Software shall not be used to promote, endorse or advertise any Modified Version, except to acknowledge the contribution(s) of the Copyright Holder(s) and Author(s) or with their explicit written permission.
+
+5) The Font Software, modified or unmodified, in part or in whole, must be distributed entirely under this license, and must not be distributed under any other license. The requirement for fonts to remain under this license does not apply to any document created using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are not met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.</pre>
+
+    <footer>
+      <p>© 2026 Teeda Studio</p>
+      <nav>
+        <a href="/little-baby-calendar/about">このアプリについて</a>
+        <a href="/little-baby-calendar/terms">利用規約</a>
+        <a href="/little-baby-calendar/privacy-policy">プライバシーポリシー</a>
+        <a href="/little-baby-calendar/oss-licenses">OSSライセンス</a>
+      </nav>
+    </footer>
+  </div>
+</body>
+</html>
