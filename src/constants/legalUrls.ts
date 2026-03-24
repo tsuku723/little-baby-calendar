@@ -1,4 +1,4 @@
-const BASE = "https://tsuku723.github.io/little-baby-calendar";
+const BASE = "https://tsuku723.github.io/little-baby-log";
 
 export const ABOUT_URL = `${BASE}/about`;
 export const TERMS_URL = `${BASE}/terms`;
