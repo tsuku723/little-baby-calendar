@@ -21,19 +21,17 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 
-import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync } from '../src/utils/photo';
+import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync, PhotoPermissionDeniedError } from '../src/utils/photo';
 
 describe('photo utils', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test('pickAndSavePhotoAsync returns null and warns when permission denied', async () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+  test('pickAndSavePhotoAsync throws PhotoPermissionDeniedError when permission denied', async () => {
     (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: false });
 
-    await expect(pickAndSavePhotoAsync()).resolves.toBeNull();
-    expect(warnSpy).toHaveBeenCalledWith('Media library permission denied');
+    await expect(pickAndSavePhotoAsync()).rejects.toThrow(PhotoPermissionDeniedError);
   });
 
   test('pickAndSavePhotoAsync returns null when picker canceled', async () => {

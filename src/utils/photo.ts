@@ -2,6 +2,13 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 
+export class PhotoPermissionDeniedError extends Error {
+  constructor() {
+    super("Media library permission denied");
+    this.name = "PhotoPermissionDeniedError";
+  }
+}
+
 const PHOTO_DIR = `${FileSystem.documentDirectory}achievement-photos/`;
 const MAX_LONG_EDGE = 1600;
 const JPEG_QUALITY = 0.75;
@@ -44,8 +51,7 @@ const calculateResize = (width?: number, height?: number): ImageManipulator.Acti
 export const pickAndSavePhotoAsync = async (): Promise<string | null> => {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
-    console.warn("Media library permission denied");
-    return null;
+    throw new PhotoPermissionDeniedError();
   }
 
   const result = await ImagePicker.launchImageLibraryAsync({

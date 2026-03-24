@@ -1,9 +1,14 @@
 import React, { useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 
+import React from "react";
+import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/AppText";
+import { SettingsStackParamList } from "@/navigation";
 import { COLORS } from "@/constants/colors";
 import { License, LICENSES, MIT_LICENSE_TEXT, OFL_LICENSE_TEXT } from "@/content/licenses";
 
@@ -48,9 +53,17 @@ const LicenseItem: React.FC<{ item: License }> = ({ item }) => {
   );
 };
 
-const OpenSourceLicensesScreen: React.FC = () => {
+type Props = NativeStackScreenProps<SettingsStackParamList, "OpenSourceLicenses">;
+
+const OpenSourceLicensesScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} accessibilityRole="button" accessibilityLabel="戻る">
+          <Ionicons name="chevron-back" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <AppText style={styles.headerTitle} weight="medium">オープンソースライセンス</AppText>
+      </View>
       <ScrollView contentContainerStyle={styles.container}>
         <AppText style={styles.title} weight="medium">
           オープンソースライセンス
@@ -72,6 +85,23 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  header: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.headerBackground,
+  },
+  backButton: {
+    position: "absolute",
+    left: 16,
+    padding: 6,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: COLORS.textPrimary,
+    textAlign: "center",
   },
   container: {
     padding: 24,

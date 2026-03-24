@@ -199,7 +199,8 @@ export const calculateAgeInfo = (params: {
   const gestationAtTargetDays = gestationAtBirthDays + daysSinceBirth;
   const gestationalWeeks = Math.floor(gestationAtTargetDays / 7);
   const gestationalDays = gestationAtTargetDays % 7;
-  const gestationalVisible = Boolean(due) && isPreterm && isBeforeDue;
+  const gestationalVisible = Boolean(due) && isPreterm && isBeforeDue
+    && utcDateMs(target) >= utcDateMs(birth); // 出生日前は在胎非表示
 
   const showMode: AgeInfo["flags"]["showMode"] = !isPreterm
     ? "chronologicalOnly"
@@ -330,13 +331,14 @@ export const buildCalendarMonthView = ({
     const gestationalChanged =
       gestationalVisible &&
       ((previousGestationalVisible && ageInfo!.gestational.weeks === previousAgeInfo!.gestational.weeks + 1) ||
-        !previousGestationalVisible);
+        !previousGestationalVisible ||
+        isBirthDay); // 出生日は前日と在胎週数が同じになるため強制表示
 
     let calendarAgeLabel =
       ageInfo && (chronologicalChanged || correctedChanged || gestationalChanged)
         ? {
             chronological: chronologicalChanged
-              ? formatCalendarAgeLabel(ageInfo.chronological, settings.ageFormat, false)
+              ? (isBirthDay ? "誕生日" : formatCalendarAgeLabel(ageInfo.chronological, settings.ageFormat, false))
               : undefined,
             corrected: correctedChanged
               ? (() => {

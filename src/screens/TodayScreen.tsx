@@ -2,7 +2,7 @@
 // Renaming to DayScreen is deferred for future refactor.
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Alert, Button, Image, ImageBackground, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ImageBackground, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import * as MediaLibrary from "expo-media-library";
 import ViewShot from "react-native-view-shot";
@@ -154,10 +154,12 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
           <Text style={styles.title}>プロフィールを作成してください</Text>
           <Text style={styles.subtitle}>最初にプロフィール設定から始めましょう</Text>
           <View style={styles.buttonRow}>
-            <Button
-              title="設定へ"
+            <TouchableOpacity
+              style={styles.navButton}
               onPress={() => rootNavigation.navigate("SettingsStack", { screen: "ProfileManager" })}
-            />
+            >
+              <Text style={styles.navButtonText}>設定へ</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </SafeAreaView>
@@ -170,10 +172,12 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
         <View style={styles.container}>
           <Text style={styles.title}>{user.name}</Text>
           <Text style={styles.subtitle}>生年月日が未設定です</Text>
-          <Button
-            title="プロフィールを編集"
+          <TouchableOpacity
+            style={styles.navButton}
             onPress={() => rootNavigation.navigate("SettingsStack", { screen: "ProfileManager" })}
-          />
+          >
+            <Text style={styles.navButtonText}>プロフィールを編集</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -211,7 +215,7 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
           </View>
         )}
 
-        {ageInfo ? (
+        {ageInfo && selectedDateIso >= user.birthDate ? (
           <View style={styles.ageBlock}>
             {ageInfo.flags.showMode === "gestational" && ageInfo.gestational.visible && ageInfo.gestational.formatted ? (
               <View style={styles.ageRow}>
@@ -447,6 +451,21 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     marginTop: 12,
+  },
+  navButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: COLORS.filterBackground,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  navButtonText: {
+    color: COLORS.textPrimary,
+    fontWeight: "600",
+    fontSize: 14,
   },
   hiddenRenderer: {
     position: "absolute",
