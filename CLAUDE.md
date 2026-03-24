@@ -3,7 +3,7 @@
 早産・NICU経験のある赤ちゃんを含む多子対応の育児記録アプリ。修正月齢・在胎週数の計算機能あり。
 
 ## リポジトリ
-- GitHub: https://github.com/tsuku723/little-baby-calendar
+- GitHub: https://github.com/tsuku723/little-baby-log
 
 ## 技術スタック
 - React Native / Expo 54 / TypeScript
