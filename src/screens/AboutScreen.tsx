@@ -1,10 +1,32 @@
 import React from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 
-import { ABOUT_TEXT_JA } from "@/content/legal/ja";
-import LegalTextScreen from "@/screens/LegalTextScreen";
+import WebView from "react-native-webview";
 
-const AboutScreen: React.FC = () => {
-  return <LegalTextScreen text={ABOUT_TEXT_JA} />;
-};
+import { COLORS } from "@/constants/colors";
+import { ABOUT_URL } from "@/constants/legalUrls";
+
+const AboutScreen: React.FC = () => (
+  <WebView
+    source={{ uri: ABOUT_URL }}
+    style={styles.webview}
+    renderLoading={() => (
+      <View style={styles.loading}>
+        <ActivityIndicator color={COLORS.accentMain} />
+      </View>
+    )}
+    startInLoadingState
+  />
+);
+
+const styles = StyleSheet.create({
+  webview: { flex: 1 },
+  loading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.background,
+  },
+});
 
 export default AboutScreen;
