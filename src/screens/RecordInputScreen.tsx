@@ -3,6 +3,7 @@ import {
   Alert,
   Button,
   Image,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -26,7 +27,7 @@ import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsCon
 import { useDateViewContext } from "@/state/DateViewContext";
 import { clampComment, remainingChars } from "@/utils/text";
 import { safeParseIsoLocal, toIsoDateString, toUtcDateOnly } from "@/utils/dateUtils";
-import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync } from "@/utils/photo";
+import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync, PhotoPermissionDeniedError } from "@/utils/photo";
 import { RECORD_TITLE_CANDIDATES } from "./recordTitleCandidates";
 import { COLORS } from "@/constants/colors";
 
@@ -142,6 +143,17 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       setPhotoPath(next);
       setHasRemovedPhoto(false);
     } catch (error) {
+      if (error instanceof PhotoPermissionDeniedError) {
+        Alert.alert(
+          "写真へのアクセスが許可されていません",
+          "写真を追加するには、設定アプリでこのアプリの写真アクセスを許可してください。",
+          [
+            { text: "キャンセル", style: "cancel" },
+            { text: "設定を開く", onPress: () => Linking.openSettings() },
+          ]
+        );
+        return;
+      }
       console.error("Failed to pick photo", error);
       Alert.alert("写真の追加に失敗しました", "再度お試しください。");
     }
