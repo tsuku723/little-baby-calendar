@@ -63,7 +63,7 @@ npm install
    - **`Unable to find expo in this project` と表示される場合**: `pwd`（または PowerShell の `Get-Location`）で **Expo プロジェクト側のフォルダにいるか** を確認し、まだなら `LittleBabyCalendarExpo` ディレクトリへ移動してから `npm install` → `npx expo start --tunnel` を実行してください。
    - `--tunnel` を付けると、PC と iPhone が別ネットワークでも接続しやすくなります。
 2. ターミナルに表示される QR コードを iPhone のカメラで読み取るか、Expo Go の「Scan QR Code」で読み取ります。
-3. Expo Go 内でアプリがビルドされ、「リトルベビーカレンダー」の UI が表示されます。
+3. Expo Go 内でアプリがビルドされ、「リトルベビーログ」の UI が表示されます。
 
 ## 6. よくあるハマりどころ
 - **npm install で `ETARGET`**: 公開されているバージョンへ変更してください（例: `@types/react-native` は 0.73 系が最新）。
