@@ -1,8 +1,52 @@
-import React from "react";
-import { SafeAreaView, ScrollView, StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+
+import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/AppText";
 import { COLORS } from "@/constants/colors";
+import { License, LICENSES, MIT_LICENSE_TEXT, OFL_LICENSE_TEXT } from "@/content/licenses";
+
+const LICENSE_TEXT: Record<string, string> = {
+  MIT: MIT_LICENSE_TEXT,
+  "OFL-1.1": OFL_LICENSE_TEXT,
+};
+
+const LicenseItem: React.FC<{ item: License }> = ({ item }) => {
+  const [expanded, setExpanded] = useState(false);
+  const licenseText = LICENSE_TEXT[item.license];
+
+  return (
+    <View style={styles.item}>
+      <TouchableOpacity
+        style={styles.itemHeader}
+        onPress={() => setExpanded((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+      >
+        <View style={styles.itemInfo}>
+          <AppText style={styles.itemName} weight="medium">
+            {item.name}
+          </AppText>
+          <AppText style={styles.itemLicense}>{item.license}</AppText>
+        </View>
+        <Ionicons
+          name={expanded ? "chevron-up" : "chevron-down"}
+          size={18}
+          color={COLORS.textSecondary}
+        />
+      </TouchableOpacity>
+      {expanded && (
+        <View style={styles.itemBody}>
+          <AppText style={styles.copyright}>{item.copyright}</AppText>
+          {licenseText && (
+            <AppText style={styles.licenseText}>{licenseText}</AppText>
+          )}
+        </View>
+      )}
+    </View>
+  );
+};
 
 const OpenSourceLicensesScreen: React.FC = () => {
   return (
@@ -11,11 +55,13 @@ const OpenSourceLicensesScreen: React.FC = () => {
         <AppText style={styles.title} weight="medium">
           オープンソースライセンス
         </AppText>
-        <View style={styles.card}>
-          <AppText style={styles.text}>準備中</AppText>
-          <AppText style={styles.subText}>
-            後続で自動生成したライセンス一覧 JSON を表示する想定です。
-          </AppText>
+        <AppText style={styles.description}>
+          本アプリは以下のオープンソースライブラリを使用しています。各項目をタップするとライセンス全文を確認できます。
+        </AppText>
+        <View style={styles.list}>
+          {LICENSES.map((item) => (
+            <LicenseItem key={item.name} item={item} />
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -30,29 +76,63 @@ const styles = StyleSheet.create({
   container: {
     padding: 24,
     gap: 16,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 24,
     lineHeight: 34,
     color: COLORS.textPrimary,
   },
-  card: {
+  description: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: COLORS.textSecondary,
+  },
+  list: {
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
+    overflow: "hidden",
+  },
+  item: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.border,
+  },
+  itemHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 14,
     backgroundColor: COLORS.surface,
-    padding: 16,
-    gap: 8,
   },
-  text: {
-    fontSize: 18,
+  itemInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  itemName: {
+    fontSize: 15,
     color: COLORS.textPrimary,
-    lineHeight: 28,
   },
-  subText: {
-    fontSize: 14,
+  itemLicense: {
+    fontSize: 13,
     color: COLORS.textSecondary,
-    lineHeight: 22,
+  },
+  itemBody: {
+    padding: 14,
+    paddingTop: 0,
+    backgroundColor: COLORS.surface,
+    gap: 10,
+  },
+  copyright: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
+  },
+  licenseText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    lineHeight: 18,
+    fontFamily: "monospace",
   },
 });
 
