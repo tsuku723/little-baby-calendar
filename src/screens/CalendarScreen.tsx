@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -46,6 +46,20 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   });
   const monthKeyValue = monthKey(anchorDate);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
+
+  // useState の lazy initializer は user=null（AsyncStorage ロード前）で実行されるため
+  // lastViewedMonth が読めない。user が初めてロードされたタイミングで1度だけ補正する。
+  const hasRestoredMonthRef = useRef(false);
+  useEffect(() => {
+    if (hasRestoredMonthRef.current) return;
+    if (user === null) return;
+    hasRestoredMonthRef.current = true;
+    if (!user.settings.lastViewedMonth) return;
+    const normalized = normalizeToUtcDate(user.settings.lastViewedMonth);
+    if (!Number.isNaN(normalized.getTime())) {
+      setAnchorDate(new Date(normalized.getFullYear(), normalized.getMonth(), 1));
+    }
+  }, [user]);
   const MIN_DATE = useMemo(() => new Date(1900, 0, 1), []);
   const MAX_DATE = useMemo(() => new Date(2100, 11, 31), []);
 
