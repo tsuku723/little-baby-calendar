@@ -286,19 +286,17 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
               </View>
 
               <View style={styles.exportAgeBlock}>
-                {ageInfo?.flags.showMode === "gestational" && ageInfo.gestational.formatted ? (
-                  <>
-                    <Text style={styles.exportChronologicalAge}>{ageInfo.chronological.formatted}</Text>
-                    <Text style={styles.exportCorrectedAge}>（在胎 {ageInfo.gestational.formatted}）</Text>
-                  </>
-                ) : ageInfo?.corrected.visible && ageInfo.corrected.formatted ? (
-                  <>
-                    <Text style={styles.exportChronologicalAge}>{ageInfo.chronological.formatted}</Text>
-                    <Text style={styles.exportCorrectedAge}>（修正 {ageInfo.corrected.formatted}）</Text>
-                  </>
-                ) : (
-                  <Text style={styles.exportChronologicalAge}>{ageInfo?.chronological.formatted ?? "-"}</Text>
-                )}
+                <View style={styles.exportNameAgeRow}>
+                  <Text style={styles.exportName}>{user.name}</Text>
+                  <View style={styles.exportAgeColumn}>
+                    <Text style={styles.exportChronologicalAge}>{ageInfo?.chronological.formatted ?? "-"}</Text>
+                    {ageInfo?.flags.showMode === "gestational" && ageInfo.gestational.formatted ? (
+                      <Text style={styles.exportCorrectedAge}>（在胎 {ageInfo.gestational.formatted}）</Text>
+                    ) : ageInfo?.corrected.visible && ageInfo.corrected.formatted ? (
+                      <Text style={styles.exportCorrectedAge}>（修正 {ageInfo.corrected.formatted}）</Text>
+                    ) : null}
+                  </View>
+                </View>
               </View>
 
               <View style={styles.exportRecordCard}>
@@ -518,6 +516,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     zIndex: 2,
+  },
+  exportNameAgeRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 20,
+  },
+  exportAgeColumn: {
+    alignItems: "center",
+  },
+  exportName: {
+    fontSize: 44,
+    fontWeight: "700",
+    color: "#3F5F55",
   },
   exportChronologicalAge: {
     fontSize: 68,
