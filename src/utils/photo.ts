@@ -13,6 +13,8 @@ const PHOTO_DIR = `${FileSystem.documentDirectory}achievement-photos/`;
 const MAX_LONG_EDGE = 1600;
 const JPEG_QUALITY = 0.75;
 
+const isSafePhotoPath = (path: string): boolean => path.startsWith(PHOTO_DIR);
+
 const ensurePhotoDirAsync = async () => {
   const dirInfo = await FileSystem.getInfoAsync(PHOTO_DIR);
   if (!dirInfo.exists) {
@@ -89,6 +91,10 @@ export const pickAndSavePhotoAsync = async (): Promise<string | null> => {
  */
 export const ensureFileExistsAsync = async (path?: string | null): Promise<string | null> => {
   if (!path) return null;
+  if (!isSafePhotoPath(path)) {
+    console.warn("Unsafe photoPath rejected:", path);
+    return null;
+  }
   try {
     const info = await FileSystem.getInfoAsync(path);
     return info.exists ? path : null;
@@ -103,6 +109,10 @@ export const ensureFileExistsAsync = async (path?: string | null): Promise<strin
  */
 export const deleteIfExistsAsync = async (path?: string | null) => {
   if (!path) return;
+  if (!isSafePhotoPath(path)) {
+    console.warn("Unsafe photoPath rejected:", path);
+    return;
+  }
   try {
     const info = await FileSystem.getInfoAsync(path);
     if (info.exists) {
