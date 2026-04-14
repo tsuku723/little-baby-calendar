@@ -8,6 +8,7 @@ import React, {
   useState,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import EncryptedStorage from "react-native-encrypted-storage";
 import { v4 as uuid } from "uuid";
 
 import { STORAGE_KEYS, loadAchievements, loadUserSettings } from "@/storage/storage";
@@ -82,7 +83,7 @@ const AppStateContext = createContext<AppStateContextValue | undefined>(undefine
 
 const persistState = async (nextState: AppState) => {
   try {
-    await AsyncStorage.setItem(APP_STATE_KEY, JSON.stringify(nextState));
+    await EncryptedStorage.setItem(APP_STATE_KEY, JSON.stringify(nextState));
   } catch (error) {
     console.warn("Failed to persist AppState", error);
   }
@@ -181,16 +182,30 @@ const migrateLegacyState = async (): Promise<AppState | null> => {
 };
 
 const loadAppState = async (): Promise<AppState> => {
-  const raw = await AsyncStorage.getItem(APP_STATE_KEY);
-  if (raw) {
+  // 1. 暗号化ストレージから読む（正常系）
+  const encryptedRaw = await EncryptedStorage.getItem(APP_STATE_KEY);
+  if (encryptedRaw) {
     try {
-      const parsed = JSON.parse(raw) as AppState;
-      return ensureStateIntegrity(parsed);
+      return ensureStateIntegrity(JSON.parse(encryptedRaw) as AppState);
     } catch (error) {
-      console.warn("Failed to parse AppState; resetting", error);
+      console.warn("Failed to parse encrypted AppState; falling through", error);
     }
   }
 
+  // 2. 平文AsyncStorageからの移行（既存ユーザー、一度だけ実行）
+  const plainRaw = await AsyncStorage.getItem(APP_STATE_KEY);
+  if (plainRaw) {
+    try {
+      const state = ensureStateIntegrity(JSON.parse(plainRaw) as AppState);
+      await persistState(state);
+      await AsyncStorage.removeItem(APP_STATE_KEY);
+      return state;
+    } catch (error) {
+      console.warn("Failed to migrate plain AppState; falling through", error);
+    }
+  }
+
+  // 3. レガシーキー（v1形式）からの移行
   const migrated = await migrateLegacyState();
   if (migrated) return ensureStateIntegrity(migrated);
 
