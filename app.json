@@ -17,7 +17,11 @@
       "supportsTablet": false,
       "infoPlist": {
         "CFBundleDevelopmentRegion": "ja_JP",
-        "CFBundleLocalizations": ["ja"]
+        "CFBundleLocalizations": [
+          "ja"
+        ],
+        "NSPhotoLibraryUsageDescription": "成長記録に写真を添付するために使用します。",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -34,6 +38,11 @@
     "plugins": [
       "@react-native-community/datetimepicker",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "314cca80-4300-4559-8259-49453a1824a6"
+      }
+    }
   }
 }
