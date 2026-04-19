@@ -40,14 +40,19 @@ npm run typecheck   # TypeScript型チェック
 - CI/CD: GitHub Actions（typecheck + jest）で自動実行
 - E2Eは手動テスト仕様書（`docs/testing/e2e-manual-test-spec.md`）に基づき手動実施
 
+## ブランチ戦略
+- `main`: リリースブランチ
+- `feature`: 開発統合ブランチ（`main` から派生）
+- 作業ブランチ: `feature` から派生し、完了後は `feature` にマージ
+
 ## Issue対応フロー
 Issue対応時は必ず以下の手順で進めること。
 
 1. 対象Issueに `status: in-progress` ラベルを付与
-2. ブランチ作成（fix/issue-XX-<内容>）
-3. バグ修正
+2. `feature` ブランチから作業ブランチを作成（fix/issue-XX-<内容> など）
+3. バグ修正・実装
 4. コミット＆プッシュ
-5. プルリクエスト作成
+5. `feature` への プルリクエスト作成
    - descriptionに修正内容・確認手順を記載
    - `Closes #XX` を記載（マージ時にIssueが自動クローズされる）
 6. 対象Issueの `status: in-progress` を `status: needs-review` に変更
