@@ -25,7 +25,6 @@ const MonthHeader: React.FC<Props> = ({
     <View style={styles.center}>
       <TouchableOpacity accessibilityRole="button" onPress={onPressMonthLabel} style={styles.monthButton}>
         <Text style={styles.month}>{monthLabel}</Text>
-        <Text style={styles.monthHint}>年月を選択</Text>
       </TouchableOpacity>
       <TouchableOpacity accessibilityRole="button" onPress={onToday}>
         <Text style={styles.today}>今日へ</Text>
@@ -67,10 +66,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: COLORS.textPrimary,
     fontWeight: "600",
-  },
-  monthHint: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
   },
   today: {
     fontSize: 14,
