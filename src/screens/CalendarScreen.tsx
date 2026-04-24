@@ -208,9 +208,8 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             ))}
           </View>
           <CalendarGrid days={monthView.days} onPressDay={handlePressDay} />
-          <Text style={styles.footer}>予定日前は在胎表示です（修正月齢は表示しません）。</Text>
+          <Text style={styles.footer}>出産予定日前の修正月齢は在胎週数で表示しています。</Text>
           <Text style={styles.footer}>修正月齢の表記は目安です。医療的判断は主治医にご相談ください。</Text>
-          <Text style={styles.footer}>データは端末内で保存します。</Text>
         </View>
       </ScrollView>
       <TouchableOpacity
