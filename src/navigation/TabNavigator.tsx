@@ -1,8 +1,11 @@
 import React from "react";
 
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { BottomTabBar, createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
+import { View } from "react-native";
+
+import AdBanner from "@/components/AdBanner";
 
 import { COLORS } from "@/constants/colors";
 import AboutScreen from "@/screens/AboutScreen";
@@ -86,6 +89,12 @@ const TabNavigator: React.FC = () => {
         tabBarInactiveTintColor: COLORS.textSecondary,
         tabBarLabelStyle: { fontSize: 12 },
       }}
+      tabBar={(props) => (
+        <View>
+          <AdBanner />
+          <BottomTabBar {...props} />
+        </View>
+      )}
     >
       <Tab.Screen
         name="CalendarStack"

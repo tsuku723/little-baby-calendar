@@ -21,7 +21,8 @@
           "ja"
         ],
         "NSPhotoLibraryUsageDescription": "成長記録に写真を添付するために使用します。",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSUserTrackingUsageDescription": "広告をパーソナライズするために、端末の広告識別子へのアクセス許可をお願いします。許可しない場合も広告は表示されますが、パーソナライズされない広告となります。"
       }
     },
     "android": {
@@ -38,7 +39,15 @@
     "plugins": [
       "@react-native-community/datetimepicker",
       "expo-font",
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-tracking-transparency",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
     ],
     "extra": {
       "eas": {

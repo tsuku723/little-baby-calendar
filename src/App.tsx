@@ -6,8 +6,10 @@ import { useFonts, ZenMaruGothic_400Regular, ZenMaruGothic_500Medium } from "@ex
 import Navigator from "@/navigation";
 import { AppStateProvider } from "@/state/AppStateContext";
 import { AchievementsProvider } from "@/state/AchievementsContext";
+import { useTrackingPermission } from "@/hooks/useTrackingPermission";
 
 const App: React.FC = () => {
+  useTrackingPermission();
   const [fontsLoaded] = useFonts({
     "ZenMaruGothic-Regular": ZenMaruGothic_400Regular,
     "ZenMaruGothic-Medium": ZenMaruGothic_500Medium,
