@@ -9,6 +9,7 @@ import {
   Pressable,
   SafeAreaView,
   ScrollView,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -28,7 +29,7 @@ import { useDateViewContext } from "@/state/DateViewContext";
 import { clampComment, remainingChars } from "@/utils/text";
 import { safeParseIsoLocal, toIsoDateString, toUtcDateOnly } from "@/utils/dateUtils";
 import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync, PhotoPermissionDeniedError } from "@/utils/photo";
-import { RECORD_TITLE_CANDIDATES } from "./recordTitleCandidates";
+import { RECORD_TITLE_CANDIDATE_SECTIONS } from "./recordTitleCandidates";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RecordInput">;
@@ -382,18 +383,24 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>タイトル候補</Text>
 
-          <ScrollView contentContainerStyle={styles.sheetList} keyboardShouldPersistTaps="handled">
-            {RECORD_TITLE_CANDIDATES.map((candidate) => (
+          <SectionList
+            sections={RECORD_TITLE_CANDIDATE_SECTIONS}
+            keyExtractor={(item) => item}
+            contentContainerStyle={styles.sheetList}
+            keyboardShouldPersistTaps="handled"
+            renderSectionHeader={({ section }) => (
+              <Text style={styles.sectionHeader}>{section.name}</Text>
+            )}
+            renderItem={({ item }) => (
               <TouchableOpacity
-                key={candidate}
                 style={styles.candidateItem}
-                onPress={() => handleSelectCandidate(candidate)}
+                onPress={() => handleSelectCandidate(item)}
                 accessibilityRole="button"
               >
-                <Text style={styles.candidateText}>{candidate}</Text>
+                <Text style={styles.candidateText}>{item}</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            )}
+          />
         </View>
       </Modal>
       <DatePickerModal
@@ -636,6 +643,15 @@ const styles = StyleSheet.create({
   sheetList: {
     paddingBottom: 12,
     gap: 10,
+  },
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textSecondary,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    backgroundColor: COLORS.surface,
+    marginTop: 4,
   },
   candidateItem: {
     paddingVertical: 12,
