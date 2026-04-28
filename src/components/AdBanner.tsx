@@ -8,19 +8,23 @@ const AdBanner: React.FC = () => {
   if (__DEV__) {
     return (
       <View style={styles.placeholder} testID="ad-banner-placeholder">
+        <Text style={styles.placeholderText}>Ad Banner</Text>
       </View>
     );
   }
 
   const { BannerAd, BannerAdSize } = require("react-native-google-mobile-ads");
   return (
-    <View testID="ad-banner-real">
+    <View style={styles.bannerContainer} testID="ad-banner-real">
       <BannerAd unitId={BANNER_AD_UNIT_ID} size={BannerAdSize.BANNER} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  bannerContainer: {
+    alignItems: "center",
+  },
   placeholder: {
     height: BANNER_HEIGHT,
     backgroundColor: "#E0E0E0",
