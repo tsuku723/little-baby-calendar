@@ -2,7 +2,8 @@
   "expo": {
     "name": "リトルベビーログ",
     "slug": "little-baby-log",
-    "version": "1.0.0",
+    "version": "1.1.0",
+    "homepage": "https://tsuku723.github.io/little-baby-log/",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -21,8 +22,8 @@
           "ja"
         ],
         "NSPhotoLibraryUsageDescription": "成長記録に写真を添付するために使用します。",
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSUserTrackingUsageDescription": "広告をパーソナライズするために、端末の広告識別子へのアクセス許可をお願いします。許可しない場合も広告は表示されますが、パーソナライズされない広告となります。"
+        "NSUserTrackingUsageDescription": "広告をパーソナライズするために、端末の広告識別子へのアクセス許可をお願いします。許可しない場合も広告は表示されますが、パーソナライズされない広告となります。",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -31,7 +32,10 @@
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "com.google.android.gms.permission.AD_ID"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -44,8 +48,7 @@
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+          "iosAppId": "ca-app-pub-8166243489339783~6964568056"
         }
       ]
     ],

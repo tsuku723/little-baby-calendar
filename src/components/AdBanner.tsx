@@ -1,14 +1,13 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
-const TEST_BANNER_ID = "ca-app-pub-3940256099942544/2934735716";
+const BANNER_AD_UNIT_ID = "ca-app-pub-8166243489339783/3517337126";
 const BANNER_HEIGHT = 50;
 
 const AdBanner: React.FC = () => {
   if (__DEV__) {
     return (
       <View style={styles.placeholder} testID="ad-banner-placeholder">
-        <Text style={styles.placeholderText}>広告エリア</Text>
       </View>
     );
   }
@@ -16,7 +15,7 @@ const AdBanner: React.FC = () => {
   const { BannerAd, BannerAdSize } = require("react-native-google-mobile-ads");
   return (
     <View testID="ad-banner-real">
-      <BannerAd unitId={TEST_BANNER_ID} size={BannerAdSize.BANNER} />
+      <BannerAd unitId={BANNER_AD_UNIT_ID} size={BannerAdSize.BANNER} />
     </View>
   );
 };
