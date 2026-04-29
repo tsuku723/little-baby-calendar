@@ -10,7 +10,14 @@
  * - Development Build / 製品版アプリでは再検討可能
  */
 import React, { useCallback } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -54,7 +61,10 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           設定
         </AppText>
       </View>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.field}>
           <Text style={styles.label}>ベビーを選択</Text>
           <View style={styles.childList}>
@@ -68,12 +78,26 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                   accessibilityRole="button"
                 >
                   <View style={styles.childInfo}>
-                    <Text style={[styles.childName, isActive && styles.childNameActive]}>
+                    <Text
+                      style={[
+                        styles.childName,
+                        isActive && styles.childNameActive,
+                      ]}
+                    >
                       {child.name || "名前未設定"}
                     </Text>
-                    <Text style={styles.childMeta}>{child.birthDate ? child.birthDate : "生年月日未設定"}</Text>
+                    <Text style={styles.childMeta}>
+                      {child.birthDate ? child.birthDate : "生年月日未設定"}
+                    </Text>
                   </View>
-                  <Text style={[styles.childCheck, isActive && styles.childCheckActive]}>{isActive ? "✓" : ""}</Text>
+                  <Text
+                    style={[
+                      styles.childCheck,
+                      isActive && styles.childCheckActive,
+                    ]}
+                  >
+                    {isActive ? "✓" : ""}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
@@ -87,8 +111,9 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.notice}>※出生情報はプロフィール編集画面でのみ入力できます。</Text>
-        <Text style={styles.notice}>※このアプリの記録は、この端末の中だけに保存されます。</Text>
+        <Text style={styles.notice}>
+          ※このアプリの記録は、この端末の中だけに保存されます。
+        </Text>
 
         <View style={styles.supportSection}>
           <Text style={styles.label}>サポート</Text>
@@ -98,12 +123,19 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
               return (
                 <TouchableOpacity
                   key={menu.route}
-                  style={[styles.supportMenuRow, isLast && styles.supportMenuRowLast]}
+                  style={[
+                    styles.supportMenuRow,
+                    isLast && styles.supportMenuRowLast,
+                  ]}
                   onPress={() => navigation.navigate(menu.route)}
                   accessibilityRole="button"
                 >
                   <Text style={styles.supportMenuLabel}>{menu.label}</Text>
-                  <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={COLORS.textSecondary}
+                  />
                 </TouchableOpacity>
               );
             })}
