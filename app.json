@@ -18,11 +18,9 @@
       "supportsTablet": false,
       "infoPlist": {
         "CFBundleDevelopmentRegion": "ja_JP",
-        "CFBundleLocalizations": [
-          "ja"
-        ],
+        "CFBundleLocalizations": ["ja"],
         "NSPhotoLibraryUsageDescription": "成長記録に写真を添付するために使用します。",
-        "NSUserTrackingUsageDescription": "広告をパーソナライズするために、端末の広告識別子へのアクセス許可をお願いします。許可しない場合も広告は表示されますが、パーソナライズされない広告となります。",
+        "NSUserTrackingUsageDescription": "広告の関連性を高めるために使用します。お名前や写真などの個人情報にはアクセスしません。許可しない場合も広告は表示されますが、興味に合わない広告が出やすくなります。",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -33,9 +31,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "com.google.android.gms.permission.AD_ID"
-      ]
+      "permissions": ["com.google.android.gms.permission.AD_ID"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
