@@ -1,33 +1,63 @@
-﻿import React, { useMemo, useState } from "react";
-import { FlatList, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useMemo, useState } from "react";
+import {
+  FlatList,
+  Image,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
-import { Achievement } from "@/models/dataModels";
-import { RecordListStackParamList, RootStackParamList, TabParamList } from "@/navigation";
+import { Achievement, AgeInfo } from "@/models/dataModels";
+import {
+  RecordListStackParamList,
+  RootStackParamList,
+  TabParamList,
+} from "@/navigation";
 import AppText from "@/components/AppText";
 import DatePickerModal from "@/components/DatePickerModal";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useActiveUser } from "@/state/AppStateContext";
-import { isIsoDateString, safeParseIsoLocal, toIsoDateString } from "@/utils/dateUtils";
+import {
+  calculateAgeInfo,
+  isIsoDateString,
+  safeParseIsoLocal,
+  toIsoDateString,
+  toUtcDateOnly,
+} from "@/utils/dateUtils";
+import { groupRecordsByMonth } from "@/utils/groupRecordsByMonth";
 import { normalizeSearchText } from "@/utils/text";
 import { COLORS } from "@/constants/colors";
 
-type Props = NativeStackScreenProps<RecordListStackParamList, "AchievementList">;
+type Props = NativeStackScreenProps<
+  RecordListStackParamList,
+  "AchievementList"
+>;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
+type ListRow =
+  | { type: "sectionHeader"; key: string; monthLabel: string }
+  | { type: "featured"; key: string; record: Achievement }
+  | { type: "standard"; key: string; record: Achievement };
+
 const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
-const startOfLocalDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const startOfLocalDay = (d: Date) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const cloneDate = (d: Date) => new Date(d.getTime());
 
-const toIsoDateFromPicker = (picked: Date): string => {
-  return toIsoDateString(picked);
-};
+const toIsoDateFromPicker = (picked: Date): string => toIsoDateString(picked);
 
 const getPickerDate = (value: string | null, fallback: Date): Date => {
-  const parsed = safeParseIsoLocal(value && isIsoDateString(value) ? value : null, fallback);
+  const parsed = safeParseIsoLocal(
+    value && isIsoDateString(value) ? value : null,
+    fallback
+  );
   if (Number.isNaN(parsed.getTime())) return cloneDate(fallback);
   return cloneDate(parsed);
 };
@@ -66,19 +96,16 @@ const AchievementListScreen: React.FC<Props> = () => {
   };
 
   const items = useMemo(() => {
-    // AchievementStore = { "2025-02-05": [A], "2025-02-06": [B, C], ... }
     const allList: Achievement[] = Object.values(store).flat();
-
-    // 1) フリーワード検索（title / memo 部分一致）
     const normalizedQuery = normalizeSearchText(searchText);
     const filteredBySearch = normalizedQuery
       ? allList.filter((item) => {
-          const normalizedTarget = normalizeSearchText(`${item.title} ${item.memo ?? ""}`);
+          const normalizedTarget = normalizeSearchText(
+            `${item.title} ${item.memo ?? ""}`
+          );
           return normalizedTarget.includes(normalizedQuery);
         })
       : allList;
-
-    // 2) 期間フィルタ（日付は ISO 形式で比較 OK）
     const validFrom = fromDate && isIsoDateString(fromDate) ? fromDate : null;
     const validTo = toDate && isIsoDateString(toDate) ? toDate : null;
     const filteredByRange = filteredBySearch.filter((item) => {
@@ -86,45 +113,237 @@ const AchievementListScreen: React.FC<Props> = () => {
       if (validTo && item.date > validTo) return false;
       return true;
     });
-
-    // 3) ソート: date desc, createdAt desc
-    return filteredByRange
-      .slice()
-      .sort((a, b) => {
-        if (a.date === b.date) return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
-        return b.date.localeCompare(a.date);
-      });
+    return filteredByRange.slice().sort((a, b) => {
+      if (a.date === b.date)
+        return (b.createdAt ?? "").localeCompare(a.createdAt ?? "");
+      return b.date.localeCompare(a.date);
+    });
   }, [fromDate, searchText, store, toDate]);
 
-  const renderItem = ({ item }: { item: Achievement }) => (
-    <TouchableOpacity
-      style={styles.row}
-      onPress={() => {
-        rootNavigation.navigate("RecordDetail", { recordId: item.id, from: "list" });
-      }}
-      accessibilityRole="button"
-    >
-      {/* 行タップでカレンダー画面の該当日を開く */}
-      <View style={styles.rowHeader}>
-        <Text style={styles.date}>{dateLabel(item.date)}</Text>
-      </View>
-      <Text style={styles.rowTitle} numberOfLines={2}>
-        {item.title}
-      </Text>
-      {item.memo ? (
-        <Text style={styles.memo} numberOfLines={2}>
-          {item.memo}
-        </Text>
-      ) : null}
-    </TouchableOpacity>
-  );
+  const todayAgeInfo = useMemo((): AgeInfo | null => {
+    if (!user?.birthDate) return null;
+    try {
+      return calculateAgeInfo({
+        targetDate: toIsoDateString(toUtcDateOnly(new Date())),
+        birthDate: user.birthDate,
+        dueDate: user.dueDate,
+        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+        ageFormat: user.settings.ageFormat,
+      });
+    } catch {
+      return null;
+    }
+  }, [user]);
+
+  const ageInfoByRecordId = useMemo((): Map<string, AgeInfo | null> => {
+    const map = new Map<string, AgeInfo | null>();
+    if (!user?.birthDate) return map;
+    for (const record of items) {
+      try {
+        map.set(
+          record.id,
+          calculateAgeInfo({
+            targetDate: record.date,
+            birthDate: user.birthDate,
+            dueDate: user.dueDate,
+            showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+            ageFormat: user.settings.ageFormat,
+          })
+        );
+      } catch {
+        map.set(record.id, null);
+      }
+    }
+    return map;
+  }, [items, user]);
+
+  const listRows = useMemo((): ListRow[] => {
+    const sections = groupRecordsByMonth(items);
+    const rows: ListRow[] = [];
+    for (const section of sections) {
+      rows.push({
+        key: `header-${section.monthKey}`,
+        type: "sectionHeader",
+        monthLabel: section.monthLabel,
+      });
+      for (const record of section.records) {
+        const isFeatured = record.id === section.featuredId;
+        rows.push({
+          key: record.id,
+          type: isFeatured ? "featured" : "standard",
+          record,
+        });
+      }
+    }
+    return rows;
+  }, [items]);
+
+  const renderAgeBadge = (ageInfo: AgeInfo | null) => {
+    if (!ageInfo) return null;
+    if (
+      ageInfo.flags.showMode === "gestational" &&
+      ageInfo.gestational.formatted
+    ) {
+      return (
+        <View style={styles.ageBadge}>
+          <Text style={styles.ageBadgeText}>
+            在胎 {ageInfo.gestational.formatted}
+          </Text>
+        </View>
+      );
+    }
+    if (ageInfo.corrected.visible && ageInfo.corrected.formatted) {
+      return (
+        <View style={styles.ageBadge}>
+          <Text style={styles.ageBadgeText}>
+            修正 {ageInfo.corrected.formatted}
+          </Text>
+        </View>
+      );
+    }
+    return null;
+  };
+
+  const renderFeaturedCard = (record: Achievement) => {
+    const ageInfo = ageInfoByRecordId.get(record.id) ?? null;
+    return (
+      <TouchableOpacity
+        key={record.id}
+        style={styles.featuredCard}
+        onPress={() =>
+          rootNavigation.navigate("RecordDetail", {
+            recordId: record.id,
+            from: "list",
+          })
+        }
+        accessibilityRole="button"
+      >
+        {record.photoPath ? (
+          <Image
+            source={{ uri: record.photoPath }}
+            style={styles.featuredPhoto}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.featuredPhoto, styles.photoPlaceholder]}>
+            <Ionicons
+              name="camera-outline"
+              size={36}
+              color={COLORS.textSecondary}
+            />
+          </View>
+        )}
+        <View style={styles.featuredContent}>
+          <Text style={styles.featuredTitle} numberOfLines={2}>
+            {record.title || "(タイトルなし)"}
+          </Text>
+          <View style={styles.cardMeta}>
+            {renderAgeBadge(ageInfo)}
+            <Text style={styles.cardDate}>{dateLabel(record.date)}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderStandardCard = (record: Achievement) => {
+    const ageInfo = ageInfoByRecordId.get(record.id) ?? null;
+    return (
+      <TouchableOpacity
+        key={record.id}
+        style={styles.standardCard}
+        onPress={() =>
+          rootNavigation.navigate("RecordDetail", {
+            recordId: record.id,
+            from: "list",
+          })
+        }
+        accessibilityRole="button"
+      >
+        <View style={styles.standardContent}>
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {record.title || "(タイトルなし)"}
+          </Text>
+          {record.memo ? (
+            <Text style={styles.cardMemo} numberOfLines={2}>
+              {record.memo}
+            </Text>
+          ) : null}
+          <View style={styles.cardMeta}>
+            {renderAgeBadge(ageInfo)}
+            <Text style={styles.cardDate}>{dateLabel(record.date)}</Text>
+          </View>
+        </View>
+        <View style={styles.thumbnailArea}>
+          {record.photoPath ? (
+            <Image
+              source={{ uri: record.photoPath }}
+              style={styles.thumbnail}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
+              <Ionicons
+                name="camera-outline"
+                size={22}
+                color={COLORS.textSecondary}
+              />
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderRow = ({ item }: { item: ListRow }) => {
+    if (item.type === "sectionHeader") {
+      return <Text style={styles.sectionHeader}>{item.monthLabel}</Text>;
+    }
+    if (item.type === "featured") {
+      return renderFeaturedCard(item.record);
+    }
+    return renderStandardCard(item.record);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <AppText style={styles.headerTitle} weight="medium">
-          {(user?.name ?? "プロフィール未設定") + " 記録一覧"}
+        <AppText style={styles.headerName} weight="medium">
+          {user?.name ?? "プロフィール未設定"}
         </AppText>
+        {todayAgeInfo ? (
+          <View style={styles.headerAgeBlock}>
+            <View style={styles.headerAgeRow}>
+              <Text style={styles.headerChronological}>
+                {todayAgeInfo.chronological.formatted}
+              </Text>
+              {todayAgeInfo.flags.showMode === "gestational" &&
+              todayAgeInfo.gestational.formatted ? (
+                <View style={styles.headerCorrectedBadge}>
+                  <Text style={styles.headerCorrectedBadgeText}>
+                    在胎 {todayAgeInfo.gestational.formatted}
+                  </Text>
+                </View>
+              ) : todayAgeInfo.corrected.visible &&
+                todayAgeInfo.corrected.formatted ? (
+                <View style={styles.headerCorrectedBadge}>
+                  <Text style={styles.headerCorrectedBadgeText}>
+                    修正 {todayAgeInfo.corrected.formatted}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+            {user?.settings.showDaysSinceBirth ? (
+              <Text style={styles.headerDays}>
+                生まれてから{todayAgeInfo.daysSinceBirth}日目
+              </Text>
+            ) : null}
+          </View>
+        ) : (
+          <Text style={styles.headerPlaceholder}>
+            年齢情報は設定済みのプロフィールで表示されます
+          </Text>
+        )}
       </View>
       <View style={styles.content}>
         <View style={styles.filterBar}>
@@ -141,7 +360,11 @@ const AchievementListScreen: React.FC<Props> = () => {
             accessibilityRole="button"
             accessibilityLabel="絞り込みを切り替える"
           >
-            <Ionicons name="options-outline" size={20} color={COLORS.textSecondary} />
+            <Ionicons
+              name="options-outline"
+              size={20}
+              color={COLORS.textSecondary}
+            />
           </TouchableOpacity>
         </View>
         {isFilterExpanded ? (
@@ -154,7 +377,11 @@ const AchievementListScreen: React.FC<Props> = () => {
             >
               <Text style={styles.filterLabel}>From</Text>
               <Text style={styles.filterValue}>{fromDate ?? "未設定"}</Text>
-              <Ionicons name="calendar-outline" size={18} color={COLORS.textSecondary} />
+              <Ionicons
+                name="calendar-outline"
+                size={18}
+                color={COLORS.textSecondary}
+              />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.filterRow}
@@ -164,7 +391,11 @@ const AchievementListScreen: React.FC<Props> = () => {
             >
               <Text style={styles.filterLabel}>To</Text>
               <Text style={styles.filterValue}>{toDate ?? "未設定"}</Text>
-              <Ionicons name="calendar-outline" size={18} color={COLORS.textSecondary} />
+              <Ionicons
+                name="calendar-outline"
+                size={18}
+                color={COLORS.textSecondary}
+              />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.clearButton}
@@ -179,17 +410,20 @@ const AchievementListScreen: React.FC<Props> = () => {
           </View>
         ) : null}
         <FlatList
-          data={items}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
+          data={listRows}
+          keyExtractor={(item) => item.key}
+          renderItem={renderRow}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.empty}>{loading ? "読み込み中..." : "まだ記録がありません"}</Text>}
+          ListEmptyComponent={
+            <Text style={styles.empty}>
+              {loading ? "読み込み中..." : "まだ記録がありません"}
+            </Text>
+          }
         />
       </View>
       <TouchableOpacity
         style={styles.fab}
         accessibilityRole="button"
-        // Phase 1: FAB は記録入力画面への入口だけを保持
         onPress={() => rootNavigation.navigate("RecordInput")}
       >
         <Text style={styles.fabText}>＋記録</Text>
@@ -224,28 +458,60 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  content: {
-    flex: 1,
-    padding: 16,
-    gap: 12,
-  },
   header: {
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
     paddingHorizontal: 16,
+    paddingVertical: 8,
     backgroundColor: COLORS.headerBackground,
+    gap: 4,
   },
-  headerTitle: {
-    fontSize: 18,
+  headerName: {
+    fontSize: 20,
     color: COLORS.textPrimary,
     textAlign: "center",
+  },
+  headerAgeBlock: {
+    alignItems: "center",
+    gap: 2,
+  },
+  headerAgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  headerChronological: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+  },
+  headerCorrectedBadge: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  headerCorrectedBadgeText: {
+    fontSize: 12,
+    color: COLORS.accentMain,
+    fontWeight: "600",
+  },
+  headerDays: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+  },
+  headerPlaceholder: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    textAlign: "center",
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 8,
   },
   filterBar: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
     gap: 6,
     backgroundColor: "#FFFFFF",
   },
@@ -261,10 +527,7 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   filterPanel: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
     gap: 6,
-    backgroundColor: "transparent",
   },
   filterRow: {
     height: 40,
@@ -297,36 +560,113 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   list: {
-    gap: 12,
+    gap: 10,
     paddingBottom: 120,
   },
-  row: {
+  sectionHeader: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.textSecondary,
+    paddingTop: 8,
+    paddingBottom: 2,
+  },
+  // Featured card
+  featuredCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: "hidden",
+    shadowColor: COLORS.textPrimary,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  featuredPhoto: {
+    width: "100%",
+    height: 180,
+    backgroundColor: COLORS.cellDimmed,
+  },
+  featuredContent: {
+    padding: 12,
+    gap: 6,
+  },
+  featuredTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
+  // Standard card
+  standardCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: 12,
-    gap: 6,
-  },
-  rowHeader: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    gap: 10,
+    shadowColor: COLORS.textPrimary,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
-  date: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
+  standardContent: {
+    flex: 1,
+    gap: 4,
   },
-  rowTitle: {
-    fontSize: 16,
+  cardTitle: {
+    fontSize: 15,
     fontWeight: "700",
     color: COLORS.textPrimary,
   },
-  memo: {
-    fontSize: 14,
+  cardMemo: {
+    fontSize: 13,
     color: COLORS.textSecondary,
-    lineHeight: 20,
+    lineHeight: 18,
   },
+  cardMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
+  },
+  cardDate: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginLeft: "auto",
+  },
+  thumbnailArea: {
+    justifyContent: "flex-start",
+  },
+  thumbnail: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    backgroundColor: COLORS.cellDimmed,
+  },
+  thumbnailPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // Age badge
+  ageBadge: {
+    backgroundColor: COLORS.ageBadgeCorrectedBg,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  ageBadgeText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: COLORS.ageBadgeText,
+  },
+  // Footer
   empty: {
     fontSize: 16,
     color: COLORS.textSecondary,
