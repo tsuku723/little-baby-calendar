@@ -2,7 +2,8 @@
   "expo": {
     "name": "リトルベビーログ",
     "slug": "little-baby-log",
-    "version": "1.0.0",
+    "version": "1.1.0",
+    "homepage": "https://tsuku723.github.io/little-baby-log/",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -17,10 +18,9 @@
       "supportsTablet": false,
       "infoPlist": {
         "CFBundleDevelopmentRegion": "ja_JP",
-        "CFBundleLocalizations": [
-          "ja"
-        ],
+        "CFBundleLocalizations": ["ja"],
         "NSPhotoLibraryUsageDescription": "成長記録に写真を添付するために使用します。",
+        "NSUserTrackingUsageDescription": "広告の関連性を高めるために使用します。お名前や写真などの個人情報にはアクセスしません。許可しない場合も広告は表示されますが、興味に合わない広告が出やすくなります。",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -30,7 +30,8 @@
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["com.google.android.gms.permission.AD_ID"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,7 +39,14 @@
     "plugins": [
       "@react-native-community/datetimepicker",
       "expo-font",
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-tracking-transparency",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "iosAppId": "ca-app-pub-8166243489339783~6964568056"
+        }
+      ]
     ],
     "extra": {
       "eas": {

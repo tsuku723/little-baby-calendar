@@ -1,10 +1,25 @@
 import React from "react";
-import { SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 
 import AppText from "@/components/AppText";
 import { COLORS } from "@/constants/colors";
+
+const renderInline = (text: string): React.ReactNode => {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <Text key={i} style={{ fontFamily: "ZenMaruGothic-Medium" }}>
+          {part.slice(2, -2)}
+        </Text>
+      );
+    }
+    return part;
+  });
+};
 
 type Props = {
   text: string;
@@ -35,6 +50,14 @@ const LegalTextScreen: React.FC<Props> = ({ text, title, onBack }) => {
             return <View key={`${index}-divider`} style={styles.divider} />;
           }
 
+          if (trimmed.startsWith("### ")) {
+            return (
+              <AppText key={`${index}-h3`} style={styles.subHeading} weight="medium">
+                {trimmed.slice(4)}
+              </AppText>
+            );
+          }
+
           if (trimmed.startsWith("## ")) {
             return (
               <AppText key={`${index}-h2`} style={styles.heading} weight="medium">
@@ -53,7 +76,7 @@ const LegalTextScreen: React.FC<Props> = ({ text, title, onBack }) => {
 
           return (
             <AppText key={`${index}-p`} style={styles.body}>
-              {trimmed}
+              {renderInline(trimmed)}
             </AppText>
           );
         })}
@@ -100,6 +123,13 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginTop: 8,
     marginBottom: 8,
+  },
+  subHeading: {
+    fontSize: 16,
+    lineHeight: 26,
+    color: COLORS.textPrimary,
+    marginTop: 6,
+    marginBottom: 4,
   },
   body: {
     fontSize: 16,

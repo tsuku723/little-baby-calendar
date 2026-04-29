@@ -67,6 +67,8 @@ describe('photo utils', () => {
     expect(result).toBe(arg.to);
   });
 
+  const SAFE_PATH = 'file:///doc/achievement-photos/x.jpg';
+
   test('ensureFileExistsAsync returns null for empty path', async () => {
     await expect(ensureFileExistsAsync(undefined)).resolves.toBeNull();
     await expect(ensureFileExistsAsync(null)).resolves.toBeNull();
@@ -75,15 +77,22 @@ describe('photo utils', () => {
 
   test('ensureFileExistsAsync returns null when file does not exist', async () => {
     (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: false });
-    await expect(ensureFileExistsAsync('/x.jpg')).resolves.toBeNull();
+    await expect(ensureFileExistsAsync(SAFE_PATH)).resolves.toBeNull();
   });
 
   test('ensureFileExistsAsync warns and returns null when fs check throws', async () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     (FileSystem.getInfoAsync as jest.Mock).mockRejectedValue(new Error('boom'));
 
-    await expect(ensureFileExistsAsync('/x.jpg')).resolves.toBeNull();
+    await expect(ensureFileExistsAsync(SAFE_PATH)).resolves.toBeNull();
     expect(warnSpy).toHaveBeenCalled();
+  });
+
+  test('ensureFileExistsAsync warns and returns null for unsafe path', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await expect(ensureFileExistsAsync('../../databases/RKStorage')).resolves.toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith('Unsafe photoPath rejected:', '../../databases/RKStorage');
+    expect(FileSystem.getInfoAsync).not.toHaveBeenCalled();
   });
 
   test('deleteIfExistsAsync does nothing for empty path', async () => {
@@ -95,16 +104,24 @@ describe('photo utils', () => {
 
   test('deleteIfExistsAsync deletes when file exists', async () => {
     (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: true });
-    await deleteIfExistsAsync('/x.jpg');
-    expect(FileSystem.deleteAsync).toHaveBeenCalledWith('/x.jpg', { idempotent: true });
+    await deleteIfExistsAsync(SAFE_PATH);
+    expect(FileSystem.deleteAsync).toHaveBeenCalledWith(SAFE_PATH, { idempotent: true });
   });
 
   test('deleteIfExistsAsync warns when fs check throws', async () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     (FileSystem.getInfoAsync as jest.Mock).mockRejectedValue(new Error('nope'));
 
-    await expect(deleteIfExistsAsync('/x.jpg')).resolves.toBeUndefined();
+    await expect(deleteIfExistsAsync(SAFE_PATH)).resolves.toBeUndefined();
     expect(warnSpy).toHaveBeenCalled();
+  });
+
+  test('deleteIfExistsAsync warns and does nothing for unsafe path', async () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await deleteIfExistsAsync('../../databases/RKStorage');
+    expect(warnSpy).toHaveBeenCalledWith('Unsafe photoPath rejected:', '../../databases/RKStorage');
+    expect(FileSystem.getInfoAsync).not.toHaveBeenCalled();
+    expect(FileSystem.deleteAsync).not.toHaveBeenCalled();
   });
 
   test('pickAndSavePhotoAsync uses empty resize actions when long edge is small and skips directory creation when exists', async () => {
@@ -165,13 +182,13 @@ describe('photo utils', () => {
   test('ensureFileExistsAsync returns original path when file exists', async () => {
     (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: true });
 
-    await expect(ensureFileExistsAsync('/exists.jpg')).resolves.toBe('/exists.jpg');
+    await expect(ensureFileExistsAsync(SAFE_PATH)).resolves.toBe(SAFE_PATH);
   });
 
   test('deleteIfExistsAsync skips delete when file does not exist', async () => {
     (FileSystem.getInfoAsync as jest.Mock).mockResolvedValue({ exists: false });
 
-    await deleteIfExistsAsync('/missing.jpg');
+    await deleteIfExistsAsync(SAFE_PATH);
     expect(FileSystem.deleteAsync).not.toHaveBeenCalled();
   });
 
