@@ -1,5 +1,14 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
-import { Button, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Button,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,14 +24,13 @@ import { COLORS } from "@/constants/colors";
 type Props = NativeStackScreenProps<RootStackParamList, "RecordDetail">;
 
 const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
-  // 選択中ベビー名取得（ベビー名のない場合は "記録" のまま）
   const user = useActiveUser();
   const { recordId, isoDate, from } = route.params ?? {};
   const { store, loading } = useAchievements();
   const [photoPath, setPhotoPath] = useState<string | null>(null);
 
   const record = useMemo(() => {
-    const scoped = isoDate ? store[isoDate] ?? [] : [];
+    const scoped = isoDate ? (store[isoDate] ?? []) : [];
     if (scoped.length > 0) {
       const hit = scoped.find((item) => item.id === recordId);
       if (hit) return hit;
@@ -64,11 +72,8 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
-          <Text style={styles.title}>記録が見つかりません</Text>
-          <Button
-            title="戻る"
-            onPress={() => navigation.goBack()}
-          />
+          <Text style={styles.errorText}>記録が見つかりません</Text>
+          <Button title="戻る" onPress={() => navigation.goBack()} />
         </View>
       </SafeAreaView>
     );
@@ -76,7 +81,6 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* ヘッダー：左に戻るボタン、中央に「ベビー名の記録」 */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerLeft}
@@ -89,68 +93,97 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         <AppText weight="medium" style={styles.headerTitle}>
           {user?.name ? `${user.name}の記録` : "記録"}
         </AppText>
-        {/* プレースホルダ（中央揃え用） */}
-        <View style={styles.headerRight} />
+        <TouchableOpacity
+          style={styles.headerRight}
+          onPress={() =>
+            navigation.navigate("RecordInput", {
+              recordId: record.id,
+              isoDate: record.date,
+              from,
+            })
+          }
+          accessibilityRole="button"
+          accessibilityLabel="編集"
+        >
+          <Text style={styles.headerEditText}>編集</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.container}>
-        <Text style={styles.title}>{record.title || "(タイトル未入力)"}</Text>
-        <View style={styles.field}>
-          <Text style={styles.label}>日付</Text>
-          <Text style={styles.value}>{record.date.replace(/-/g, "/")}</Text>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* 写真エリア */}
+        <View style={styles.photoWrapper}>
+          {photoPath ? (
+            <Image
+              source={{ uri: photoPath }}
+              style={styles.photo}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.photoPlaceholder}>
+              <Ionicons
+                name="camera-outline"
+                size={40}
+                color={COLORS.textSecondary}
+              />
+            </View>
+          )}
+          <View style={styles.dateOverlay}>
+            <Text style={styles.dateOverlayText}>
+              {record.date.replace(/-/g, "/")}
+            </Text>
+          </View>
         </View>
 
-        {ageInfo ? (
-          <View style={styles.field}>
-            <Text style={styles.label}>月齢</Text>
-            <View style={styles.ageBlock}>
-              {ageInfo.flags.showMode === "gestational" && ageInfo.gestational.visible && ageInfo.gestational.formatted ? (
-                <View style={styles.ageRow}>
-                  <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
-                  <Text style={styles.ageNote}>（在胎 {ageInfo.gestational.formatted}）</Text>
+        <View style={styles.body}>
+          {/* タイトル */}
+          <Text style={styles.title}>{record.title || "(タイトル未入力)"}</Text>
+
+          {/* 月齢バッジ */}
+          {ageInfo ? (
+            <View style={styles.badgeRow}>
+              <View style={[styles.badge, styles.badgeChronological]}>
+                <Text style={styles.badgeText}>
+                  {ageInfo.chronological.formatted}
+                </Text>
+              </View>
+              {ageInfo.flags.showMode === "gestational" &&
+              ageInfo.gestational.visible &&
+              ageInfo.gestational.formatted ? (
+                <View style={[styles.badge, styles.badgeGestational]}>
+                  <Text style={styles.badgeText}>
+                    在胎 {ageInfo.gestational.formatted}
+                  </Text>
                 </View>
-              ) : ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
-                <View style={styles.ageRow}>
-                  <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
-                  <Text style={styles.ageNote}>（修正 {ageInfo.corrected.formatted}）</Text>
+              ) : null}
+              {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
+                <View style={[styles.badge, styles.badgeCorrected]}>
+                  <Text style={styles.badgeText}>
+                    修正 {ageInfo.corrected.formatted}
+                  </Text>
                 </View>
-              ) : (
-                <View style={styles.ageRow}>
-                  <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
-                </View>
-              )}
+              ) : null}
               {user?.settings.showDaysSinceBirth ? (
-                <Text style={styles.ageNote}>生まれてから{ageInfo.daysSinceBirth}日目</Text>
+                <View style={[styles.badge, styles.badgeDays]}>
+                  <Text style={styles.badgeText}>
+                    {ageInfo.daysSinceBirth}日目
+                  </Text>
+                </View>
               ) : null}
             </View>
-          </View>
-        ) : null}
+          ) : null}
 
-        {record.memo ? (
-          <View style={styles.field}>
-            <Text style={styles.label}>メモ</Text>
-            <Text style={styles.value}>{record.memo}</Text>
-          </View>
-        ) : null}
-
-        {photoPath ? (
-          <View style={styles.field}>
-            <Text style={styles.label}>写真</Text>
-            <Image source={{ uri: photoPath }} style={styles.photo} resizeMode="cover" />
-          </View>
-        ) : null}
-
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.editButton]}
-            onPress={() =>
-              navigation.navigate("RecordInput", { recordId: record.id, isoDate: record.date, from })
-            }
-            accessibilityRole="button"
-          >
-            <Text style={styles.actionButtonText}>編集する</Text>
-          </TouchableOpacity>
+          {/* メモ */}
+          {record.memo ? (
+            <View style={styles.memoSection}>
+              <Text style={styles.memoLabel}>メモ</Text>
+              <Text style={styles.memoText}>{record.memo}</Text>
+            </View>
+          ) : null}
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -160,67 +193,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  container: {
-    flex: 1,
-    gap: 16,
-    padding: 24,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: COLORS.textPrimary,
-  },
-  field: {
-    gap: 6,
-  },
-  label: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  value: {
-    fontSize: 17,
-    color: COLORS.textPrimary,
-  },
-  ageBlock: {
-    gap: 4,
-  },
-  ageRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  ageValue: {
-    fontSize: 17,
-    color: COLORS.textPrimary,
-  },
-  ageNote: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  actions: {
-    marginTop: 12,
-    alignItems: "center",
-  },
-  actionButton: {
-    backgroundColor: COLORS.filterBackground,
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  actionButtonText: {
-    fontSize: 14,
-    color: COLORS.textPrimary,
-    fontWeight: "600",
-  },
-  editButton: {
-    alignSelf: "center",
-  },
-  /* 記録詳細ヘッダー */
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -238,12 +210,101 @@ const styles = StyleSheet.create({
   headerRight: {
     position: "absolute",
     right: 16,
-    width: 24,
-    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 18,
     color: COLORS.textPrimary,
+  },
+  headerEditText: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+    fontWeight: "500",
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  photoWrapper: {
+    width: "100%",
+    height: 280,
+    position: "relative",
+  },
+  photo: {
+    width: "100%",
+    height: "100%",
+  },
+  photoPlaceholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: COLORS.cellDimmed,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dateOverlay: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  dateOverlayText: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    fontWeight: "500",
+  },
+  body: {
+    padding: 20,
+    gap: 16,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
+  badgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  badge: {
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  badgeChronological: {
+    backgroundColor: COLORS.ageBadgeChronologicalBg,
+  },
+  badgeCorrected: {
+    backgroundColor: COLORS.ageBadgeCorrectedBg,
+  },
+  badgeGestational: {
+    backgroundColor: COLORS.ageBadgeGestationalBg,
+  },
+  badgeDays: {
+    backgroundColor: COLORS.ageBadgeChronologicalBg,
+  },
+  badgeText: {
+    fontSize: 13,
+    color: COLORS.ageBadgeText,
+    fontWeight: "600",
+  },
+  memoSection: {
+    gap: 6,
+  },
+  memoLabel: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+  },
+  memoText: {
+    fontSize: 17,
+    color: COLORS.textPrimary,
+    lineHeight: 26,
   },
   centered: {
     flex: 1,
@@ -252,11 +313,9 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 24,
   },
-  photo: {
-    width: "100%",
-    height: 240,
-    borderRadius: 12,
-    backgroundColor: COLORS.cellDimmed,
+  errorText: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
   },
 });
 
