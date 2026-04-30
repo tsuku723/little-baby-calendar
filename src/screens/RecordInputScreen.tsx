@@ -9,6 +9,7 @@ import {
   Pressable,
   SafeAreaView,
   ScrollView,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -23,12 +24,24 @@ import { RootStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
 import DatePickerModal from "@/components/DatePickerModal";
 import { useActiveUser } from "@/state/AppStateContext";
-import { SaveAchievementPayload, useAchievements } from "@/state/AchievementsContext";
+import {
+  SaveAchievementPayload,
+  useAchievements,
+} from "@/state/AchievementsContext";
 import { useDateViewContext } from "@/state/DateViewContext";
 import { clampComment, remainingChars } from "@/utils/text";
-import { safeParseIsoLocal, toIsoDateString, toUtcDateOnly } from "@/utils/dateUtils";
-import { deleteIfExistsAsync, ensureFileExistsAsync, pickAndSavePhotoAsync, PhotoPermissionDeniedError } from "@/utils/photo";
-import { RECORD_TITLE_CANDIDATES } from "./recordTitleCandidates";
+import {
+  safeParseIsoLocal,
+  toIsoDateString,
+  toUtcDateOnly,
+} from "@/utils/dateUtils";
+import {
+  deleteIfExistsAsync,
+  ensureFileExistsAsync,
+  pickAndSavePhotoAsync,
+  PhotoPermissionDeniedError,
+} from "@/utils/photo";
+import { RECORD_TITLE_CANDIDATE_SECTIONS } from "./recordTitleCandidates";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<RootStackParamList, "RecordInput">;
@@ -52,14 +65,19 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     return all.find((item) => item.id === recordId) ?? null;
   }, [preferredDate, recordId, store]);
 
-  const selectedDateIso = useMemo(() => toIsoDateString(selectedDate), [selectedDate]);
+  const selectedDateIso = useMemo(
+    () => toIsoDateString(selectedDate),
+    [selectedDate]
+  );
   const [recordDate, setRecordDate] = useState<Date>(() =>
     safeParseIsoLocal(preferredDate ?? selectedDateIso, selectedDate)
   );
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [title, setTitle] = useState<string>(editingRecord?.title ?? "");
   const [content, setContent] = useState<string>(editingRecord?.memo ?? "");
-  const [photoPath, setPhotoPath] = useState<string | null>(editingRecord?.photoPath ?? null);
+  const [photoPath, setPhotoPath] = useState<string | null>(
+    editingRecord?.photoPath ?? null
+  );
   const [hasRemovedPhoto, setHasRemovedPhoto] = useState<boolean>(false);
   const [isTitleSheetVisible, setTitleSheetVisible] = useState(false);
   const MIN_DATE = useMemo(() => new Date(1900, 0, 1), []);
@@ -88,7 +106,9 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   useEffect(() => {
     let mounted = true;
     const verifyPhoto = async () => {
-      const ensured = await ensureFileExistsAsync(editingRecord?.photoPath ?? null);
+      const ensured = await ensureFileExistsAsync(
+        editingRecord?.photoPath ?? null
+      );
       if (!mounted) return;
       setPhotoPath(ensured);
       setHasRemovedPhoto(!ensured && Boolean(editingRecord?.photoPath));
@@ -130,7 +150,8 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const handlePickPhoto = async () => {
-    const previousTempPhoto = photoPath && photoPath !== editingRecord?.photoPath ? photoPath : null;
+    const previousTempPhoto =
+      photoPath && photoPath !== editingRecord?.photoPath ? photoPath : null;
     try {
       const next = await pickAndSavePhotoAsync();
       if (!next) return;
@@ -176,7 +197,10 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handleSave = async () => {
     if (!user) {
-      Alert.alert("プロフィール未設定", "プロフィールを作成してから記録してください。");
+      Alert.alert(
+        "プロフィール未設定",
+        "プロフィールを作成してから記録してください。"
+      );
       return;
     }
 
@@ -193,7 +217,8 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     }
 
     const photoPayload: string | null | undefined = (() => {
-      if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath) return null; // 既存の写真を削除
+      if (hasRemovedPhoto && editingRecord?.photoPath && !photoPath)
+        return null; // 既存の写真を削除
       if (photoPath && photoPath !== editingRecord?.photoPath) return photoPath; // 新規に差し替え
       if (!editingRecord && photoPath) return photoPath; // 新規レコードで写真あり
       return undefined; // 変更なし
@@ -237,13 +262,17 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         text: "削除",
         style: "destructive",
         onPress: async () => {
-          const targetStack = from === "list" ? "RecordListStack" : "CalendarStack";
+          const targetStack =
+            from === "list" ? "RecordListStack" : "CalendarStack";
           (navigation as any).replace("MainTabs", { screen: targetStack });
           try {
             await remove(editingRecord.id, editingRecord.date);
           } catch (error) {
             console.error("Failed to delete record", error);
-            Alert.alert("削除に失敗しました", "時間をおいて再度お試しください。");
+            Alert.alert(
+              "削除に失敗しました",
+              "時間をおいて再度お試しください。"
+            );
           }
         },
       },
@@ -256,7 +285,9 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
           <Text style={styles.title}>プロフィールを作成してください</Text>
-          <Text style={styles.note}>記録を保存するにはプロフィールが必要です。</Text>
+          <Text style={styles.note}>
+            記録を保存するにはプロフィールが必要です。
+          </Text>
           <Button title="戻る" onPress={() => navigation.goBack()} />
         </View>
       </SafeAreaView>
@@ -267,7 +298,11 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
     <SafeAreaView style={styles.safeArea}>
       {/* 入力画面ヘッダー：キャンセル／記録する */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} accessibilityRole="button" style={styles.headerLeft}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          style={styles.headerLeft}
+        >
           <AppText weight="medium" style={styles.headerCancel}>
             キャンセル
           </AppText>
@@ -293,7 +328,11 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             placeholder="短いタイトル（任意）"
             accessibilityLabel="タイトル"
           />
-          <TouchableOpacity style={styles.titleSuggestionButton} onPress={openTitleSheet} accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.titleSuggestionButton}
+            onPress={openTitleSheet}
+            accessibilityRole="button"
+          >
             <Text style={styles.titleSuggestionText}>候補から選ぶ（任意）</Text>
           </TouchableOpacity>
         </View>
@@ -306,9 +345,15 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
             accessibilityLabel="日付を選択"
           >
             <Text style={styles.dateRowLabel}>日付</Text>
-            <Text style={styles.dateRowValue}>{toIsoDateString(recordDate)} ▼</Text>
+            <Text style={styles.dateRowValue}>
+              {toIsoDateString(recordDate)} ▼
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.todayButton} onPress={setDateToToday} accessibilityRole="button">
+          <TouchableOpacity
+            style={styles.todayButton}
+            onPress={setDateToToday}
+            accessibilityRole="button"
+          >
             <Text style={styles.todayButtonText}>今日へ</Text>
           </TouchableOpacity>
         </View>
@@ -331,30 +376,55 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.field}>
           <Text style={styles.label}>写真（任意）</Text>
           <View style={styles.photoActions}>
-            <TouchableOpacity style={styles.actionButton} onPress={handlePickPhoto} accessibilityRole="button">
-              <Ionicons name="image-outline" size={18} color={COLORS.textPrimary} />
-              <Text style={styles.actionButtonText}>{photoPath ? "写真を差し替える" : "写真を追加"}</Text>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handlePickPhoto}
+              accessibilityRole="button"
+            >
+              <Ionicons
+                name="image-outline"
+                size={18}
+                color={COLORS.textPrimary}
+              />
+              <Text style={styles.actionButtonText}>
+                {photoPath ? "写真を差し替える" : "写真を追加"}
+              </Text>
             </TouchableOpacity>
             {photoPath ? (
-              <TouchableOpacity style={styles.photoRemoveButton} onPress={handleRemovePhoto} accessibilityRole="button">
+              <TouchableOpacity
+                style={styles.photoRemoveButton}
+                onPress={handleRemovePhoto}
+                accessibilityRole="button"
+              >
                 <Text style={styles.photoRemoveText}>写真を外す</Text>
               </TouchableOpacity>
             ) : null}
           </View>
           {photoPath ? (
             <View style={styles.photoPreviewWrapper}>
-              <Image source={{ uri: photoPath }} style={styles.photoPreview} resizeMode="cover" />
-              <Text style={styles.helper}>保存時にこの写真を記録へ紐付けます。</Text>
+              <Image
+                source={{ uri: photoPath }}
+                style={styles.photoPreview}
+                resizeMode="cover"
+              />
+              <Text style={styles.helper}>
+                保存時にこの写真を記録へ紐付けます。
+              </Text>
             </View>
           ) : (
-            <Text style={styles.helper}>写真はアプリ内で JPEG 形式で保存されます。</Text>
+            <Text style={styles.helper}>
+              写真はアプリ内で JPEG 形式で保存されます。
+            </Text>
           )}
         </View>
-
       </ScrollView>
       <View style={styles.fixedActions}>
         <TouchableOpacity
-          style={[styles.actionButton, styles.fixedActionButton, styles.saveButton]}
+          style={[
+            styles.actionButton,
+            styles.fixedActionButton,
+            styles.saveButton,
+          ]}
           onPress={handleSave}
           accessibilityRole="button"
         >
@@ -362,11 +432,17 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         </TouchableOpacity>
         {editingRecord ? (
           <TouchableOpacity
-            style={[styles.actionButton, styles.fixedActionButton, styles.deleteButton]}
+            style={[
+              styles.actionButton,
+              styles.fixedActionButton,
+              styles.deleteButton,
+            ]}
             onPress={confirmDelete}
             accessibilityRole="button"
           >
-            <Text style={[styles.actionButtonText, styles.deleteButtonText]}>この記録を削除</Text>
+            <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
+              この記録を削除
+            </Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -377,23 +453,33 @@ const RecordInputScreen: React.FC<Props> = ({ navigation, route }) => {
         onRequestClose={closeTitleSheet}
         statusBarTranslucent
       >
-        <Pressable style={styles.sheetOverlay} onPress={closeTitleSheet} accessibilityRole="button" />
+        <Pressable
+          style={styles.sheetOverlay}
+          onPress={closeTitleSheet}
+          accessibilityRole="button"
+        />
         <View style={styles.sheetContainer}>
           <View style={styles.sheetHandle} />
           <Text style={styles.sheetTitle}>タイトル候補</Text>
 
-          <ScrollView contentContainerStyle={styles.sheetList} keyboardShouldPersistTaps="handled">
-            {RECORD_TITLE_CANDIDATES.map((candidate) => (
+          <SectionList
+            sections={RECORD_TITLE_CANDIDATE_SECTIONS}
+            keyExtractor={(item) => item}
+            contentContainerStyle={styles.sheetList}
+            keyboardShouldPersistTaps="handled"
+            renderSectionHeader={({ section }) => (
+              <Text style={styles.sectionHeader}>{section.name}</Text>
+            )}
+            renderItem={({ item }) => (
               <TouchableOpacity
-                key={candidate}
                 style={styles.candidateItem}
-                onPress={() => handleSelectCandidate(candidate)}
+                onPress={() => handleSelectCandidate(item)}
                 accessibilityRole="button"
               >
-                <Text style={styles.candidateText}>{candidate}</Text>
+                <Text style={styles.candidateText}>{item}</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            )}
+          />
         </View>
       </Modal>
       <DatePickerModal
@@ -636,6 +722,15 @@ const styles = StyleSheet.create({
   sheetList: {
     paddingBottom: 12,
     gap: 10,
+  },
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.textSecondary,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    backgroundColor: COLORS.cellDimmed,
+    marginTop: 4,
   },
   candidateItem: {
     paddingVertical: 12,
