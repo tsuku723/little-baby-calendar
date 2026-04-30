@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     paddingVertical: 6,
     paddingHorizontal: 4,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.cellDimmed,
     marginTop: 4,
   },
   candidateItem: {
