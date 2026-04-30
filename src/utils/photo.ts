@@ -27,7 +27,10 @@ const buildPhotoFileName = () => {
   return `achievement-${Date.now()}-${suffix}.jpg`;
 };
 
-const calculateResize = (width?: number, height?: number): ImageManipulator.Action[] => {
+const calculateResize = (
+  width?: number,
+  height?: number
+): ImageManipulator.Action[] => {
   if (!width || !height) {
     // 画像の寸法が取得できない場合でも、縦横 1600px の範囲に収める
     return [{ resize: { width: MAX_LONG_EDGE } }];
@@ -57,7 +60,7 @@ export const pickAndSavePhotoAsync = async (): Promise<string | null> => {
   }
 
   const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    mediaTypes: "images",
     allowsMultipleSelection: false,
     quality: 1,
   });
@@ -89,7 +92,9 @@ export const pickAndSavePhotoAsync = async (): Promise<string | null> => {
 /**
  * FileSystem 上にファイルが存在するかを確認し、存在すればパスを返す。
  */
-export const ensureFileExistsAsync = async (path?: string | null): Promise<string | null> => {
+export const ensureFileExistsAsync = async (
+  path?: string | null
+): Promise<string | null> => {
   if (!path) return null;
   if (!isSafePhotoPath(path)) {
     console.warn("Unsafe photoPath rejected:", path);

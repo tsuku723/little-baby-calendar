@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, FontAwesome6 } from "@expo/vector-icons";
 
 import { RootStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
@@ -123,9 +123,9 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             />
           ) : (
             <View style={styles.photoPlaceholder}>
-              <Ionicons
-                name="camera-outline"
-                size={40}
+              <FontAwesome6
+                name="baby"
+                size={86}
                 color={COLORS.textSecondary}
               />
             </View>

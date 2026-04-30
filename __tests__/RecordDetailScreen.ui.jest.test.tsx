@@ -6,6 +6,7 @@ let mockStore: any = {};
 
 jest.mock("@expo/vector-icons", () => ({
   Ionicons: () => null,
+  FontAwesome6: () => null,
 }));
 
 jest.mock("@/components/AppText", () => {
