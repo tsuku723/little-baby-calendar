@@ -2,7 +2,7 @@ import React from 'react';
 import renderer, { act } from 'react-test-renderer';
 
 const mockSetActiveUser = jest.fn().mockResolvedValue(undefined);
-let mockAppState: any = { users: [], activeUserId: null };
+let mockAppState: any = { users: [], activeUserId: null, achievements: {} };
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: () => null,
@@ -21,16 +21,26 @@ jest.mock('@/state/AppStateContext', () => ({
   useAppState: () => ({ state: mockAppState, setActiveUser: mockSetActiveUser }),
 }));
 
+const mockCreateBackup = jest.fn();
+jest.mock('@/services/backupService', () => ({
+  createBackup: (...args: any[]) => mockCreateBackup(...args),
+}));
+
+const mockShareAsync = jest.fn().mockResolvedValue(undefined);
+jest.mock('expo-sharing', () => ({
+  shareAsync: (...args: any[]) => mockShareAsync(...args),
+}));
+
 const mockNavigation = { navigate: jest.fn() };
 const mockRoute = { params: {} };
 
 describe('SettingsScreen UI (TS-UI-008)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAppState = { users: [], activeUserId: null, achievements: {} };
   });
 
   test('users なし: ベビーを選択セクションを表示', async () => {
-    mockAppState = { users: [], activeUserId: null };
     const SettingsScreen = require('../src/screens/SettingsScreen').default;
     let tree: any;
     await act(async () => {
@@ -59,6 +69,7 @@ describe('SettingsScreen UI (TS-UI-008)', () => {
         },
       ],
       activeUserId: 'u1',
+      achievements: {},
     };
     const SettingsScreen = require('../src/screens/SettingsScreen').default;
     let tree: any;
@@ -89,6 +100,7 @@ describe('SettingsScreen UI (TS-UI-008)', () => {
         },
       ],
       activeUserId: 'u1',
+      achievements: {},
     };
     const SettingsScreen = require('../src/screens/SettingsScreen').default;
     let tree: any;
@@ -102,7 +114,6 @@ describe('SettingsScreen UI (TS-UI-008)', () => {
   });
 
   test('サポートメニューが表示される', async () => {
-    mockAppState = { users: [], activeUserId: null };
     const SettingsScreen = require('../src/screens/SettingsScreen').default;
     let tree: any;
     await act(async () => {
@@ -114,5 +125,68 @@ describe('SettingsScreen UI (TS-UI-008)', () => {
     expect(json).toContain('このアプリについて');
     expect(json).toContain('プライバシーポリシー');
     expect(json).toContain('利用規約');
+  });
+
+  test('バックアップを作成ボタンが表示される', async () => {
+    const SettingsScreen = require('../src/screens/SettingsScreen').default;
+    let tree: any;
+    await act(async () => {
+      tree = renderer.create(
+        React.createElement(SettingsScreen, { navigation: mockNavigation, route: mockRoute })
+      );
+    });
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('バックアップを作成');
+  });
+
+  test('バックアップボタン押下で createBackup が呼ばれる', async () => {
+    mockCreateBackup.mockResolvedValue('file:///cache/backup.zip');
+    const SettingsScreen = require('../src/screens/SettingsScreen').default;
+    let tree: any;
+    await act(async () => {
+      tree = renderer.create(
+        React.createElement(SettingsScreen, { navigation: mockNavigation, route: mockRoute })
+      );
+    });
+    const backupButton = tree.root.findByProps({ testID: 'backup-button' });
+    await act(async () => {
+      await backupButton.props.onPress();
+    });
+    expect(mockCreateBackup).toHaveBeenCalledWith([], {});
+  });
+
+  test('バックアップ処理中はボタンが disabled になる', async () => {
+    mockCreateBackup.mockImplementation(() => new Promise(() => {}));
+    const SettingsScreen = require('../src/screens/SettingsScreen').default;
+    let tree: any;
+    await act(async () => {
+      tree = renderer.create(
+        React.createElement(SettingsScreen, { navigation: mockNavigation, route: mockRoute })
+      );
+    });
+    const backupButton = tree.root.findByProps({ testID: 'backup-button' });
+    act(() => {
+      backupButton.props.onPress();
+    });
+    await act(async () => {});
+    const updatedButton = tree.root.findByProps({ testID: 'backup-button' });
+    expect(updatedButton.props.disabled).toBe(true);
+  });
+
+  test('バックアップ失敗時にエラーメッセージが表示される', async () => {
+    mockCreateBackup.mockRejectedValue(new Error('保存に失敗しました'));
+    const SettingsScreen = require('../src/screens/SettingsScreen').default;
+    let tree: any;
+    await act(async () => {
+      tree = renderer.create(
+        React.createElement(SettingsScreen, { navigation: mockNavigation, route: mockRoute })
+      );
+    });
+    const backupButton = tree.root.findByProps({ testID: 'backup-button' });
+    await act(async () => {
+      await backupButton.props.onPress();
+    });
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('保存に失敗しました');
   });
 });

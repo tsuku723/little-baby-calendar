@@ -1,23 +1,14 @@
-/**
- * NOTE:
- * データエクスポート機能は MVP では一旦見送る。
- *
- * 理由:
- * - Expo Go / iOS / Android では FileSystem / Sharing に制約あり
- * - 実行環境による挙動差が大きいため
- *
- * 追記:
- * - Development Build / 製品版アプリでは再検討可能
- */
-import React, { useCallback } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import * as Sharing from "expo-sharing";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { SettingsStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
+import { createBackup } from "@/services/backupService";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
@@ -39,6 +30,8 @@ const supportMenus: Array<{ label: string; route: SupportRoute }> = [
 
 const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { state, setActiveUser } = useAppState();
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupError, setBackupError] = useState<string | null>(null);
 
   const handleSelectChild = useCallback(
     async (userId: string) => {
@@ -46,6 +39,20 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
     },
     [setActiveUser]
   );
+
+  const handleCreateBackup = useCallback(async () => {
+    setBackupLoading(true);
+    setBackupError(null);
+    try {
+      const uri = await createBackup(state.users, state.achievements);
+      await Sharing.shareAsync(uri);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "不明なエラーが発生しました";
+      setBackupError(message);
+    } finally {
+      setBackupLoading(false);
+    }
+  }, [state.users, state.achievements]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -89,6 +96,26 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
 
         <Text style={styles.notice}>※出生情報はプロフィール編集画面でのみ入力できます。</Text>
         <Text style={styles.notice}>※このアプリの記録は、この端末の中だけに保存されます。</Text>
+
+        <View style={styles.backupSection}>
+          <Text style={styles.label}>データ</Text>
+          <TouchableOpacity
+            testID="backup-button"
+            style={[styles.backupButton, backupLoading && styles.backupButtonDisabled]}
+            onPress={handleCreateBackup}
+            disabled={backupLoading}
+            accessibilityRole="button"
+          >
+            {backupLoading ? (
+              <ActivityIndicator size="small" color={COLORS.textPrimary} />
+            ) : (
+              <Text style={styles.backupButtonText}>バックアップを作成</Text>
+            )}
+          </TouchableOpacity>
+          {backupError !== null && (
+            <Text style={styles.backupError}>{backupError}</Text>
+          )}
+        </View>
 
         <View style={styles.supportSection}>
           <Text style={styles.label}>サポート</Text>
@@ -204,6 +231,31 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cellDimmed,
     padding: 12,
     borderRadius: 8,
+  },
+  backupSection: {
+    gap: 8,
+  },
+  backupButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.filterBackground,
+    alignItems: "center",
+  },
+  backupButtonDisabled: {
+    opacity: 0.5,
+  },
+  backupButtonText: {
+    color: COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  backupError: {
+    fontSize: 13,
+    color: "#D32F2F",
+    paddingHorizontal: 4,
   },
   supportSection: {
     gap: 8,
