@@ -1,5 +1,14 @@
 import React, { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
 import * as Sharing from "expo-sharing";
@@ -47,7 +56,8 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
       const uri = await createBackup(state.users, state.achievements);
       await Sharing.shareAsync(uri);
     } catch (e) {
-      const message = e instanceof Error ? e.message : "不明なエラーが発生しました";
+      const message =
+        e instanceof Error ? e.message : "不明なエラーが発生しました";
       setBackupError(message);
     } finally {
       setBackupLoading(false);
@@ -61,7 +71,10 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           設定
         </AppText>
       </View>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.field}>
           <Text style={styles.label}>ベビーを選択</Text>
           <View style={styles.childList}>
@@ -75,12 +88,26 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                   accessibilityRole="button"
                 >
                   <View style={styles.childInfo}>
-                    <Text style={[styles.childName, isActive && styles.childNameActive]}>
+                    <Text
+                      style={[
+                        styles.childName,
+                        isActive && styles.childNameActive,
+                      ]}
+                    >
                       {child.name || "名前未設定"}
                     </Text>
-                    <Text style={styles.childMeta}>{child.birthDate ? child.birthDate : "生年月日未設定"}</Text>
+                    <Text style={styles.childMeta}>
+                      {child.birthDate ? child.birthDate : "生年月日未設定"}
+                    </Text>
                   </View>
-                  <Text style={[styles.childCheck, isActive && styles.childCheckActive]}>{isActive ? "✓" : ""}</Text>
+                  <Text
+                    style={[
+                      styles.childCheck,
+                      isActive && styles.childCheckActive,
+                    ]}
+                  >
+                    {isActive ? "✓" : ""}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
@@ -94,14 +121,21 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.notice}>※出生情報はプロフィール編集画面でのみ入力できます。</Text>
-        <Text style={styles.notice}>※このアプリの記録は、この端末の中だけに保存されます。</Text>
+        <Text style={styles.notice}>
+          ※出生情報はプロフィール編集画面でのみ入力できます。
+        </Text>
+        <Text style={styles.notice}>
+          ※このアプリの記録は、この端末の中だけに保存されます。
+        </Text>
 
         <View style={styles.backupSection}>
           <Text style={styles.label}>データ</Text>
           <TouchableOpacity
             testID="backup-button"
-            style={[styles.backupButton, backupLoading && styles.backupButtonDisabled]}
+            style={[
+              styles.backupButton,
+              backupLoading && styles.backupButtonDisabled,
+            ]}
             onPress={handleCreateBackup}
             disabled={backupLoading}
             accessibilityRole="button"
@@ -125,12 +159,19 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
               return (
                 <TouchableOpacity
                   key={menu.route}
-                  style={[styles.supportMenuRow, isLast && styles.supportMenuRowLast]}
+                  style={[
+                    styles.supportMenuRow,
+                    isLast && styles.supportMenuRowLast,
+                  ]}
                   onPress={() => navigation.navigate(menu.route)}
                   accessibilityRole="button"
                 >
                   <Text style={styles.supportMenuLabel}>{menu.label}</Text>
-                  <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={COLORS.textSecondary}
+                  />
                 </TouchableOpacity>
               );
             })}

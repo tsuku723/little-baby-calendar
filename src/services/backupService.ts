@@ -27,7 +27,8 @@ export const createBackup = async (
     for (const achievement of records) {
       if (achievement.photoPath && !photoMap[achievement.photoPath]) {
         const originalPath = achievement.photoPath;
-        const filename = originalPath.split("/").pop() ?? `photo_${achievement.id}.jpg`;
+        const filename =
+          originalPath.split("/").pop() ?? `photo_${achievement.id}.jpg`;
         const zipPath = `photos/${filename}`;
         photoMap[originalPath] = zipPath;
 
