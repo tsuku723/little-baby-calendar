@@ -1,23 +1,23 @@
-/**
- * NOTE:
- * データエクスポート機能は MVP では一旦見送る。
- *
- * 理由:
- * - Expo Go / iOS / Android では FileSystem / Sharing に制約あり
- * - 実行環境による挙動差が大きいため
- *
- * 追記:
- * - Development Build / 製品版アプリでは再検討可能
- */
-import React, { useCallback } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import * as Sharing from "expo-sharing";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { SettingsStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
+import { createBackup } from "@/services/backupService";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
@@ -39,6 +39,8 @@ const supportMenus: Array<{ label: string; route: SupportRoute }> = [
 
 const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { state, setActiveUser } = useAppState();
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupError, setBackupError] = useState<string | null>(null);
 
   const handleSelectChild = useCallback(
     async (userId: string) => {
@@ -47,6 +49,21 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
     [setActiveUser]
   );
 
+  const handleCreateBackup = useCallback(async () => {
+    setBackupLoading(true);
+    setBackupError(null);
+    try {
+      const uri = await createBackup(state.users, state.achievements);
+      await Sharing.shareAsync(uri);
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : "不明なエラーが発生しました";
+      setBackupError(message);
+    } finally {
+      setBackupLoading(false);
+    }
+  }, [state.users, state.achievements]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -54,7 +71,10 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           設定
         </AppText>
       </View>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.field}>
           <Text style={styles.label}>ベビーを選択</Text>
           <View style={styles.childList}>
@@ -68,12 +88,26 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                   accessibilityRole="button"
                 >
                   <View style={styles.childInfo}>
-                    <Text style={[styles.childName, isActive && styles.childNameActive]}>
+                    <Text
+                      style={[
+                        styles.childName,
+                        isActive && styles.childNameActive,
+                      ]}
+                    >
                       {child.name || "名前未設定"}
                     </Text>
-                    <Text style={styles.childMeta}>{child.birthDate ? child.birthDate : "生年月日未設定"}</Text>
+                    <Text style={styles.childMeta}>
+                      {child.birthDate ? child.birthDate : "生年月日未設定"}
+                    </Text>
                   </View>
-                  <Text style={[styles.childCheck, isActive && styles.childCheckActive]}>{isActive ? "✓" : ""}</Text>
+                  <Text
+                    style={[
+                      styles.childCheck,
+                      isActive && styles.childCheckActive,
+                    ]}
+                  >
+                    {isActive ? "✓" : ""}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
@@ -87,8 +121,35 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.notice}>※出生情報はプロフィール編集画面でのみ入力できます。</Text>
-        <Text style={styles.notice}>※このアプリの記録は、この端末の中だけに保存されます。</Text>
+        <Text style={styles.notice}>
+          ※出生情報はプロフィール編集画面でのみ入力できます。
+        </Text>
+        <Text style={styles.notice}>
+          ※このアプリの記録は、この端末の中だけに保存されます。
+        </Text>
+
+        <View style={styles.backupSection}>
+          <Text style={styles.label}>データ</Text>
+          <TouchableOpacity
+            testID="backup-button"
+            style={[
+              styles.backupButton,
+              backupLoading && styles.backupButtonDisabled,
+            ]}
+            onPress={handleCreateBackup}
+            disabled={backupLoading}
+            accessibilityRole="button"
+          >
+            {backupLoading ? (
+              <ActivityIndicator size="small" color={COLORS.textPrimary} />
+            ) : (
+              <Text style={styles.backupButtonText}>バックアップを作成</Text>
+            )}
+          </TouchableOpacity>
+          {backupError !== null && (
+            <Text style={styles.backupError}>{backupError}</Text>
+          )}
+        </View>
 
         <View style={styles.supportSection}>
           <Text style={styles.label}>サポート</Text>
@@ -98,12 +159,19 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
               return (
                 <TouchableOpacity
                   key={menu.route}
-                  style={[styles.supportMenuRow, isLast && styles.supportMenuRowLast]}
+                  style={[
+                    styles.supportMenuRow,
+                    isLast && styles.supportMenuRowLast,
+                  ]}
                   onPress={() => navigation.navigate(menu.route)}
                   accessibilityRole="button"
                 >
                   <Text style={styles.supportMenuLabel}>{menu.label}</Text>
-                  <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color={COLORS.textSecondary}
+                  />
                 </TouchableOpacity>
               );
             })}
@@ -204,6 +272,31 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cellDimmed,
     padding: 12,
     borderRadius: 8,
+  },
+  backupSection: {
+    gap: 8,
+  },
+  backupButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.filterBackground,
+    alignItems: "center",
+  },
+  backupButtonDisabled: {
+    opacity: 0.5,
+  },
+  backupButtonText: {
+    color: COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  backupError: {
+    fontSize: 13,
+    color: "#D32F2F",
+    paddingHorizontal: 4,
   },
   supportSection: {
     gap: 8,
