@@ -1,5 +1,12 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
@@ -9,7 +16,11 @@ import CalendarGrid from "@/components/CalendarGrid";
 import CalendarDecorations from "@/components/CalendarDecorations";
 import DatePickerModal from "@/components/DatePickerModal";
 import MonthHeader from "@/components/MonthHeader";
-import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navigation";
+import {
+  CalendarStackParamList,
+  RootStackParamList,
+  TabParamList,
+} from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useActiveUser, useAppState } from "@/state/AppStateContext";
 import { useDateViewContext } from "@/state/DateViewContext";
@@ -57,26 +68,34 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     if (!user.settings.lastViewedMonth) return;
     const normalized = normalizeToUtcDate(user.settings.lastViewedMonth);
     if (!Number.isNaN(normalized.getTime())) {
-      setAnchorDate(new Date(normalized.getFullYear(), normalized.getMonth(), 1));
+      setAnchorDate(
+        new Date(normalized.getFullYear(), normalized.getMonth(), 1)
+      );
     }
   }, [user]);
   const MIN_DATE = useMemo(() => new Date(1900, 0, 1), []);
   const MAX_DATE = useMemo(() => new Date(2100, 11, 31), []);
 
+  // anchorDate が変わったときに lastViewedMonth を更新する。
+  // ref で「同じ月は一度だけ更新」とガードし、updateUser 後の state 変化が
+  // このエフェクトを再実行するフィードバックループを防ぐ。
+  const syncedMonthRef = useRef<string | null>(null);
   useEffect(() => {
     void loadMonth(monthKeyValue);
+    if (!user?.id) return;
     const isoMonth = `${anchorDate.getFullYear()}-${String(anchorDate.getMonth() + 1).padStart(2, "0")}-01`;
-    if (user?.settings.lastViewedMonth !== isoMonth && user?.id) {
-      void updateUser(user.id, { settings: { ...user.settings, lastViewedMonth: isoMonth } });
-    }
-  }, [anchorDate, loadMonth, monthKeyValue, updateUser, user?.id, user?.settings.lastViewedMonth]);
+    if (syncedMonthRef.current === isoMonth) return;
+    syncedMonthRef.current = isoMonth;
+    void updateUser(user.id, { settings: { lastViewedMonth: isoMonth } });
+  }, [anchorDate, loadMonth, monthKeyValue, updateUser, user?.id]);
 
   const monthView = useMemo(
     () =>
       buildCalendarMonthView({
         anchorDate,
         settings: {
-          showCorrectedUntilMonths: user?.settings.showCorrectedUntilMonths ?? null,
+          showCorrectedUntilMonths:
+            user?.settings.showCorrectedUntilMonths ?? null,
           ageFormat: user?.settings.ageFormat ?? "md",
           showDaysSinceBirth: user?.settings.showDaysSinceBirth ?? true,
           lastViewedMonth: user?.settings.lastViewedMonth ?? null,
@@ -89,12 +108,20 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   );
 
   const handlePrev = () => {
-    const prev = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - 1, 1);
+    const prev = new Date(
+      anchorDate.getFullYear(),
+      anchorDate.getMonth() - 1,
+      1
+    );
     setAnchorDate(prev);
   };
 
   const handleNext = () => {
-    const next = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 1);
+    const next = new Date(
+      anchorDate.getFullYear(),
+      anchorDate.getMonth() + 1,
+      1
+    );
     setAnchorDate(next);
   };
 
@@ -146,7 +173,13 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     } catch {
       return null;
     }
-  }, [ageFormat, todayIso, user?.birthDate, user?.dueDate, user?.settings.showCorrectedUntilMonths]);
+  }, [
+    ageFormat,
+    todayIso,
+    user?.birthDate,
+    user?.dueDate,
+    user?.settings.showCorrectedUntilMonths,
+  ]);
 
   const monthPickerValue = useMemo(
     () => new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1),
@@ -155,32 +188,52 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.backgroundLayer} pointerEvents="none" accessible={false}>
+      <View
+        style={styles.backgroundLayer}
+        pointerEvents="none"
+        accessible={false}
+      >
         <View style={styles.backgroundTop} />
         <View style={styles.backgroundBottom} />
       </View>
       <CalendarDecorations topOffset={insets.top} />
       <View style={styles.fixedHeader}>
-        <Text style={styles.headerName}>{user?.name ?? "プロフィール未設定"}</Text>
+        <Text style={styles.headerName}>
+          {user?.name ?? "プロフィール未設定"}
+        </Text>
         {todayAgeInfo ? (
           <View style={styles.headerAgeBlock}>
-            {todayAgeInfo.flags.showMode === "gestational" && todayAgeInfo.gestational.formatted ? (
+            {todayAgeInfo.flags.showMode === "gestational" &&
+            todayAgeInfo.gestational.formatted ? (
               <Text style={styles.headerChronological}>
                 {todayAgeInfo.chronological.formatted}
-                <Text style={styles.headerCorrected}>（在胎 {todayAgeInfo.gestational.formatted}）</Text>
+                <Text style={styles.headerCorrected}>
+                  （在胎 {todayAgeInfo.gestational.formatted}）
+                </Text>
               </Text>
-            ) : todayAgeInfo.corrected.visible && todayAgeInfo.corrected.formatted ? (
+            ) : todayAgeInfo.corrected.visible &&
+              todayAgeInfo.corrected.formatted ? (
               <Text style={styles.headerChronological}>
                 {todayAgeInfo.chronological.formatted}
-                <Text style={styles.headerCorrected}>（修正 {todayAgeInfo.corrected.formatted}）</Text>
+                <Text style={styles.headerCorrected}>
+                  （修正 {todayAgeInfo.corrected.formatted}）
+                </Text>
               </Text>
             ) : (
-              <Text style={styles.headerChronological}>{todayAgeInfo.chronological.formatted}</Text>
+              <Text style={styles.headerChronological}>
+                {todayAgeInfo.chronological.formatted}
+              </Text>
             )}
-            {showDaysSinceBirth ? <Text style={styles.headerDays}>生まれてから{todayAgeInfo.daysSinceBirth}日目</Text> : null}
+            {showDaysSinceBirth ? (
+              <Text style={styles.headerDays}>
+                生まれてから{todayAgeInfo.daysSinceBirth}日目
+              </Text>
+            ) : null}
           </View>
         ) : (
-          <Text style={styles.headerPlaceholder}>年齢情報は設定済みのプロフィールで表示されます</Text>
+          <Text style={styles.headerPlaceholder}>
+            年齢情報は設定済みのプロフィールで表示されます
+          </Text>
         )}
       </View>
       <ScrollView keyboardShouldPersistTaps="handled" style={styles.scroll}>
@@ -208,8 +261,12 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             ))}
           </View>
           <CalendarGrid days={monthView.days} onPressDay={handlePressDay} />
-          <Text style={styles.footer}>出産予定日前の修正月齢は在胎週数で表示しています。</Text>
-          <Text style={styles.footer}>修正月齢の表記は目安です。医療的判断は主治医にご相談ください。</Text>
+          <Text style={styles.footer}>
+            出産予定日前の修正月齢は在胎週数で表示しています。
+          </Text>
+          <Text style={styles.footer}>
+            修正月齢の表記は目安です。医療的判断は主治医にご相談ください。
+          </Text>
         </View>
       </ScrollView>
       <TouchableOpacity
