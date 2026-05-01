@@ -9,6 +9,15 @@ jest.mock("@expo/vector-icons", () => ({
   FontAwesome6: () => null,
 }));
 
+jest.mock("@/components/AgeBadge", () => {
+  const React = require("react");
+  const { Text } = require("react-native");
+  return {
+    __esModule: true,
+    default: ({ label }: any) => React.createElement(Text, null, label),
+  };
+});
+
 jest.mock("@/components/AppText", () => {
   const React = require("react");
   const { Text } = require("react-native");

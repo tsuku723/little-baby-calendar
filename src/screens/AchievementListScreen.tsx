@@ -20,6 +20,7 @@ import {
   RootStackParamList,
   TabParamList,
 } from "@/navigation";
+import AgeBadge from "@/components/AgeBadge";
 import AppText from "@/components/AppText";
 import DatePickerModal from "@/components/DatePickerModal";
 import { useAchievements } from "@/state/AchievementsContext";
@@ -47,6 +48,7 @@ type ListRow =
   | { type: "standard"; key: string; record: Achievement };
 
 const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
+
 const startOfLocalDay = (d: Date) =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const cloneDate = (d: Date) => new Date(d.getTime());
@@ -185,20 +187,18 @@ const AchievementListScreen: React.FC<Props> = () => {
       ageInfo.gestational.formatted
     ) {
       return (
-        <View style={styles.ageBadge}>
-          <Text style={styles.ageBadgeText}>
-            在胎 {ageInfo.gestational.formatted}
-          </Text>
-        </View>
+        <AgeBadge
+          label={`在胎 ${ageInfo.gestational.formatted}`}
+          variant="gestational"
+        />
       );
     }
     if (ageInfo.corrected.visible && ageInfo.corrected.formatted) {
       return (
-        <View style={styles.ageBadge}>
-          <Text style={styles.ageBadgeText}>
-            修正 {ageInfo.corrected.formatted}
-          </Text>
-        </View>
+        <AgeBadge
+          label={`修正 ${ageInfo.corrected.formatted}`}
+          variant="corrected"
+        />
       );
     }
     return null;
@@ -570,7 +570,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 2,
   },
-  // Featured card
   featuredCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 12,
@@ -597,7 +596,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: COLORS.textPrimary,
   },
-  // Standard card
   standardCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 12,
@@ -654,19 +652,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  // Age badge
-  ageBadge: {
-    backgroundColor: COLORS.ageBadgeCorrectedBg,
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  ageBadgeText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: COLORS.ageBadgeText,
-  },
-  // Footer
   empty: {
     fontSize: 16,
     color: COLORS.textSecondary,

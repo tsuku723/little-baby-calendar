@@ -14,6 +14,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons, FontAwesome6 } from "@expo/vector-icons";
 
 import { RootStackParamList } from "@/navigation";
+import AgeBadge from "@/components/AgeBadge";
 import AppText from "@/components/AppText";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
@@ -113,7 +114,6 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* 写真エリア */}
         <View style={styles.photoWrapper}>
           {photoPath ? (
             <Image
@@ -138,44 +138,37 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         <View style={styles.body}>
-          {/* タイトル */}
           <Text style={styles.title}>{record.title || "(タイトル未入力)"}</Text>
 
-          {/* 月齢バッジ */}
           {ageInfo ? (
             <View style={styles.badgeRow}>
-              <View style={[styles.badge, styles.badgeChronological]}>
-                <Text style={styles.badgeText}>
-                  {ageInfo.chronological.formatted}
-                </Text>
-              </View>
+              <AgeBadge
+                label={ageInfo.chronological.formatted}
+                variant="chronological"
+              />
               {ageInfo.flags.showMode === "gestational" &&
               ageInfo.gestational.visible &&
               ageInfo.gestational.formatted ? (
-                <View style={[styles.badge, styles.badgeGestational]}>
-                  <Text style={styles.badgeText}>
-                    在胎 {ageInfo.gestational.formatted}
-                  </Text>
-                </View>
+                <AgeBadge
+                  label={`在胎 ${ageInfo.gestational.formatted}`}
+                  variant="gestational"
+                />
               ) : null}
               {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
-                <View style={[styles.badge, styles.badgeCorrected]}>
-                  <Text style={styles.badgeText}>
-                    修正 {ageInfo.corrected.formatted}
-                  </Text>
-                </View>
+                <AgeBadge
+                  label={`修正 ${ageInfo.corrected.formatted}`}
+                  variant="corrected"
+                />
               ) : null}
               {user?.settings.showDaysSinceBirth ? (
-                <View style={[styles.badge, styles.badgeDays]}>
-                  <Text style={styles.badgeText}>
-                    {ageInfo.daysSinceBirth}日目
-                  </Text>
-                </View>
+                <AgeBadge
+                  label={`${ageInfo.daysSinceBirth}日目`}
+                  variant="days"
+                />
               ) : null}
             </View>
           ) : null}
 
-          {/* メモ */}
           {record.memo ? (
             <View style={styles.memoSection}>
               <Text style={styles.memoLabel}>メモ</Text>
@@ -271,28 +264,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-  },
-  badge: {
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-  },
-  badgeChronological: {
-    backgroundColor: COLORS.ageBadgeChronologicalBg,
-  },
-  badgeCorrected: {
-    backgroundColor: COLORS.ageBadgeCorrectedBg,
-  },
-  badgeGestational: {
-    backgroundColor: COLORS.ageBadgeGestationalBg,
-  },
-  badgeDays: {
-    backgroundColor: COLORS.ageBadgeChronologicalBg,
-  },
-  badgeText: {
-    fontSize: 13,
-    color: COLORS.ageBadgeText,
-    fontWeight: "600",
   },
   memoSection: {
     gap: 6,
