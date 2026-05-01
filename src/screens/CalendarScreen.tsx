@@ -1,5 +1,12 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NavigationProp, useNavigation } from "@react-navigation/native";
@@ -9,7 +16,12 @@ import CalendarGrid from "@/components/CalendarGrid";
 import CalendarDecorations from "@/components/CalendarDecorations";
 import DatePickerModal from "@/components/DatePickerModal";
 import MonthHeader from "@/components/MonthHeader";
-import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navigation";
+import AppText from "@/components/AppText";
+import {
+  CalendarStackParamList,
+  RootStackParamList,
+  TabParamList,
+} from "@/navigation";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useActiveUser, useAppState } from "@/state/AppStateContext";
 import { useDateViewContext } from "@/state/DateViewContext";
@@ -57,7 +69,9 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     if (!user.settings.lastViewedMonth) return;
     const normalized = normalizeToUtcDate(user.settings.lastViewedMonth);
     if (!Number.isNaN(normalized.getTime())) {
-      setAnchorDate(new Date(normalized.getFullYear(), normalized.getMonth(), 1));
+      setAnchorDate(
+        new Date(normalized.getFullYear(), normalized.getMonth(), 1)
+      );
     }
   }, [user]);
   const MIN_DATE = useMemo(() => new Date(1900, 0, 1), []);
@@ -67,16 +81,26 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     void loadMonth(monthKeyValue);
     const isoMonth = `${anchorDate.getFullYear()}-${String(anchorDate.getMonth() + 1).padStart(2, "0")}-01`;
     if (user?.settings.lastViewedMonth !== isoMonth && user?.id) {
-      void updateUser(user.id, { settings: { ...user.settings, lastViewedMonth: isoMonth } });
+      void updateUser(user.id, {
+        settings: { ...user.settings, lastViewedMonth: isoMonth },
+      });
     }
-  }, [anchorDate, loadMonth, monthKeyValue, updateUser, user?.id, user?.settings.lastViewedMonth]);
+  }, [
+    anchorDate,
+    loadMonth,
+    monthKeyValue,
+    updateUser,
+    user?.id,
+    user?.settings.lastViewedMonth,
+  ]);
 
   const monthView = useMemo(
     () =>
       buildCalendarMonthView({
         anchorDate,
         settings: {
-          showCorrectedUntilMonths: user?.settings.showCorrectedUntilMonths ?? null,
+          showCorrectedUntilMonths:
+            user?.settings.showCorrectedUntilMonths ?? null,
           ageFormat: user?.settings.ageFormat ?? "md",
           showDaysSinceBirth: user?.settings.showDaysSinceBirth ?? true,
           lastViewedMonth: user?.settings.lastViewedMonth ?? null,
@@ -89,12 +113,20 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
   );
 
   const handlePrev = () => {
-    const prev = new Date(anchorDate.getFullYear(), anchorDate.getMonth() - 1, 1);
+    const prev = new Date(
+      anchorDate.getFullYear(),
+      anchorDate.getMonth() - 1,
+      1
+    );
     setAnchorDate(prev);
   };
 
   const handleNext = () => {
-    const next = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 1);
+    const next = new Date(
+      anchorDate.getFullYear(),
+      anchorDate.getMonth() + 1,
+      1
+    );
     setAnchorDate(next);
   };
 
@@ -146,7 +178,13 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
     } catch {
       return null;
     }
-  }, [ageFormat, todayIso, user?.birthDate, user?.dueDate, user?.settings.showCorrectedUntilMonths]);
+  }, [
+    ageFormat,
+    todayIso,
+    user?.birthDate,
+    user?.dueDate,
+    user?.settings.showCorrectedUntilMonths,
+  ]);
 
   const monthPickerValue = useMemo(
     () => new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1),
@@ -155,32 +193,51 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.backgroundLayer} pointerEvents="none" accessible={false}>
+      <View
+        style={styles.backgroundLayer}
+        pointerEvents="none"
+        accessible={false}
+      >
         <View style={styles.backgroundTop} />
         <View style={styles.backgroundBottom} />
       </View>
       <CalendarDecorations topOffset={insets.top} />
       <View style={styles.fixedHeader}>
-        <Text style={styles.headerName}>{user?.name ?? "プロフィール未設定"}</Text>
+        <AppText style={styles.headerName} weight="medium">
+          {user?.name ?? "プロフィール未設定"}
+        </AppText>
         {todayAgeInfo ? (
           <View style={styles.headerAgeBlock}>
-            {todayAgeInfo.flags.showMode === "gestational" && todayAgeInfo.gestational.formatted ? (
+            <View style={styles.headerAgeRow}>
               <Text style={styles.headerChronological}>
                 {todayAgeInfo.chronological.formatted}
-                <Text style={styles.headerCorrected}>（在胎 {todayAgeInfo.gestational.formatted}）</Text>
               </Text>
-            ) : todayAgeInfo.corrected.visible && todayAgeInfo.corrected.formatted ? (
-              <Text style={styles.headerChronological}>
-                {todayAgeInfo.chronological.formatted}
-                <Text style={styles.headerCorrected}>（修正 {todayAgeInfo.corrected.formatted}）</Text>
+              {todayAgeInfo.flags.showMode === "gestational" &&
+              todayAgeInfo.gestational.formatted ? (
+                <View style={styles.headerCorrectedBadge}>
+                  <Text style={styles.headerCorrectedBadgeText}>
+                    在胎 {todayAgeInfo.gestational.formatted}
+                  </Text>
+                </View>
+              ) : todayAgeInfo.corrected.visible &&
+                todayAgeInfo.corrected.formatted ? (
+                <View style={styles.headerCorrectedBadge}>
+                  <Text style={styles.headerCorrectedBadgeText}>
+                    修正 {todayAgeInfo.corrected.formatted}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+            {showDaysSinceBirth ? (
+              <Text style={styles.headerDays}>
+                生まれてから{todayAgeInfo.daysSinceBirth}日目
               </Text>
-            ) : (
-              <Text style={styles.headerChronological}>{todayAgeInfo.chronological.formatted}</Text>
-            )}
-            {showDaysSinceBirth ? <Text style={styles.headerDays}>生まれてから{todayAgeInfo.daysSinceBirth}日目</Text> : null}
+            ) : null}
           </View>
         ) : (
-          <Text style={styles.headerPlaceholder}>年齢情報は設定済みのプロフィールで表示されます</Text>
+          <Text style={styles.headerPlaceholder}>
+            年齢情報は設定済みのプロフィールで表示されます
+          </Text>
         )}
       </View>
       <ScrollView keyboardShouldPersistTaps="handled" style={styles.scroll}>
@@ -208,8 +265,12 @@ const CalendarScreen: React.FC<Props> = ({ navigation }) => {
             ))}
           </View>
           <CalendarGrid days={monthView.days} onPressDay={handlePressDay} />
-          <Text style={styles.footer}>出産予定日前の修正月齢は在胎週数で表示しています。</Text>
-          <Text style={styles.footer}>修正月齢の表記は目安です。医療的判断は主治医にご相談ください。</Text>
+          <Text style={styles.footer}>
+            出産予定日前の修正月齢は在胎週数で表示しています。
+          </Text>
+          <Text style={styles.footer}>
+            修正月齢の表記は目安です。医療的判断は主治医にご相談ください。
+          </Text>
         </View>
       </ScrollView>
       <TouchableOpacity
@@ -252,37 +313,41 @@ const styles = StyleSheet.create({
   fixedHeader: {
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingVertical: 8,
     backgroundColor: COLORS.headerBackground,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    gap: 6,
+    gap: 4,
   },
   scroll: {
     backgroundColor: COLORS.background,
   },
   headerName: {
     fontSize: 20,
-    fontWeight: "700",
     color: COLORS.textPrimary,
     textAlign: "center",
-    fontFamily: "ZenMaruGothic-Medium",
   },
   headerAgeBlock: {
     alignItems: "center",
-    gap: 4,
+    gap: 2,
   },
-  headerCorrected: {
-    fontSize: 14,
-    color: COLORS.accentMain,
-    fontFamily: "ZenMaruGothic-Regular",
-    textAlign: "center",
+  headerAgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   headerChronological: {
     fontSize: 14,
     color: COLORS.textPrimary,
-    fontFamily: "ZenMaruGothic-Regular",
-    textAlign: "center",
+  },
+  headerCorrectedBadge: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  headerCorrectedBadgeText: {
+    fontSize: 12,
+    color: COLORS.accentMain,
+    fontWeight: "600",
   },
   headerDays: {
     fontSize: 12,

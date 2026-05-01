@@ -33,6 +33,7 @@ import {
   RootStackParamList,
   TabParamList,
 } from "@/navigation";
+import AgeBadge from "@/components/AgeBadge";
 import AppText from "@/components/AppText";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
@@ -41,6 +42,7 @@ import {
   calculateAgeInfo,
   normalizeToUtcDate,
   toIsoDateString,
+  toUtcDateOnly,
 } from "@/utils/dateUtils";
 import { ensureFileExistsAsync } from "@/utils/photo";
 import { COLORS } from "@/constants/colors";
@@ -99,6 +101,8 @@ const RecordCard: React.FC<RecordCardProps> = ({ item, onPress }) => {
 type Props = NativeStackScreenProps<CalendarStackParamList, "Today">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 
+const DAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
+
 const EXPORT_BACKGROUND_IMAGE = require("../../assets/export/bg_base_green.png");
 const EXPORT_DECORATION_IMAGE = require("../../assets/export/deco_overlay_green.png");
 
@@ -139,6 +143,11 @@ const TodayScreen: React.FC<Props> = ({
     [activeDate]
   );
 
+  const todayIso = useMemo(
+    () => toIsoDateString(toUtcDateOnly(new Date())),
+    []
+  );
+
   const ageInfo = useMemo(() => {
     if (!user || !user.birthDate) return null;
     try {
@@ -155,6 +164,28 @@ const TodayScreen: React.FC<Props> = ({
   }, [
     user,
     selectedDateIso,
+    user?.birthDate,
+    user?.dueDate,
+    user?.settings.showCorrectedUntilMonths,
+    user?.settings.ageFormat,
+  ]);
+
+  const todayAgeInfo = useMemo(() => {
+    if (!user || !user.birthDate) return null;
+    try {
+      return calculateAgeInfo({
+        targetDate: todayIso,
+        birthDate: user.birthDate,
+        dueDate: user.dueDate,
+        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+        ageFormat: user.settings.ageFormat,
+      });
+    } catch {
+      return null;
+    }
+  }, [
+    user,
+    todayIso,
     user?.birthDate,
     user?.dueDate,
     user?.settings.showCorrectedUntilMonths,
@@ -189,8 +220,11 @@ const TodayScreen: React.FC<Props> = ({
     return [...lines.slice(0, maxVisibleRecords), `…他${hiddenCount}件`];
   }, [sortedAchievements]);
 
-  const displayDate = selectedDateIso.replace(/-/g, "/");
   const exportDisplayDate = selectedDateIso.replace(/-/g, ".");
+  const sectionTitleDate = useMemo(() => {
+    const dayLabel = DAY_LABELS[activeDate.getDay()];
+    return `${selectedDateIso.replace(/-/g, "/")}(${dayLabel})の記録`;
+  }, [activeDate, selectedDateIso]);
 
   useLayoutEffect(() => {
     const parent = stackNavigation.getParent();
@@ -299,12 +333,38 @@ const TodayScreen: React.FC<Props> = ({
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <View style={styles.headerTextBlock}>
-          <AppText style={styles.headerName} weight="medium">
-            {user.name}
-          </AppText>
-          <AppText style={styles.headerDate}>{displayDate}</AppText>
-        </View>
+        <AppText style={styles.headerName} weight="medium">
+          {user.name}
+        </AppText>
+        {todayAgeInfo ? (
+          <View style={styles.headerAgeBlock}>
+            <View style={styles.headerAgeRow}>
+              <Text style={styles.headerChronological}>
+                {todayAgeInfo.chronological.formatted}
+              </Text>
+              {todayAgeInfo.flags.showMode === "gestational" &&
+              todayAgeInfo.gestational.formatted ? (
+                <View style={styles.headerCorrectedBadge}>
+                  <Text style={styles.headerCorrectedBadgeText}>
+                    在胎 {todayAgeInfo.gestational.formatted}
+                  </Text>
+                </View>
+              ) : todayAgeInfo.corrected.visible &&
+                todayAgeInfo.corrected.formatted ? (
+                <View style={styles.headerCorrectedBadge}>
+                  <Text style={styles.headerCorrectedBadgeText}>
+                    修正 {todayAgeInfo.corrected.formatted}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+            {user.settings.showDaysSinceBirth ? (
+              <Text style={styles.headerDays}>
+                生まれてから{todayAgeInfo.daysSinceBirth}日目
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
         <TouchableOpacity
           style={styles.headerCalendarButton}
           onPress={handleOpenCalendar}
@@ -339,45 +399,36 @@ const TodayScreen: React.FC<Props> = ({
           </View>
         )}
 
-        {ageInfo && selectedDateIso >= user.birthDate ? (
-          <View style={styles.ageBlock}>
-            {ageInfo.flags.showMode === "gestational" &&
-            ageInfo.gestational.visible &&
-            ageInfo.gestational.formatted ? (
-              <View style={styles.ageRow}>
-                <Text style={styles.ageValue}>
-                  {ageInfo.chronological.formatted}
-                </Text>
-                <Text style={styles.ageNote}>
-                  （在胎 {ageInfo.gestational.formatted}）
-                </Text>
-              </View>
-            ) : ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
-              <View style={styles.ageRow}>
-                <Text style={styles.ageValue}>
-                  {ageInfo.chronological.formatted}
-                </Text>
-                <Text style={styles.ageNote}>
-                  （修正 {ageInfo.corrected.formatted}）
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.ageRow}>
-                <Text style={styles.ageValue}>
-                  {ageInfo.chronological.formatted}
-                </Text>
-              </View>
-            )}
-            {user.settings.showDaysSinceBirth ? (
-              <Text style={styles.ageText}>
-                生まれてから{ageInfo.daysSinceBirth}日目
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
-
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>今日の記録</Text>
+          <Text style={styles.sectionTitle}>{sectionTitleDate}</Text>
+          {ageInfo !== null && selectedDateIso >= user.birthDate ? (
+            <View style={styles.badgeRow}>
+              <AgeBadge
+                label={ageInfo.chronological.formatted}
+                variant="chronological"
+              />
+              {ageInfo.flags.showMode === "gestational" &&
+              ageInfo.gestational.visible &&
+              ageInfo.gestational.formatted ? (
+                <AgeBadge
+                  label={`在胎 ${ageInfo.gestational.formatted}`}
+                  variant="gestational"
+                />
+              ) : null}
+              {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
+                <AgeBadge
+                  label={`修正 ${ageInfo.corrected.formatted}`}
+                  variant="corrected"
+                />
+              ) : null}
+              {user.settings.showDaysSinceBirth ? (
+                <AgeBadge
+                  label={`${ageInfo.daysSinceBirth}日目`}
+                  variant="days"
+                />
+              ) : null}
+            </View>
+          ) : null}
           {achievementsLoading ? (
             <Text style={styles.empty}>読み込み中...</Text>
           ) : todaysAchievements.length === 0 ? (
@@ -503,13 +554,9 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     backgroundColor: COLORS.headerBackground,
-  },
-  headerTextBlock: {
-    alignItems: "center",
     gap: 4,
   },
   headerName: {
@@ -517,10 +564,33 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     textAlign: "center",
   },
-  headerDate: {
+  headerAgeBlock: {
+    alignItems: "center",
+    gap: 2,
+  },
+  headerAgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  headerChronological: {
     fontSize: 14,
     color: COLORS.textPrimary,
-    textAlign: "center",
+  },
+  headerCorrectedBadge: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  headerCorrectedBadgeText: {
+    fontSize: 12,
+    color: COLORS.accentMain,
+    fontWeight: "600",
+  },
+  headerDays: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
   },
   headerCalendarButton: {
     position: "absolute",
@@ -542,31 +612,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textPrimary,
   },
-  ageBlock: {
-    gap: 6,
-  },
-  ageRow: {
+  badgeRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
     flexWrap: "wrap",
-  },
-  ageLabel: {
-    fontSize: 16,
-    color: COLORS.textPrimary,
-    fontWeight: "600",
-  },
-  ageValue: {
-    fontSize: 16,
-    color: COLORS.textPrimary,
-  },
-  ageNote: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  ageText: {
-    fontSize: 16,
-    color: COLORS.textPrimary,
+    gap: 6,
+    marginBottom: 8,
   },
   exportActionRow: {
     alignSelf: "flex-start",
@@ -610,7 +660,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     padding: 12,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 12,
     marginBottom: 8,
   },
