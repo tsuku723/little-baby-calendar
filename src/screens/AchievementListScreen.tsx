@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
 import {
+  FlatList,
   Image,
   SafeAreaView,
-  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -14,7 +14,7 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
-import { Achievement } from "@/models/dataModels";
+import { Achievement, AgeInfo } from "@/models/dataModels";
 import {
   RecordListStackParamList,
   RootStackParamList,
@@ -25,14 +25,14 @@ import AppText from "@/components/AppText";
 import DatePickerModal from "@/components/DatePickerModal";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useActiveUser } from "@/state/AppStateContext";
-import { UserProfile } from "@/state/AppStateContext";
 import {
   calculateAgeInfo,
   isIsoDateString,
   safeParseIsoLocal,
   toIsoDateString,
+  toUtcDateOnly,
 } from "@/utils/dateUtils";
-import { ensureFileExistsAsync } from "@/utils/photo";
+import { groupRecordsByMonth } from "@/utils/groupRecordsByMonth";
 import { normalizeSearchText } from "@/utils/text";
 import { COLORS } from "@/constants/colors";
 
@@ -41,6 +41,13 @@ type Props = NativeStackScreenProps<
   "AchievementList"
 >;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
+
+type ListRow =
+  | { type: "sectionHeader"; key: string; monthLabel: string }
+  | { type: "featured"; key: string; record: Achievement }
+  | { type: "standard"; key: string; record: Achievement };
+
+const dateLabel = (iso: string): string => iso.replace(/-/g, "/");
 
 const startOfLocalDay = (d: Date) =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -56,237 +63,6 @@ const getPickerDate = (value: string | null, fallback: Date): Date => {
   if (Number.isNaN(parsed.getTime())) return cloneDate(fallback);
   return cloneDate(parsed);
 };
-
-// ---- カード共通: 月齢バッジ行 ----
-
-type AgeBadgeRowProps = { record: Achievement; user: UserProfile };
-
-const AgeBadgeRow: React.FC<AgeBadgeRowProps> = ({ record, user }) => {
-  const ageInfo = useMemo(() => {
-    if (!user.birthDate) return null;
-    try {
-      return calculateAgeInfo({
-        targetDate: record.date,
-        birthDate: user.birthDate,
-        dueDate: user.dueDate,
-        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
-        ageFormat: user.settings.ageFormat,
-      });
-    } catch {
-      return null;
-    }
-  }, [record.date, user]);
-
-  if (!ageInfo) return null;
-
-  const showGestational =
-    ageInfo.flags.showMode === "gestational" &&
-    ageInfo.gestational.visible &&
-    ageInfo.gestational.formatted;
-  const showCorrected =
-    ageInfo.flags.showMode === "corrected" &&
-    ageInfo.corrected.visible &&
-    ageInfo.corrected.formatted;
-
-  return (
-    <View style={badgeRowStyles.row}>
-      <AgeBadge
-        label={ageInfo.chronological.formatted}
-        variant="chronological"
-      />
-      {showGestational ? (
-        <AgeBadge
-          label={`在胎 ${ageInfo.gestational.formatted}`}
-          variant="gestational"
-        />
-      ) : showCorrected ? (
-        <AgeBadge
-          label={`修正 ${ageInfo.corrected.formatted}`}
-          variant="corrected"
-        />
-      ) : null}
-    </View>
-  );
-};
-
-const badgeRowStyles = StyleSheet.create({
-  row: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 6 },
-});
-
-// ---- 標準カード（右サムネイル）----
-
-type RecordCardProps = {
-  item: Achievement;
-  user: UserProfile;
-  onPress: () => void;
-};
-
-const RecordCard: React.FC<RecordCardProps> = ({ item, user, onPress }) => {
-  const [resolvedPhoto, setResolvedPhoto] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    let mounted = true;
-    void ensureFileExistsAsync(item.photoPath ?? null).then((path) => {
-      if (mounted) setResolvedPhoto(path);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [item.photoPath]);
-
-  return (
-    <TouchableOpacity
-      style={cardStyles.card}
-      onPress={onPress}
-      accessibilityRole="button"
-    >
-      <View style={cardStyles.left}>
-        <Text style={cardStyles.date}>{item.date.replace(/-/g, "/")}</Text>
-        <Text style={cardStyles.title} numberOfLines={2}>
-          {item.title || "(タイトルなし)"}
-        </Text>
-        {item.memo ? (
-          <Text style={cardStyles.memo} numberOfLines={2}>
-            {item.memo}
-          </Text>
-        ) : null}
-        <AgeBadgeRow record={item} user={user} />
-      </View>
-      <View style={cardStyles.thumb}>
-        {resolvedPhoto ? (
-          <Image
-            source={{ uri: resolvedPhoto }}
-            style={cardStyles.thumbImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={cardStyles.thumbPlaceholder}>
-            <Ionicons
-              name="camera-outline"
-              size={22}
-              color={COLORS.textSecondary}
-            />
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-};
-
-const cardStyles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-  },
-  left: { flex: 1, gap: 2 },
-  date: { fontSize: 12, color: COLORS.textSecondary },
-  title: { fontSize: 16, fontWeight: "700", color: COLORS.textPrimary },
-  memo: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 20 },
-  thumb: {
-    width: 72,
-    height: 72,
-    borderRadius: 8,
-    overflow: "hidden",
-    flexShrink: 0,
-  },
-  thumbImage: { width: "100%", height: "100%" },
-  thumbPlaceholder: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: COLORS.cellDimmed,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
-
-// ---- フィーチャーカード（写真大）----
-
-const FeaturedCard: React.FC<RecordCardProps> = ({ item, user, onPress }) => {
-  const [resolvedPhoto, setResolvedPhoto] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    let mounted = true;
-    void ensureFileExistsAsync(item.photoPath ?? null).then((path) => {
-      if (mounted) setResolvedPhoto(path);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, [item.photoPath]);
-
-  return (
-    <TouchableOpacity
-      style={featuredStyles.card}
-      onPress={onPress}
-      accessibilityRole="button"
-    >
-      <View style={featuredStyles.photoArea}>
-        {resolvedPhoto ? (
-          <Image
-            source={{ uri: resolvedPhoto }}
-            style={featuredStyles.photo}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={featuredStyles.photoPlaceholder}>
-            <Ionicons
-              name="camera-outline"
-              size={32}
-              color={COLORS.textSecondary}
-            />
-          </View>
-        )}
-      </View>
-      <View style={featuredStyles.body}>
-        <Text style={featuredStyles.date}>{item.date.replace(/-/g, "/")}</Text>
-        <Text style={featuredStyles.title} numberOfLines={2}>
-          {item.title || "(タイトルなし)"}
-        </Text>
-        {item.memo ? (
-          <Text style={featuredStyles.memo} numberOfLines={2}>
-            {item.memo}
-          </Text>
-        ) : null}
-        <AgeBadgeRow record={item} user={user} />
-      </View>
-    </TouchableOpacity>
-  );
-};
-
-const featuredStyles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    overflow: "hidden",
-  },
-  photoArea: { width: "100%", height: 200 },
-  photo: { width: "100%", height: "100%" },
-  photoPlaceholder: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: COLORS.cellDimmed,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  body: { padding: 12, gap: 4 },
-  date: { fontSize: 12, color: COLORS.textSecondary },
-  title: { fontSize: 16, fontWeight: "700", color: COLORS.textPrimary },
-  memo: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 20 },
-});
-
-// ---- セクションデータ型 ----
-
-type CardItem = { record: Achievement; isFeatured: boolean };
-
-// ---- メイン画面 ----
 
 const AchievementListScreen: React.FC<Props> = () => {
   const rootNavigation = useNavigation<RootNavigation>();
@@ -321,23 +97,6 @@ const AchievementListScreen: React.FC<Props> = () => {
     setPickerValue(getPickerDate(target === "from" ? fromDate : toDate, today));
   };
 
-  // 今日の月齢（ヘッダー表示用）
-  const todayAgeInfo = useMemo(() => {
-    if (!user?.birthDate) return null;
-    try {
-      return calculateAgeInfo({
-        targetDate: toIsoDateString(today),
-        birthDate: user.birthDate,
-        dueDate: user.dueDate,
-        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
-        ageFormat: user.settings.ageFormat,
-      });
-    } catch {
-      return null;
-    }
-  }, [today, user]);
-
-  // フィルタ後のフラットリスト
   const items = useMemo(() => {
     const allList: Achievement[] = Object.values(store).flat();
     const normalizedQuery = normalizeSearchText(searchText);
@@ -363,99 +122,228 @@ const AchievementListScreen: React.FC<Props> = () => {
     });
   }, [fromDate, searchText, store, toDate]);
 
-  // 月ごとにグループ化してセクション配列を生成
-  const sections = useMemo(() => {
-    const groups: Record<string, Achievement[]> = {};
-    items.forEach((item) => {
-      const key = item.date.slice(0, 7); // YYYY-MM
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(item);
-    });
-
-    return Object.entries(groups)
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([key, records]) => {
-        // 各月で最も新しい（先頭の）写真付き記録をフィーチャー
-        const featuredId = records.find((r) => r.photoPath)?.id ?? null;
-        const year = parseInt(key.slice(0, 4), 10);
-        const month = parseInt(key.slice(5, 7), 10);
-        return {
-          title: `${year}年${month}月`,
-          data: records.map((r) => ({
-            record: r,
-            isFeatured: r.id === featuredId,
-          })) as CardItem[],
-        };
+  const todayAgeInfo = useMemo((): AgeInfo | null => {
+    if (!user?.birthDate) return null;
+    try {
+      return calculateAgeInfo({
+        targetDate: toIsoDateString(toUtcDateOnly(new Date())),
+        birthDate: user.birthDate,
+        dueDate: user.dueDate,
+        showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+        ageFormat: user.settings.ageFormat,
       });
+    } catch {
+      return null;
+    }
+  }, [user]);
+
+  const ageInfoByRecordId = useMemo((): Map<string, AgeInfo | null> => {
+    const map = new Map<string, AgeInfo | null>();
+    if (!user?.birthDate) return map;
+    for (const record of items) {
+      try {
+        map.set(
+          record.id,
+          calculateAgeInfo({
+            targetDate: record.date,
+            birthDate: user.birthDate,
+            dueDate: user.dueDate,
+            showCorrectedUntilMonths: user.settings.showCorrectedUntilMonths,
+            ageFormat: user.settings.ageFormat,
+          })
+        );
+      } catch {
+        map.set(record.id, null);
+      }
+    }
+    return map;
+  }, [items, user]);
+
+  const listRows = useMemo((): ListRow[] => {
+    const sections = groupRecordsByMonth(items);
+    const rows: ListRow[] = [];
+    for (const section of sections) {
+      rows.push({
+        key: `header-${section.monthKey}`,
+        type: "sectionHeader",
+        monthLabel: section.monthLabel,
+      });
+      for (const record of section.records) {
+        const isFeatured = record.id === section.featuredId;
+        rows.push({
+          key: record.id,
+          type: isFeatured ? "featured" : "standard",
+          record,
+        });
+      }
+    }
+    return rows;
   }, [items]);
 
-  const navigateToRecord = (recordId: string) => {
-    rootNavigation.navigate("RecordDetail", { recordId, from: "list" });
-  };
-
-  const renderItem = ({ item }: { item: CardItem }) => {
-    if (!user) return null;
-    if (item.isFeatured) {
+  const renderAgeBadge = (ageInfo: AgeInfo | null) => {
+    if (!ageInfo) return null;
+    if (
+      ageInfo.flags.showMode === "gestational" &&
+      ageInfo.gestational.formatted
+    ) {
       return (
-        <FeaturedCard
-          item={item.record}
-          user={user}
-          onPress={() => navigateToRecord(item.record.id)}
+        <AgeBadge
+          label={`在胎 ${ageInfo.gestational.formatted}`}
+          variant="gestational"
         />
       );
     }
+    if (ageInfo.corrected.visible && ageInfo.corrected.formatted) {
+      return (
+        <AgeBadge
+          label={`修正 ${ageInfo.corrected.formatted}`}
+          variant="corrected"
+        />
+      );
+    }
+    return null;
+  };
+
+  const renderFeaturedCard = (record: Achievement) => {
+    const ageInfo = ageInfoByRecordId.get(record.id) ?? null;
     return (
-      <RecordCard
-        item={item.record}
-        user={user}
-        onPress={() => navigateToRecord(item.record.id)}
-      />
+      <TouchableOpacity
+        key={record.id}
+        style={styles.featuredCard}
+        onPress={() =>
+          rootNavigation.navigate("RecordDetail", {
+            recordId: record.id,
+            from: "list",
+          })
+        }
+        accessibilityRole="button"
+      >
+        {record.photoPath ? (
+          <Image
+            source={{ uri: record.photoPath }}
+            style={styles.featuredPhoto}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.featuredPhoto, styles.photoPlaceholder]}>
+            <Ionicons
+              name="camera-outline"
+              size={36}
+              color={COLORS.textSecondary}
+            />
+          </View>
+        )}
+        <View style={styles.featuredContent}>
+          <Text style={styles.featuredTitle} numberOfLines={2}>
+            {record.title || "(タイトルなし)"}
+          </Text>
+          <View style={styles.cardMeta}>
+            {renderAgeBadge(ageInfo)}
+            <Text style={styles.cardDate}>{dateLabel(record.date)}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
     );
   };
 
-  const renderSectionHeader = ({ section }: { section: { title: string } }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionHeaderText}>{section.title}</Text>
-    </View>
-  );
+  const renderStandardCard = (record: Achievement) => {
+    const ageInfo = ageInfoByRecordId.get(record.id) ?? null;
+    return (
+      <TouchableOpacity
+        key={record.id}
+        style={styles.standardCard}
+        onPress={() =>
+          rootNavigation.navigate("RecordDetail", {
+            recordId: record.id,
+            from: "list",
+          })
+        }
+        accessibilityRole="button"
+      >
+        <View style={styles.standardContent}>
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {record.title || "(タイトルなし)"}
+          </Text>
+          {record.memo ? (
+            <Text style={styles.cardMemo} numberOfLines={2}>
+              {record.memo}
+            </Text>
+          ) : null}
+          <View style={styles.cardMeta}>
+            {renderAgeBadge(ageInfo)}
+            <Text style={styles.cardDate}>{dateLabel(record.date)}</Text>
+          </View>
+        </View>
+        <View style={styles.thumbnailArea}>
+          {record.photoPath ? (
+            <Image
+              source={{ uri: record.photoPath }}
+              style={styles.thumbnail}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
+              <Ionicons
+                name="camera-outline"
+                size={22}
+                color={COLORS.textSecondary}
+              />
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderRow = ({ item }: { item: ListRow }) => {
+    if (item.type === "sectionHeader") {
+      return <Text style={styles.sectionHeader}>{item.monthLabel}</Text>;
+    }
+    if (item.type === "featured") {
+      return renderFeaturedCard(item.record);
+    }
+    return renderStandardCard(item.record);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* ヘッダー：名前 ＋ 今日の月齢 */}
       <View style={styles.header}>
         <AppText style={styles.headerName} weight="medium">
           {user?.name ?? "プロフィール未設定"}
         </AppText>
         {todayAgeInfo ? (
           <View style={styles.headerAgeBlock}>
-            {todayAgeInfo.flags.showMode === "gestational" &&
-            todayAgeInfo.gestational.formatted ? (
-              <Text style={styles.headerChronological}>
-                {todayAgeInfo.chronological.formatted}
-                <Text style={styles.headerCorrected}>
-                  （在胎 {todayAgeInfo.gestational.formatted}）
-                </Text>
-              </Text>
-            ) : todayAgeInfo.corrected.visible &&
-              todayAgeInfo.corrected.formatted ? (
-              <Text style={styles.headerChronological}>
-                {todayAgeInfo.chronological.formatted}
-                <Text style={styles.headerCorrected}>
-                  （修正 {todayAgeInfo.corrected.formatted}）
-                </Text>
-              </Text>
-            ) : (
+            <View style={styles.headerAgeRow}>
               <Text style={styles.headerChronological}>
                 {todayAgeInfo.chronological.formatted}
               </Text>
-            )}
+              {todayAgeInfo.flags.showMode === "gestational" &&
+              todayAgeInfo.gestational.formatted ? (
+                <View style={styles.headerCorrectedBadge}>
+                  <Text style={styles.headerCorrectedBadgeText}>
+                    在胎 {todayAgeInfo.gestational.formatted}
+                  </Text>
+                </View>
+              ) : todayAgeInfo.corrected.visible &&
+                todayAgeInfo.corrected.formatted ? (
+                <View style={styles.headerCorrectedBadge}>
+                  <Text style={styles.headerCorrectedBadgeText}>
+                    修正 {todayAgeInfo.corrected.formatted}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
             {user?.settings.showDaysSinceBirth ? (
               <Text style={styles.headerDays}>
                 生まれてから{todayAgeInfo.daysSinceBirth}日目
               </Text>
             ) : null}
           </View>
-        ) : null}
+        ) : (
+          <Text style={styles.headerPlaceholder}>
+            年齢情報は設定済みのプロフィールで表示されます
+          </Text>
+        )}
       </View>
       <View style={styles.content}>
         <View style={styles.filterBar}>
@@ -521,19 +409,16 @@ const AchievementListScreen: React.FC<Props> = () => {
             </TouchableOpacity>
           </View>
         ) : null}
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => item.record.id}
-          renderItem={renderItem}
-          renderSectionHeader={renderSectionHeader}
+        <FlatList
+          data={listRows}
+          keyExtractor={(item) => item.key}
+          renderItem={renderRow}
           contentContainerStyle={styles.list}
-          stickySectionHeadersEnabled={false}
           ListEmptyComponent={
             <Text style={styles.empty}>
               {loading ? "読み込み中..." : "まだ記録がありません"}
             </Text>
           }
-          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         />
       </View>
       <TouchableOpacity
@@ -573,19 +458,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  content: {
-    flex: 1,
-    padding: 16,
-    gap: 12,
-  },
   header: {
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingVertical: 8,
     backgroundColor: COLORS.headerBackground,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    gap: 6,
+    gap: 4,
   },
   headerName: {
     fontSize: 20,
@@ -594,27 +472,46 @@ const styles = StyleSheet.create({
   },
   headerAgeBlock: {
     alignItems: "center",
-    gap: 4,
+    gap: 2,
+  },
+  headerAgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   headerChronological: {
     fontSize: 14,
     color: COLORS.textPrimary,
-    textAlign: "center",
   },
-  headerCorrected: {
-    fontSize: 14,
+  headerCorrectedBadge: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  headerCorrectedBadgeText: {
+    fontSize: 12,
     color: COLORS.accentMain,
+    fontWeight: "600",
   },
   headerDays: {
     fontSize: 12,
     color: COLORS.textSecondary,
+  },
+  headerPlaceholder: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
     textAlign: "center",
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 8,
   },
   filterBar: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
     gap: 6,
     backgroundColor: "#FFFFFF",
   },
@@ -630,10 +527,7 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   filterPanel: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
     gap: 6,
-    backgroundColor: "transparent",
   },
   filterRow: {
     height: 40,
@@ -666,17 +560,97 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   list: {
-    gap: 0,
+    gap: 10,
     paddingBottom: 120,
   },
   sectionHeader: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  sectionHeaderText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
     color: COLORS.textSecondary,
+    paddingTop: 8,
+    paddingBottom: 2,
+  },
+  featuredCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: "hidden",
+    shadowColor: COLORS.textPrimary,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  featuredPhoto: {
+    width: "100%",
+    height: 180,
+    backgroundColor: COLORS.cellDimmed,
+  },
+  featuredContent: {
+    padding: 12,
+    gap: 6,
+  },
+  featuredTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
+  standardCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 12,
+    flexDirection: "row",
+    gap: 10,
+    shadowColor: COLORS.textPrimary,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  standardContent: {
+    flex: 1,
+    gap: 4,
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+  },
+  cardMemo: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    lineHeight: 18,
+  },
+  cardMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
+  },
+  cardDate: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginLeft: "auto",
+  },
+  thumbnailArea: {
+    justifyContent: "flex-start",
+  },
+  thumbnail: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    backgroundColor: COLORS.cellDimmed,
+  },
+  thumbnailPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   empty: {
     fontSize: 16,

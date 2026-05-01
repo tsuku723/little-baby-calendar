@@ -2,12 +2,13 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { COLORS } from "@/constants/colors";
 
-type Variant = "chronological" | "corrected" | "gestational";
+type Variant = "chronological" | "corrected" | "gestational" | "days";
 
 const BG: Record<Variant, string> = {
   chronological: COLORS.ageBadgeChronologicalBg,
   corrected: COLORS.ageBadgeCorrectedBg,
   gestational: COLORS.ageBadgeGestationalBg,
+  days: COLORS.ageBadgeChronologicalBg,
 };
 
 type Props = {

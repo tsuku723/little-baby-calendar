@@ -1,8 +1,24 @@
 ﻿// TODO: This screen functions as a day-based view.
 // Renaming to DayScreen is deferred for future refactor.
 
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Alert, Image, ImageBackground, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  Alert,
+  Image,
+  ImageBackground,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import * as MediaLibrary from "expo-media-library";
 import ViewShot from "react-native-view-shot";
@@ -11,14 +27,74 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
-import { CalendarStackParamList, RootStackParamList, TabParamList } from "@/navigation";
+import { Achievement } from "@/models/dataModels";
+import {
+  CalendarStackParamList,
+  RootStackParamList,
+  TabParamList,
+} from "@/navigation";
 import AppText from "@/components/AppText";
 import { useActiveUser } from "@/state/AppStateContext";
 import { useAchievements } from "@/state/AchievementsContext";
 import { useDateViewContext } from "@/state/DateViewContext";
-import { calculateAgeInfo, normalizeToUtcDate, toIsoDateString } from "@/utils/dateUtils";
+import {
+  calculateAgeInfo,
+  normalizeToUtcDate,
+  toIsoDateString,
+} from "@/utils/dateUtils";
 import { ensureFileExistsAsync } from "@/utils/photo";
 import { COLORS } from "@/constants/colors";
+
+type RecordCardProps = {
+  item: Achievement;
+  onPress: () => void;
+};
+
+const RecordCard: React.FC<RecordCardProps> = ({ item, onPress }) => {
+  const [resolvedPhoto, setResolvedPhoto] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    void ensureFileExistsAsync(item.photoPath ?? null).then((path) => {
+      if (mounted) setResolvedPhoto(path);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [item.photoPath]);
+
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={onPress}
+      accessibilityRole="button"
+    >
+      <View style={styles.cardLeft}>
+        <Text style={styles.cardTitle} numberOfLines={2}>
+          {item.title || "(タイトルなし)"}
+        </Text>
+        <Text style={styles.cardDate}>{item.date.replace(/-/g, "/")}</Text>
+      </View>
+      <View style={styles.cardThumb}>
+        {resolvedPhoto ? (
+          <Image
+            source={{ uri: resolvedPhoto }}
+            style={styles.cardThumbImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.cardThumbPlaceholder}>
+            <Ionicons
+              name="camera-outline"
+              size={24}
+              color={COLORS.textSecondary}
+            />
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 type Props = NativeStackScreenProps<CalendarStackParamList, "Today">;
 type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
@@ -26,7 +102,10 @@ type RootNavigation = NavigationProp<RootStackParamList & TabParamList>;
 const EXPORT_BACKGROUND_IMAGE = require("../../assets/export/bg_base_green.png");
 const EXPORT_DECORATION_IMAGE = require("../../assets/export/deco_overlay_green.png");
 
-const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) => {
+const TodayScreen: React.FC<Props> = ({
+  navigation: stackNavigation,
+  route,
+}) => {
   const rootNavigation = useNavigation<RootNavigation>();
   // Hooks should remain at top level (no conditional hooks)
   const user = useActiveUser();
@@ -37,7 +116,10 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
 
   const shouldHideTabBar = !user || !user.birthDate;
 
-  const normalizedRouteDate = useMemo(() => normalizeToUtcDate(route.params.isoDate), [route.params.isoDate]);
+  const normalizedRouteDate = useMemo(
+    () => normalizeToUtcDate(route.params.isoDate),
+    [route.params.isoDate]
+  );
 
   useEffect(() => {
     if (Number.isNaN(normalizedRouteDate.getTime())) return;
@@ -45,11 +127,17 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
   }, [normalizedRouteDate, selectDateFromCalendar]);
 
   const activeDate = useMemo(
-    () => (!Number.isNaN(normalizedRouteDate.getTime()) ? normalizedRouteDate : selectedDate),
+    () =>
+      !Number.isNaN(normalizedRouteDate.getTime())
+        ? normalizedRouteDate
+        : selectedDate,
     [normalizedRouteDate, selectedDate]
   );
 
-  const selectedDateIso = useMemo(() => toIsoDateString(activeDate), [activeDate]);
+  const selectedDateIso = useMemo(
+    () => toIsoDateString(activeDate),
+    [activeDate]
+  );
 
   const ageInfo = useMemo(() => {
     if (!user || !user.birthDate) return null;
@@ -73,14 +161,24 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
     user?.settings.ageFormat,
   ]);
 
-  const todaysAchievements = useMemo(() => byDay[selectedDateIso] ?? [], [byDay, selectedDateIso]);
+  const todaysAchievements = useMemo(
+    () => byDay[selectedDateIso] ?? [],
+    [byDay, selectedDateIso]
+  );
   const sortedAchievements = useMemo(
-    () => todaysAchievements.slice().sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)),
+    () =>
+      todaysAchievements
+        .slice()
+        .sort((a, b) =>
+          (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)
+        ),
     [todaysAchievements]
   );
   const exportRecordLines = useMemo(() => {
     const maxVisibleRecords = 6;
-    const lines = sortedAchievements.map((item) => `・${item.title || "(タイトルなし)"}`);
+    const lines = sortedAchievements.map(
+      (item) => `・${item.title || "(タイトルなし)"}`
+    );
     if (lines.length === 0) {
       return ["まだ記録がありません"];
     }
@@ -110,7 +208,9 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
     let mounted = true;
     const resolveLatestPhoto = async () => {
       const photoCandidate = sortedAchievements.find((item) => item.photoPath);
-      const ensured = await ensureFileExistsAsync(photoCandidate?.photoPath ?? null);
+      const ensured = await ensureFileExistsAsync(
+        photoCandidate?.photoPath ?? null
+      );
       if (!mounted) return;
       setLatestPhotoPath(ensured);
     };
@@ -130,7 +230,10 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert("権限を確認してください", "写真へのアクセスを許可すると画像を保存できます。");
+        Alert.alert(
+          "権限を確認してください",
+          "写真へのアクセスを許可すると画像を保存できます。"
+        );
         return;
       }
 
@@ -150,13 +253,19 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
   if (!user) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}> 
+        <View style={styles.container}>
           <Text style={styles.title}>プロフィールを作成してください</Text>
-          <Text style={styles.subtitle}>最初にプロフィール設定から始めましょう</Text>
+          <Text style={styles.subtitle}>
+            最初にプロフィール設定から始めましょう
+          </Text>
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={styles.navButton}
-              onPress={() => rootNavigation.navigate("SettingsStack", { screen: "ProfileManager" })}
+              onPress={() =>
+                rootNavigation.navigate("SettingsStack", {
+                  screen: "ProfileManager",
+                })
+              }
             >
               <Text style={styles.navButtonText}>設定へ</Text>
             </TouchableOpacity>
@@ -174,7 +283,11 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
           <Text style={styles.subtitle}>生年月日が未設定です</Text>
           <TouchableOpacity
             style={styles.navButton}
-            onPress={() => rootNavigation.navigate("SettingsStack", { screen: "ProfileManager" })}
+            onPress={() =>
+              rootNavigation.navigate("SettingsStack", {
+                screen: "ProfileManager",
+              })
+            }
           >
             <Text style={styles.navButtonText}>プロフィールを編集</Text>
           </TouchableOpacity>
@@ -198,10 +311,17 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
           accessibilityRole="button"
           accessibilityLabel="カレンダーへ戻る"
         >
-          <Ionicons name="calendar-outline" size={22} color={COLORS.textPrimary} />
+          <Ionicons
+            name="calendar-outline"
+            size={22}
+            color={COLORS.textPrimary}
+          />
         </TouchableOpacity>
       </View>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         {sortedAchievements.length > 0 && (
           <View style={styles.exportActionRow}>
             <TouchableOpacity
@@ -209,7 +329,11 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
               onPress={handleSaveImage}
               accessibilityRole="button"
             >
-              <Ionicons name="image-outline" size={18} color={COLORS.textPrimary} />
+              <Ionicons
+                name="image-outline"
+                size={18}
+                color={COLORS.textPrimary}
+              />
               <Text style={styles.exportButtonText}>画像として保存</Text>
             </TouchableOpacity>
           </View>
@@ -217,23 +341,37 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
 
         {ageInfo && selectedDateIso >= user.birthDate ? (
           <View style={styles.ageBlock}>
-            {ageInfo.flags.showMode === "gestational" && ageInfo.gestational.visible && ageInfo.gestational.formatted ? (
+            {ageInfo.flags.showMode === "gestational" &&
+            ageInfo.gestational.visible &&
+            ageInfo.gestational.formatted ? (
               <View style={styles.ageRow}>
-                <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
-                <Text style={styles.ageNote}>（在胎 {ageInfo.gestational.formatted}）</Text>
+                <Text style={styles.ageValue}>
+                  {ageInfo.chronological.formatted}
+                </Text>
+                <Text style={styles.ageNote}>
+                  （在胎 {ageInfo.gestational.formatted}）
+                </Text>
               </View>
             ) : ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
               <View style={styles.ageRow}>
-                <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
-                <Text style={styles.ageNote}>（修正 {ageInfo.corrected.formatted}）</Text>
+                <Text style={styles.ageValue}>
+                  {ageInfo.chronological.formatted}
+                </Text>
+                <Text style={styles.ageNote}>
+                  （修正 {ageInfo.corrected.formatted}）
+                </Text>
               </View>
             ) : (
               <View style={styles.ageRow}>
-                <Text style={styles.ageValue}>{ageInfo.chronological.formatted}</Text>
+                <Text style={styles.ageValue}>
+                  {ageInfo.chronological.formatted}
+                </Text>
               </View>
             )}
             {user.settings.showDaysSinceBirth ? (
-              <Text style={styles.ageText}>生まれてから{ageInfo.daysSinceBirth}日目</Text>
+              <Text style={styles.ageText}>
+                生まれてから{ageInfo.daysSinceBirth}日目
+              </Text>
             ) : null}
           </View>
         ) : null}
@@ -245,23 +383,28 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
           ) : todaysAchievements.length === 0 ? (
             <Text style={styles.empty}>気づいたことがあれば記録しよう</Text>
           ) : (
-            todaysAchievements.map((item) => (
-              <TouchableOpacity
+            sortedAchievements.map((item) => (
+              <RecordCard
                 key={item.id}
-                style={styles.card}
-                onPress={() => rootNavigation.navigate("RecordDetail", { recordId: item.id, from: "today" })}
-                accessibilityRole="button"
-              >
-                <Text style={styles.cardTitle}>{item.title || "(タイトルなし)"}</Text>
-                <Text style={styles.cardMeta}>{item.date}</Text>
-              </TouchableOpacity>
+                item={item}
+                onPress={() =>
+                  rootNavigation.navigate("RecordDetail", {
+                    recordId: item.id,
+                    from: "today",
+                  })
+                }
+              />
             ))
           )}
         </View>
       </ScrollView>
       {/* 保存用の描画領域（画面には表示しない） */}
       <View style={styles.hiddenRenderer} pointerEvents="none">
-        <ViewShot ref={viewShotRef} options={{ format: "png", quality: 1 }} style={styles.exportContainer}>
+        <ViewShot
+          ref={viewShotRef}
+          options={{ format: "png", quality: 1 }}
+          style={styles.exportContainer}
+        >
           <View style={styles.exportContent} collapsable={false}>
             <ImageBackground
               source={EXPORT_BACKGROUND_IMAGE}
@@ -270,7 +413,15 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
               resizeMode="contain"
             >
               <View style={styles.exportPhotoFrame}>
-                {latestPhotoPath ? <Image source={{ uri: latestPhotoPath }} style={styles.exportPhoto} resizeMode="cover" /> : <View style={styles.exportPhotoPlaceholder} />}
+                {latestPhotoPath ? (
+                  <Image
+                    source={{ uri: latestPhotoPath }}
+                    style={styles.exportPhoto}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.exportPhotoPlaceholder} />
+                )}
               </View>
               <View style={styles.exportDecorationOverlay} pointerEvents="none">
                 <Image
@@ -280,32 +431,53 @@ const TodayScreen: React.FC<Props> = ({ navigation: stackNavigation, route }) =>
                 />
               </View>
               <View style={styles.exportDateBlock}>
-                <Text style={styles.exportDateText} numberOfLines={1} ellipsizeMode="clip">
+                <Text
+                  style={styles.exportDateText}
+                  numberOfLines={1}
+                  ellipsizeMode="clip"
+                >
                   {exportDisplayDate}
                 </Text>
               </View>
 
               <View style={styles.exportAgeBlock}>
-                {ageInfo?.flags.showMode === "gestational" && ageInfo.gestational.formatted ? (
+                {ageInfo?.flags.showMode === "gestational" &&
+                ageInfo.gestational.formatted ? (
                   <>
-                    <Text style={styles.exportChronologicalAge}>{ageInfo.chronological.formatted}</Text>
-                    <Text style={styles.exportCorrectedAge}>（在胎 {ageInfo.gestational.formatted}）</Text>
+                    <Text style={styles.exportChronologicalAge}>
+                      {ageInfo.chronological.formatted}
+                    </Text>
+                    <Text style={styles.exportCorrectedAge}>
+                      （在胎 {ageInfo.gestational.formatted}）
+                    </Text>
                   </>
-                ) : ageInfo?.corrected.visible && ageInfo.corrected.formatted ? (
+                ) : ageInfo?.corrected.visible &&
+                  ageInfo.corrected.formatted ? (
                   <>
-                    <Text style={styles.exportChronologicalAge}>{ageInfo.chronological.formatted}</Text>
-                    <Text style={styles.exportCorrectedAge}>（修正 {ageInfo.corrected.formatted}）</Text>
+                    <Text style={styles.exportChronologicalAge}>
+                      {ageInfo.chronological.formatted}
+                    </Text>
+                    <Text style={styles.exportCorrectedAge}>
+                      （修正 {ageInfo.corrected.formatted}）
+                    </Text>
                   </>
                 ) : (
-                  <Text style={styles.exportChronologicalAge}>{ageInfo?.chronological.formatted ?? "-"}</Text>
+                  <Text style={styles.exportChronologicalAge}>
+                    {ageInfo?.chronological.formatted ?? "-"}
+                  </Text>
                 )}
               </View>
 
               <View style={styles.exportRecordCard}>
                 {exportRecordLines.map((line, index) => (
-                  <Text key={`${line}-${index}`} style={styles.exportRecordText} numberOfLines={1} ellipsizeMode="tail">
+                  <Text
+                    key={`${line}-${index}`}
+                    style={styles.exportRecordText}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
                     {line}
-                </Text>
+                  </Text>
                 ))}
               </View>
             </ImageBackground>
@@ -433,21 +605,44 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: COLORS.surface,
-    padding: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    gap: 6,
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     marginBottom: 8,
+  },
+  cardLeft: {
+    flex: 1,
+    gap: 4,
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     color: COLORS.textPrimary,
   },
-  cardMeta: {
+  cardDate: {
     fontSize: 14,
     color: COLORS.textSecondary,
+  },
+  cardThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  cardThumbImage: {
+    width: "100%",
+    height: "100%",
+  },
+  cardThumbPlaceholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: COLORS.cellDimmed,
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonRow: {
     marginTop: 12,

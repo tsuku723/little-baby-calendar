@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, FontAwesome6 } from "@expo/vector-icons";
 
 import { RootStackParamList } from "@/navigation";
 import AgeBadge from "@/components/AgeBadge";
@@ -73,25 +73,15 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
-          <Text style={styles.notFoundText}>記録が見つかりません</Text>
+          <Text style={styles.errorText}>記録が見つかりません</Text>
           <Button title="戻る" onPress={() => navigation.goBack()} />
         </View>
       </SafeAreaView>
     );
   }
 
-  const showGestational =
-    ageInfo?.flags.showMode === "gestational" &&
-    ageInfo.gestational.visible &&
-    ageInfo.gestational.formatted;
-  const showCorrected =
-    ageInfo?.flags.showMode === "corrected" &&
-    ageInfo.corrected.visible &&
-    ageInfo.corrected.formatted;
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* ヘッダー：戻る | タイトル | 編集テキストリンク */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerLeft}
@@ -116,61 +106,76 @@ const RecordDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           accessibilityRole="button"
           accessibilityLabel="編集"
         >
-          <Text style={styles.editLink}>編集</Text>
+          <Text style={styles.headerEditText}>編集</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* 日付（写真の上に小さく） */}
-        <Text style={styles.date}>{record.date.replace(/-/g, "/")}</Text>
-
-        {/* 写真 */}
-        {photoPath ? (
-          <Image
-            source={{ uri: photoPath }}
-            style={styles.photo}
-            resizeMode="cover"
-          />
-        ) : null}
-
-        {/* タイトル */}
-        <Text style={styles.title}>{record.title || "(タイトル未入力)"}</Text>
-
-        {/* 月齢バッジ行 */}
-        {ageInfo ? (
-          <View style={styles.badgeRow}>
-            <AgeBadge
-              label={ageInfo.chronological.formatted}
-              variant="chronological"
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.photoWrapper}>
+          {photoPath ? (
+            <Image
+              source={{ uri: photoPath }}
+              style={styles.photo}
+              resizeMode="cover"
             />
-            {showGestational ? (
-              <AgeBadge
-                label={`在胎 ${ageInfo.gestational.formatted}`}
-                variant="gestational"
+          ) : (
+            <View style={styles.photoPlaceholder}>
+              <FontAwesome6
+                name="baby"
+                size={86}
+                color={COLORS.textSecondary}
               />
-            ) : showCorrected ? (
-              <AgeBadge
-                label={`修正 ${ageInfo.corrected.formatted}`}
-                variant="corrected"
-              />
-            ) : null}
-            {user?.settings.showDaysSinceBirth ? (
-              <View style={styles.daysBadge}>
-                <Text style={styles.daysBadgeText}>
-                  {ageInfo.daysSinceBirth}日目
-                </Text>
-              </View>
-            ) : null}
+            </View>
+          )}
+          <View style={styles.dateOverlay}>
+            <Text style={styles.dateOverlayText}>
+              {record.date.replace(/-/g, "/")}
+            </Text>
           </View>
-        ) : null}
+        </View>
 
-        {/* メモ */}
-        {record.memo ? (
-          <View style={styles.memoSection}>
-            <Text style={styles.memoLabel}>メモ</Text>
-            <Text style={styles.memoBody}>{record.memo}</Text>
-          </View>
-        ) : null}
+        <View style={styles.body}>
+          <Text style={styles.title}>{record.title || "(タイトル未入力)"}</Text>
+
+          {ageInfo ? (
+            <View style={styles.badgeRow}>
+              <AgeBadge
+                label={ageInfo.chronological.formatted}
+                variant="chronological"
+              />
+              {ageInfo.flags.showMode === "gestational" &&
+              ageInfo.gestational.visible &&
+              ageInfo.gestational.formatted ? (
+                <AgeBadge
+                  label={`在胎 ${ageInfo.gestational.formatted}`}
+                  variant="gestational"
+                />
+              ) : null}
+              {ageInfo.corrected.visible && ageInfo.corrected.formatted ? (
+                <AgeBadge
+                  label={`修正 ${ageInfo.corrected.formatted}`}
+                  variant="corrected"
+                />
+              ) : null}
+              {user?.settings.showDaysSinceBirth ? (
+                <AgeBadge
+                  label={`${ageInfo.daysSinceBirth}日目`}
+                  variant="days"
+                />
+              ) : null}
+            </View>
+          ) : null}
+
+          {record.memo ? (
+            <View style={styles.memoSection}>
+              <Text style={styles.memoLabel}>メモ</Text>
+              <Text style={styles.memoText}>{record.memo}</Text>
+            </View>
+          ) : null}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -194,58 +199,71 @@ const styles = StyleSheet.create({
     left: 16,
     alignItems: "center",
     justifyContent: "center",
-    padding: 4,
+  },
+  headerRight: {
+    position: "absolute",
+    right: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 18,
     color: COLORS.textPrimary,
   },
-  headerRight: {
-    position: "absolute",
-    right: 16,
-    padding: 4,
+  headerEditText: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+    fontWeight: "500",
   },
-  editLink: {
-    fontSize: 15,
-    color: COLORS.accentMain,
-    fontWeight: "600",
+  scroll: {
+    flex: 1,
   },
-  container: {
-    padding: 20,
-    gap: 14,
-    paddingBottom: 48,
+  scrollContent: {
+    paddingBottom: 40,
   },
-  date: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
+  photoWrapper: {
+    width: "100%",
+    height: 280,
+    position: "relative",
   },
   photo: {
     width: "100%",
-    height: 260,
-    borderRadius: 12,
+    height: "100%",
+  },
+  photoPlaceholder: {
+    width: "100%",
+    height: "100%",
     backgroundColor: COLORS.cellDimmed,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dateOverlay: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  dateOverlayText: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    fontWeight: "500",
+  },
+  body: {
+    padding: 20,
+    gap: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "700",
     color: COLORS.textPrimary,
-    lineHeight: 32,
   },
   badgeRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-  },
-  daysBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: COLORS.cellDimmed,
-  },
-  daysBadgeText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    fontWeight: "600",
   },
   memoSection: {
     gap: 6,
@@ -253,14 +271,11 @@ const styles = StyleSheet.create({
   memoLabel: {
     fontSize: 12,
     color: COLORS.textSecondary,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
   },
-  memoBody: {
-    fontSize: 16,
+  memoText: {
+    fontSize: 17,
     color: COLORS.textPrimary,
-    lineHeight: 24,
+    lineHeight: 26,
   },
   centered: {
     flex: 1,
@@ -269,8 +284,8 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 24,
   },
-  notFoundText: {
-    fontSize: 18,
+  errorText: {
+    fontSize: 16,
     color: COLORS.textPrimary,
   },
 });
