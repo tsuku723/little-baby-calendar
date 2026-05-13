@@ -6,6 +6,8 @@ import { Achievement, UserProfile } from "@/state/AppStateContext";
 const APP_VERSION = "1.0.0";
 const BACKUP_FORMAT_VERSION = 1;
 
+const INVALID_FORMAT_ERROR = "バックアップファイルの形式が正しくありません";
+
 export type BackupData = {
   version: number;
   appVersion: string;
@@ -70,4 +72,78 @@ export const createBackup = async (
   });
 
   return outputUri;
+};
+
+export const restoreBackup = async (
+  zipUri: string
+): Promise<{
+  profiles: UserProfile[];
+  achievements: Record<string, Achievement[]>;
+}> => {
+  const base64Zip = await FileSystem.readAsStringAsync(zipUri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+
+  let zip: JSZip;
+  try {
+    zip = await JSZip.loadAsync(base64Zip, { base64: true });
+  } catch {
+    throw new Error(INVALID_FORMAT_ERROR);
+  }
+
+  const backupFile = zip.file("backup.json");
+  if (!backupFile) throw new Error(INVALID_FORMAT_ERROR);
+
+  let backupData: BackupData;
+  try {
+    const jsonText = await backupFile.async("text");
+    backupData = JSON.parse(jsonText) as BackupData;
+  } catch {
+    throw new Error(INVALID_FORMAT_ERROR);
+  }
+
+  if (
+    backupData.version === undefined ||
+    !Array.isArray(backupData.profiles) ||
+    backupData.achievements === undefined
+  ) {
+    throw new Error(INVALID_FORMAT_ERROR);
+  }
+
+  if (backupData.version !== BACKUP_FORMAT_VERSION) {
+    throw new Error("未対応のバックアップ形式です");
+  }
+
+  if (backupData.profiles.length === 0) {
+    throw new Error(INVALID_FORMAT_ERROR);
+  }
+
+  const photosDir = `${FileSystem.documentDirectory}photos/`;
+  await FileSystem.makeDirectoryAsync(photosDir, { intermediates: true });
+
+  const restoredAchievements: Record<string, Achievement[]> = {};
+  for (const [userId, records] of Object.entries(backupData.achievements)) {
+    restoredAchievements[userId] = await Promise.all(
+      (records as Achievement[]).map(async (achievement) => {
+        if (!achievement.photoPath) return achievement;
+
+        const zipPath = achievement.photoPath;
+        const filename = zipPath.split("/").pop() ?? "";
+        const localPath = `${photosDir}${filename}`;
+
+        const photoFile = zip.file(zipPath);
+        if (photoFile) {
+          const base64 = await photoFile.async("base64");
+          await FileSystem.writeAsStringAsync(localPath, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          return { ...achievement, photoPath: localPath };
+        }
+
+        return { ...achievement, photoPath: undefined };
+      })
+    );
+  }
+
+  return { profiles: backupData.profiles, achievements: restoredAchievements };
 };

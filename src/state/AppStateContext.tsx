@@ -10,7 +10,11 @@ import React, {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { v4 as uuid } from "uuid";
 
-import { STORAGE_KEYS, loadAchievements, loadUserSettings } from "@/storage/storage";
+import {
+  STORAGE_KEYS,
+  loadAchievements,
+  loadUserSettings,
+} from "@/storage/storage";
 
 export type UserSettings = {
   showCorrectedUntilMonths: number | null;
@@ -57,7 +61,9 @@ type AppStateContextValue = {
   addUser: (input: NewUserInput) => Promise<void>;
   updateUser: (
     userId: string,
-    partial: Partial<Omit<UserProfile, "id" | "settings">> & { settings?: Partial<UserSettings> }
+    partial: Partial<Omit<UserProfile, "id" | "settings">> & {
+      settings?: Partial<UserSettings>;
+    }
   ) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
   setActiveUser: (userId: string) => Promise<void>;
@@ -68,6 +74,10 @@ type AppStateContextValue = {
     partial: Partial<Achievement>
   ) => Promise<void>;
   deleteAchievement: (userId: string, id: string) => Promise<void>;
+  restoreState: (
+    profiles: UserProfile[],
+    achievements: Record<string, Achievement[]>
+  ) => Promise<void>;
 };
 
 const APP_STATE_KEY = "little_baby_calendar_app_state";
@@ -78,7 +88,9 @@ const EMPTY_STATE: AppState = {
   achievements: {},
 };
 
-const AppStateContext = createContext<AppStateContextValue | undefined>(undefined);
+const AppStateContext = createContext<AppStateContextValue | undefined>(
+  undefined
+);
 
 const persistState = async (nextState: AppState) => {
   try {
@@ -115,20 +127,27 @@ const ensureStateIntegrity = (state: AppState): AppState => {
     if (!nextState.achievements[user.id]) {
       nextState.achievements[user.id] = [];
     }
-    nextState.achievements[user.id] = nextState.achievements[user.id].map(normalizeAchievement);
+    nextState.achievements[user.id] =
+      nextState.achievements[user.id].map(normalizeAchievement);
   });
 
   return nextState;
 };
 
 const migrateLegacyState = async (): Promise<AppState | null> => {
-  const legacySettingsRaw = await AsyncStorage.getItem(STORAGE_KEYS.userSettings);
-  const legacyAchievementsRaw = await AsyncStorage.getItem(STORAGE_KEYS.achievementStore);
+  const legacySettingsRaw = await AsyncStorage.getItem(
+    STORAGE_KEYS.userSettings
+  );
+  const legacyAchievementsRaw = await AsyncStorage.getItem(
+    STORAGE_KEYS.achievementStore
+  );
 
   if (!legacySettingsRaw && !legacyAchievementsRaw) return null;
 
   const legacySettings = legacySettingsRaw ? await loadUserSettings() : null;
-  const legacyAchievements = legacyAchievementsRaw ? await loadAchievements() : {};
+  const legacyAchievements = legacyAchievementsRaw
+    ? await loadAchievements()
+    : {};
 
   const userId = uuid();
   const now = new Date().toISOString();
@@ -136,7 +155,8 @@ const migrateLegacyState = async (): Promise<AppState | null> => {
   const profile: UserProfile = {
     id: userId,
     name: "Baby",
-    birthDate: legacySettings?.birthDate || new Date().toISOString().slice(0, 10),
+    birthDate:
+      legacySettings?.birthDate || new Date().toISOString().slice(0, 10),
     dueDate: legacySettings?.dueDate ?? null,
     settings: {
       showCorrectedUntilMonths: legacySettings?.showCorrectedUntilMonths ?? 24,
@@ -152,7 +172,12 @@ const migrateLegacyState = async (): Promise<AppState | null> => {
     if (!Array.isArray(list)) return;
     list.forEach((item) => {
       const legacyTag = (item as any).tag;
-      const tag = legacyTag === "did" ? "growth" : legacyTag === "tried" ? "effort" : "growth";
+      const tag =
+        legacyTag === "did"
+          ? "growth"
+          : legacyTag === "tried"
+            ? "effort"
+            : "growth";
       migratedAchievements.push({
         id: (item as any).id ?? uuid(),
         date: (item as any).date ?? "",
@@ -212,13 +237,16 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({
     void bootstrap();
   }, []);
 
-  const updateState = useCallback(async (updater: (prev: AppState) => AppState) => {
-    setState((prev) => {
-      const next = ensureStateIntegrity(updater(prev));
-      void persistState(next);
-      return next;
-    });
-  }, []);
+  const updateState = useCallback(
+    async (updater: (prev: AppState) => AppState) => {
+      setState((prev) => {
+        const next = ensureStateIntegrity(updater(prev));
+        void persistState(next);
+        return next;
+      });
+    },
+    []
+  );
 
   const addUser = useCallback(
     async (input: NewUserInput) => {
@@ -249,7 +277,12 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const updateUser = useCallback(
-    async (userId: string, partial: Partial<Omit<UserProfile, "id" | "settings">> & { settings?: Partial<UserSettings> }) => {
+    async (
+      userId: string,
+      partial: Partial<Omit<UserProfile, "id" | "settings">> & {
+        settings?: Partial<UserSettings>;
+      }
+    ) => {
       await updateState((prev) => {
         const nextUsers = prev.users.map((user) =>
           user.id === userId
@@ -348,6 +381,22 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({
     [updateState]
   );
 
+  const restoreState = useCallback(
+    async (
+      profiles: UserProfile[],
+      achievements: Record<string, Achievement[]>
+    ) => {
+      const nextState = ensureStateIntegrity({
+        users: profiles,
+        activeUserId: profiles[0]?.id ?? null,
+        achievements,
+      });
+      setState(nextState);
+      await persistState(nextState);
+    },
+    []
+  );
+
   const value = useMemo(
     () => ({
       state,
@@ -359,11 +408,27 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({
       addAchievement,
       updateAchievement,
       deleteAchievement,
+      restoreState,
     }),
-    [state, loading, addUser, updateUser, deleteUser, setActiveUser, addAchievement, updateAchievement, deleteAchievement]
+    [
+      state,
+      loading,
+      addUser,
+      updateUser,
+      deleteUser,
+      setActiveUser,
+      addAchievement,
+      updateAchievement,
+      deleteAchievement,
+      restoreState,
+    ]
   );
 
-  return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
+  return (
+    <AppStateContext.Provider value={value}>
+      {children}
+    </AppStateContext.Provider>
+  );
 };
 
 export const useAppState = (): AppStateContextValue => {
