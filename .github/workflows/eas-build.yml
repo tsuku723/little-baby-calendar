@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: EAS Build iOS Preview
+    name: EAS Build iOS Production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
