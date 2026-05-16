@@ -1,16 +1,7 @@
-/**
- * NOTE:
- * データエクスポート機能は MVP では一旦見送る。
- *
- * 理由:
- * - Expo Go / iOS / Android では FileSystem / Sharing に制約あり
- * - 実行環境による挙動差が大きいため
- *
- * 追記:
- * - Development Build / 製品版アプリでは再検討可能
- */
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -20,11 +11,19 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
+import * as Sharing from "expo-sharing";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { SettingsStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
+import {
+  createBackup,
+  restoreBackup,
+  validateBackup,
+  INVALID_FORMAT_ERROR,
+} from "@/services/backupService";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
@@ -45,7 +44,10 @@ const supportMenus: Array<{ label: string; route: SupportRoute }> = [
 ];
 
 const SettingsScreen: React.FC<Props> = ({ navigation }) => {
-  const { state, setActiveUser } = useAppState();
+  const { state, setActiveUser, restoreState } = useAppState();
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupError, setBackupError] = useState<string | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
 
   const handleSelectChild = useCallback(
     async (userId: string) => {
@@ -53,6 +55,77 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
     },
     [setActiveUser]
   );
+
+  const handleCreateBackup = useCallback(async () => {
+    setBackupLoading(true);
+    setBackupError(null);
+    try {
+      const uri = await createBackup(state.users, state.achievements);
+      await Sharing.shareAsync(uri);
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : "不明なエラーが発生しました";
+      setBackupError(message);
+    } finally {
+      setBackupLoading(false);
+    }
+  }, [state.users, state.achievements]);
+
+  const handleImport = useCallback(async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "application/zip",
+      copyToCacheDirectory: true,
+    });
+
+    if (result.canceled) return;
+
+    const uri = result.assets[0].uri;
+
+    try {
+      await validateBackup(uri);
+    } catch (e) {
+      const raw = e instanceof Error ? e.message : "";
+      const message =
+        raw === INVALID_FORMAT_ERROR || raw === "未対応のバックアップ形式です"
+          ? raw
+          : INVALID_FORMAT_ERROR;
+      Alert.alert("エラー", message);
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      Alert.alert(
+        "バックアップをインポート",
+        "現在のすべてのデータ（プロフィール・記録・写真）が、バックアップの内容に置き換えられます。この操作は元に戻せません。続けますか？",
+        [
+          { text: "キャンセル", style: "cancel", onPress: () => resolve() },
+          {
+            text: "インポート",
+            style: "destructive",
+            onPress: async () => {
+              setImportLoading(true);
+              try {
+                const { profiles, achievements } = await restoreBackup(uri);
+                await restoreState(profiles, achievements);
+                Alert.alert("完了", "バックアップからデータを復元しました");
+              } catch (e) {
+                const raw = e instanceof Error ? e.message : "";
+                const message =
+                  raw === INVALID_FORMAT_ERROR ||
+                  raw === "未対応のバックアップ形式です"
+                    ? raw
+                    : INVALID_FORMAT_ERROR;
+                Alert.alert("エラー", message);
+              } finally {
+                setImportLoading(false);
+                resolve();
+              }
+            },
+          },
+        ]
+      );
+    });
+  }, [restoreState]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -114,6 +187,47 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.notice}>
           ※このアプリの記録は、この端末の中だけに保存されます。
         </Text>
+
+        <View style={styles.backupSection}>
+          <Text style={styles.label}>データ</Text>
+          <TouchableOpacity
+            testID="backup-button"
+            style={[
+              styles.backupButton,
+              backupLoading && styles.backupButtonDisabled,
+            ]}
+            onPress={handleCreateBackup}
+            disabled={backupLoading}
+            accessibilityRole="button"
+          >
+            {backupLoading ? (
+              <ActivityIndicator size="small" color={COLORS.textPrimary} />
+            ) : (
+              <Text style={styles.backupButtonText}>バックアップを作成</Text>
+            )}
+          </TouchableOpacity>
+          {backupError !== null && (
+            <Text style={styles.backupError}>{backupError}</Text>
+          )}
+          <TouchableOpacity
+            testID="import-button"
+            style={[
+              styles.backupButton,
+              importLoading && styles.backupButtonDisabled,
+            ]}
+            onPress={handleImport}
+            disabled={importLoading}
+            accessibilityRole="button"
+          >
+            {importLoading ? (
+              <ActivityIndicator size="small" color={COLORS.textPrimary} />
+            ) : (
+              <Text style={styles.backupButtonText}>
+                バックアップをインポート
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.supportSection}>
           <Text style={styles.label}>サポート</Text>
@@ -236,6 +350,31 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cellDimmed,
     padding: 12,
     borderRadius: 8,
+  },
+  backupSection: {
+    gap: 8,
+  },
+  backupButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.filterBackground,
+    alignItems: "center",
+  },
+  backupButtonDisabled: {
+    opacity: 0.5,
+  },
+  backupButtonText: {
+    color: COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  backupError: {
+    fontSize: 13,
+    color: "#D32F2F",
+    paddingHorizontal: 4,
   },
   supportSection: {
     gap: 8,
