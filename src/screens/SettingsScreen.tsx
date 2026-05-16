@@ -185,9 +185,6 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <Text style={styles.notice}>
-          ※出生情報はプロフィール編集画面でのみ入力できます。
-        </Text>
-        <Text style={styles.notice}>
           ※このアプリの記録は、この端末の中だけに保存されます。
         </Text>
 
