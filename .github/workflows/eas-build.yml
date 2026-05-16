@@ -1,11 +1,13 @@
 name: EAS Build (iOS)
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
-    name: EAS Build iOS Preview
+    name: EAS Build iOS Production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +22,12 @@ jobs:
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
-      - name: Build iOS (preview)
-        run: eas build --platform ios --profile preview --non-interactive
+      - name: Build iOS (production)
+        run: eas build --platform ios --profile production --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit to TestFlight
+        run: eas submit --platform ios --profile production --latest --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
