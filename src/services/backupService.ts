@@ -6,7 +6,8 @@ import { Achievement, UserProfile } from "@/state/AppStateContext";
 const APP_VERSION = "1.0.0";
 const BACKUP_FORMAT_VERSION = 1;
 
-const INVALID_FORMAT_ERROR = "バックアップファイルの形式が正しくありません";
+export const INVALID_FORMAT_ERROR =
+  "バックアップファイルの形式が正しくありません";
 
 export type BackupData = {
   version: number;
@@ -74,38 +75,37 @@ export const createBackup = async (
   return outputUri;
 };
 
-export const restoreBackup = async (
-  zipUri: string
-): Promise<{
-  profiles: UserProfile[];
-  achievements: Record<string, Achievement[]>;
-}> => {
-  const base64Zip = await FileSystem.readAsStringAsync(zipUri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-
-  let zip: JSZip;
-  try {
-    zip = await JSZip.loadAsync(base64Zip, { base64: true });
-  } catch {
+export const validateBackup = async (zipUri: string): Promise<void> => {
+  const fileInfo = await FileSystem.getInfoAsync(zipUri);
+  if (
+    !fileInfo.exists ||
+    ("size" in fileInfo && fileInfo.size > 150 * 1024 * 1024)
+  ) {
     throw new Error(INVALID_FORMAT_ERROR);
   }
 
-  const backupFile = zip.file("backup.json");
-  if (!backupFile) throw new Error(INVALID_FORMAT_ERROR);
+  const KNOWN_ERRORS = [INVALID_FORMAT_ERROR, "未対応のバックアップ形式です"];
 
   let backupData: BackupData;
   try {
+    const base64Zip = await FileSystem.readAsStringAsync(zipUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const zip = await JSZip.loadAsync(base64Zip, { base64: true });
+    const backupFile = zip.file("backup.json");
+    if (!backupFile) throw new Error(INVALID_FORMAT_ERROR);
     const jsonText = await backupFile.async("text");
     backupData = JSON.parse(jsonText) as BackupData;
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && KNOWN_ERRORS.includes(e.message)) throw e;
     throw new Error(INVALID_FORMAT_ERROR);
   }
 
   if (
     backupData.version === undefined ||
     !Array.isArray(backupData.profiles) ||
-    backupData.achievements === undefined
+    backupData.achievements === undefined ||
+    backupData.profiles.length === 0
   ) {
     throw new Error(INVALID_FORMAT_ERROR);
   }
@@ -113,9 +113,51 @@ export const restoreBackup = async (
   if (backupData.version !== BACKUP_FORMAT_VERSION) {
     throw new Error("未対応のバックアップ形式です");
   }
+};
 
-  if (backupData.profiles.length === 0) {
+export const restoreBackup = async (
+  zipUri: string
+): Promise<{
+  profiles: UserProfile[];
+  achievements: Record<string, Achievement[]>;
+}> => {
+  const fileInfo = await FileSystem.getInfoAsync(zipUri);
+  if (
+    !fileInfo.exists ||
+    ("size" in fileInfo && fileInfo.size > 150 * 1024 * 1024)
+  ) {
     throw new Error(INVALID_FORMAT_ERROR);
+  }
+
+  const KNOWN_ERRORS = [INVALID_FORMAT_ERROR, "未対応のバックアップ形式です"];
+
+  let zip: JSZip;
+  let backupData: BackupData;
+  try {
+    const base64Zip = await FileSystem.readAsStringAsync(zipUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    zip = await JSZip.loadAsync(base64Zip, { base64: true });
+    const backupFile = zip.file("backup.json");
+    if (!backupFile) throw new Error(INVALID_FORMAT_ERROR);
+    const jsonText = await backupFile.async("text");
+    backupData = JSON.parse(jsonText) as BackupData;
+  } catch (e) {
+    if (e instanceof Error && KNOWN_ERRORS.includes(e.message)) throw e;
+    throw new Error(INVALID_FORMAT_ERROR);
+  }
+
+  if (
+    backupData.version === undefined ||
+    !Array.isArray(backupData.profiles) ||
+    backupData.achievements === undefined ||
+    backupData.profiles.length === 0
+  ) {
+    throw new Error(INVALID_FORMAT_ERROR);
+  }
+
+  if (backupData.version !== BACKUP_FORMAT_VERSION) {
+    throw new Error("未対応のバックアップ形式です");
   }
 
   const photosDir = `${FileSystem.documentDirectory}photos/`;

@@ -18,7 +18,12 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { SettingsStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
-import { createBackup, restoreBackup } from "@/services/backupService";
+import {
+  createBackup,
+  restoreBackup,
+  validateBackup,
+  INVALID_FORMAT_ERROR,
+} from "@/services/backupService";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
@@ -43,7 +48,6 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupError, setBackupError] = useState<string | null>(null);
   const [importLoading, setImportLoading] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
 
   const handleSelectChild = useCallback(
     async (userId: string) => {
@@ -68,8 +72,6 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   }, [state.users, state.achievements]);
 
   const handleImport = useCallback(async () => {
-    setImportError(null);
-
     const result = await DocumentPicker.getDocumentAsync({
       type: "application/zip",
       copyToCacheDirectory: true,
@@ -78,6 +80,18 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
     if (result.canceled) return;
 
     const uri = result.assets[0].uri;
+
+    try {
+      await validateBackup(uri);
+    } catch (e) {
+      const raw = e instanceof Error ? e.message : "";
+      const message =
+        raw === INVALID_FORMAT_ERROR || raw === "未対応のバックアップ形式です"
+          ? raw
+          : INVALID_FORMAT_ERROR;
+      Alert.alert("エラー", message);
+      return;
+    }
 
     await new Promise<void>((resolve) => {
       Alert.alert(
@@ -95,9 +109,13 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                 await restoreState(profiles, achievements);
                 Alert.alert("完了", "バックアップからデータを復元しました");
               } catch (e) {
+                const raw = e instanceof Error ? e.message : "";
                 const message =
-                  e instanceof Error ? e.message : "不明なエラーが発生しました";
-                setImportError(message);
+                  raw === INVALID_FORMAT_ERROR ||
+                  raw === "未対応のバックアップ形式です"
+                    ? raw
+                    : INVALID_FORMAT_ERROR;
+                Alert.alert("エラー", message);
               } finally {
                 setImportLoading(false);
                 resolve();
@@ -212,9 +230,6 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
               </Text>
             )}
           </TouchableOpacity>
-          {importError !== null && (
-            <Text style={styles.backupError}>{importError}</Text>
-          )}
         </View>
 
         <View style={styles.supportSection}>

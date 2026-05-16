@@ -188,6 +188,7 @@ describe("BackupService", () => {
     };
 
     beforeEach(() => {
+      mockGetInfoAsync.mockResolvedValue({ exists: true, size: 1024 });
       mockReadAsStringAsync.mockResolvedValue("base64zipdata");
       mockZipFile = jest.fn();
       mockLoadAsync = jest.fn().mockResolvedValue({ file: mockZipFile });
