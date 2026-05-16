@@ -11,13 +11,19 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import * as Sharing from "expo-sharing";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { SettingsStackParamList } from "@/navigation";
 import AppText from "@/components/AppText";
 import { useAppState } from "@/state/AppStateContext";
-import { createBackup } from "@/services/backupService";
+import {
+  createBackup,
+  restoreBackup,
+  validateBackup,
+  INVALID_FORMAT_ERROR,
+} from "@/services/backupService";
 import { COLORS } from "@/constants/colors";
 
 type Props = NativeStackScreenProps<SettingsStackParamList, "Settings">;
@@ -38,9 +44,10 @@ const supportMenus: Array<{ label: string; route: SupportRoute }> = [
 ];
 
 const SettingsScreen: React.FC<Props> = ({ navigation }) => {
-  const { state, setActiveUser } = useAppState();
+  const { state, setActiveUser, restoreState } = useAppState();
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupError, setBackupError] = useState<string | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
 
   const handleSelectChild = useCallback(
     async (userId: string) => {
@@ -63,6 +70,62 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
       setBackupLoading(false);
     }
   }, [state.users, state.achievements]);
+
+  const handleImport = useCallback(async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "application/zip",
+      copyToCacheDirectory: true,
+    });
+
+    if (result.canceled) return;
+
+    const uri = result.assets[0].uri;
+
+    try {
+      await validateBackup(uri);
+    } catch (e) {
+      const raw = e instanceof Error ? e.message : "";
+      const message =
+        raw === INVALID_FORMAT_ERROR || raw === "未対応のバックアップ形式です"
+          ? raw
+          : INVALID_FORMAT_ERROR;
+      Alert.alert("エラー", message);
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      Alert.alert(
+        "バックアップをインポート",
+        "現在のすべてのデータ（プロフィール・記録・写真）が、バックアップの内容に置き換えられます。この操作は元に戻せません。続けますか？",
+        [
+          { text: "キャンセル", style: "cancel", onPress: () => resolve() },
+          {
+            text: "インポート",
+            style: "destructive",
+            onPress: async () => {
+              setImportLoading(true);
+              try {
+                const { profiles, achievements } = await restoreBackup(uri);
+                await restoreState(profiles, achievements);
+                Alert.alert("完了", "バックアップからデータを復元しました");
+              } catch (e) {
+                const raw = e instanceof Error ? e.message : "";
+                const message =
+                  raw === INVALID_FORMAT_ERROR ||
+                  raw === "未対応のバックアップ形式です"
+                    ? raw
+                    : INVALID_FORMAT_ERROR;
+                Alert.alert("エラー", message);
+              } finally {
+                setImportLoading(false);
+                resolve();
+              }
+            },
+          },
+        ]
+      );
+    });
+  }, [restoreState]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -149,6 +212,24 @@ const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           {backupError !== null && (
             <Text style={styles.backupError}>{backupError}</Text>
           )}
+          <TouchableOpacity
+            testID="import-button"
+            style={[
+              styles.backupButton,
+              importLoading && styles.backupButtonDisabled,
+            ]}
+            onPress={handleImport}
+            disabled={importLoading}
+            accessibilityRole="button"
+          >
+            {importLoading ? (
+              <ActivityIndicator size="small" color={COLORS.textPrimary} />
+            ) : (
+              <Text style={styles.backupButtonText}>
+                バックアップをインポート
+              </Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.supportSection}>
