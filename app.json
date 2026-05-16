@@ -3,7 +3,6 @@
     "name": "リトルベビーログ",
     "slug": "little-baby-log",
     "version": "1.4.2",
-    "homepage": "https://tsuku723.github.io/little-baby-log/",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
