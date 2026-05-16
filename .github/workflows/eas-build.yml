@@ -1,6 +1,8 @@
 name: EAS Build (iOS)
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -22,5 +24,10 @@ jobs:
 
       - name: Build iOS (preview)
         run: eas build --platform ios --profile preview --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Submit to TestFlight
+        run: eas submit --platform ios --profile production --latest --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
